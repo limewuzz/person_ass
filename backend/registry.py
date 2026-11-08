@@ -239,11 +239,11 @@ def build_registry_router(store: RegistryStore):
                  if principal.may_access_node(n.id)]
         return _paginate(sorted(items, key=lambda x: x["id"]), cursor, limit)
 
-    @router.get("/api/v1/nodes/{node_id}")
-    def get_node(node_id: str, principal: Principal = Depends(get_principal)):
+    @router.get("/api/v1/nodes/{id}")
+    def get_node(id: str, principal: Principal = Depends(get_principal)):
         _require_scope(principal, "registry:read")
-        _object_guard(principal, node_id=node_id)
-        rec = store.nodes.get(node_id)
+        _object_guard(principal, node_id=id)
+        rec = store.nodes.get(id)
         if not rec:
             raise HTTPException(status_code=404, detail={"error": "not_found"})
         return store.node_out(rec)
@@ -273,10 +273,10 @@ def build_registry_router(store: RegistryStore):
         _require_scope(principal, "registry:read")
         return list_resources("service", None, cursor, limit, principal)
 
-    @router.get("/api/v1/resources/{resource_id}")
-    def get_resource(resource_id: str, principal: Principal = Depends(get_principal)):
+    @router.get("/api/v1/resources/{id}")
+    def get_resource(id: str, principal: Principal = Depends(get_principal)):
         _require_scope(principal, "registry:read")
-        rec = store.resources.get(resource_id)
+        rec = store.resources.get(id)
         if not rec:
             raise HTTPException(status_code=404, detail={"error": "not_found"})
         _object_guard(principal, kind=rec.kind, node_id=rec.node_id)
@@ -290,9 +290,9 @@ def build_registry_router(store: RegistryStore):
                  if principal.may_access_node(a.runtime_node_id)]
         return _paginate(sorted(items, key=lambda x: x["id"]), cursor, limit)
 
-    @router.get("/api/v1/agents/{agent_id}")
-    def get_agent(agent_id: str, principal: Principal = Depends(get_principal)):
-        rec = store.agents.get(agent_id)
+    @router.get("/api/v1/agents/{id}")
+    def get_agent(id: str, principal: Principal = Depends(get_principal)):
+        rec = store.agents.get(id)
         if not rec:
             raise HTTPException(status_code=404, detail={"error": "not_found"})
         _object_guard(principal, node_id=rec.runtime_node_id)

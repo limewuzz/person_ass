@@ -1,0 +1,18 @@
+# mwcp-api 镜像（PROPOSAL——未构建未部署；R4 A2 要求静态可审查）
+# 注意：tag 未锁 digest；部署 Gate 时以实际拉取 digest 锁定并记录（不预填臆造值）
+FROM python:3.12-slim
+
+WORKDIR /app
+# 依赖先拷（层缓存）：requirements.lock 为权威
+COPY backend/requirements.lock /app/requirements.lock
+RUN pip install --no-cache-dir -r requirements.lock
+
+COPY backend/app.py backend/auth.py backend/deps.py backend/registry.py backend/probes.py /app/
+COPY build/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && useradd --system --no-create-home mwcp && chown -R mwcp /app
+USER mwcp
+
+EXPOSE 8123
+ENV MWCP_LISTEN_HOST=0.0.0.0 MWCP_LISTEN_PORT=8123
+# 注意：容器内监听 0.0.0.0（容器命名空间）；宿主暴露面由 compose 的 127.0.0.1:8123:8123 唯一决定
+ENTRYPOINT ["/app/entrypoint.sh"]

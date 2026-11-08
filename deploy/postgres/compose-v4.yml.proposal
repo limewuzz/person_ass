@@ -1,0 +1,91 @@
+# PROPOSAL v4 ONLY — DO NOT DEPLOY. 评审 R2 BLOCK-01/02/05/06 修订版。
+# 静态校验：docker compose -f compose-v3.yml.proposal --project-name mwcp config --quiet
+# （校验用占位 secret 文件；真实 secret 文件只存在于部署目标机，600 权限，不入 git/工单）
+services:
+  mwcp-db:
+    image: postgres:16@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5
+    container_name: mwcp-db            # ⚠ 全局名：部署 Gate 前置检查冲突（见 PROPOSAL §6）
+    restart: unless-stopped
+    stop_grace_period: 90s
+    shm_size: 256m                     # BLOCK-05：显式共享内存
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - max_connections=20            # BLOCK-05：P1 规模收紧；压测后再调
+      - -c
+      - work_mem=2MB                  # 单会话可多次分配，非上限——见预算公式
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - log_min_duration_statement=500ms
+    environment:
+      # BLOCK-02：引导账户（仅首次建库用；后续运维走 mwcp_migrator）
+      POSTGRES_USER: mwcp_bootstrap
+      POSTGRES_PASSWORD_FILE: /run/secrets/mwcp_pg_bootstrap_password   # BLOCK-01：文件型注入
+      POSTGRES_DB: control_plane
+    secrets:
+      - mwcp_pg_bootstrap_password
+      - mwcp_pg_app_password
+      - mwcp_pg_migrator_password
+    volumes:
+      - mwcp-pgdata:/var/lib/postgresql/data
+      - ./init/00-init-roles.sh:/docker-entrypoint-initdb.d/00-init-roles.sh:ro  # 可执行角色初始化（密码经 secrets 文件）
+    networks:
+      - mwcp-internal
+    mem_limit: 640m                    # 预算公式见 PROPOSAL §5；最终值以压测定
+    cpus: 1.0
+    healthcheck:
+      # pg_isready 仅证进程存活（不做账户认证）；应用就绪必须由 API 以 mwcp_app
+      # 执行 SELECT 1 + 迁移版本核对（见 R4-04 §6 readiness 定义）——不得凭此置 ready
+      test: ["CMD-SHELL", "pg_isready -U mwcp_bootstrap -d control_plane"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      mw.project: control-plane
+      mw.layer: database
+    # 无 ports： —— PG 对宿主/公网零发布（internal 网络双重保证）
+
+  mwcp-api:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.api       # 部署 Gate 前提交评审
+    container_name: mwcp-api
+    restart: unless-stopped
+    environment:
+      # BLOCK-01：不再经 compose env 传任何口令/DSN/JWT 密钥；
+      # API 启动时从 /run/secrets 读文件、进程内拼装（含 URL 转义），进程环境仅留文件路径
+      MWCP_SECRETS_DIR: /run/secrets
+    secrets:
+      - mwcp_pg_app_password
+      - mwcp_auth_secrets
+    ports:
+      - "127.0.0.1:8123:8123"         # 唯一宿主面：仅回环；目标 Docker 版本实测（BLOCK-06）
+    depends_on:
+      mwcp-db:
+        condition: service_healthy
+    networks:
+      - mwcp-internal                  # P1 不出网；mwcp-edge 属未来独立审批
+    mem_limit: 256m
+    cpus: 0.5
+    labels:
+      mw.project: control-plane
+      mw.layer: api
+
+networks:
+  mwcp-internal:
+    internal: true
+volumes:
+  mwcp-pgdata:
+    name: mwcp-pgdata
+secrets:
+  mwcp_pg_bootstrap_password:
+    file: ./secrets/mwcp_pg_bootstrap_password.txt   # 部署机生成（openssl rand -base64 32），600
+  mwcp_pg_migrator_password:
+    file: ./secrets/mwcp_pg_migrator_password.txt
+  mwcp_pg_app_password:
+    file: ./secrets/mwcp_pg_app_password.txt
+  mwcp_auth_secrets:
+    file: ./secrets/mwcp_auth_secrets.txt            # kid:secret 逗号表

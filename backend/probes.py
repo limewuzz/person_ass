@@ -20,6 +20,69 @@ from registry import RESOURCE_KINDS, RegistryStore, _iso
 
 PROBE_CAPABILITIES = {"probe.http.get", "probe.tcp.check"}  # 白名单（须与 capabilities 表 enabled 一致）
 
+import ipaddress
+import urllib.parse
+
+# ---- SSRF 防护（R4 §B）----
+# 云元数据/链路本地/唯一本地等一律拒绝；回环仅测试模式显式放行；
+# 生产模式要求 hostname 命中显式注册白名单（当前为空 → 任何目标都会被拒）。
+BLOCKED_LITERAL_HOSTS = {
+    "metadata.google.internal", "metadata.goog",
+    "169.254.169.254", "fd00:ec2::254",      # AWS/GCP 元数据
+    "100.100.100.100",                        # 阿里云元数据
+}
+PRODUCTION_ALLOWED_HOSTS: set[str] = set()   # 生产白名单：空 = 禁止一切生产目标
+
+
+class ProbeTargetRejected(ValueError):
+    """目标未通过 SSRF 校验。"""
+
+
+def validate_probe_target(target: ProbeTarget, *, allow_loopback: bool = False,
+                          production_mode: bool = False) -> None:
+    """显式校验：scheme/主机/解析后 IP 三层检查（DNS 预解析缓解重绑定，残余风险见 R4-07）。"""
+    if target.capability == "probe.tcp.check":
+        host, port = target.host, target.port
+        if not host or not port:
+            raise ProbeTargetRejected("tcp target needs host+port")
+    elif target.capability == "probe.http.get":
+        if not target.url:
+            raise ProbeTargetRejected("http target needs url")
+        p = urllib.parse.urlsplit(target.url)
+        if p.scheme not in ("http", "https"):
+            raise ProbeTargetRejected(f"scheme {p.scheme!r} not allowed")
+        if p.username or p.password:
+            raise ProbeTargetRejected("credentials in URL not allowed")
+        host = p.hostname
+        if not host:
+            raise ProbeTargetRejected("no hostname")
+    else:
+        raise ProbeTargetRejected(f"capability {target.capability} not in whitelist")
+    host_l = host.lower().strip(".")
+    if production_mode:
+        if host_l not in PRODUCTION_ALLOWED_HOSTS:
+            raise ProbeTargetRejected("host not in production whitelist (empty by design)")
+    if host_l in BLOCKED_LITERAL_HOSTS:
+        raise ProbeTargetRejected("cloud metadata endpoint blocked")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror as e:
+        raise ProbeTargetRejected(f"dns resolve failed: {e}") from e
+    seen: set[str] = set()
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        seen.add(str(ip))
+        if ip.is_loopback:
+            if not allow_loopback:
+                raise ProbeTargetRejected("loopback blocked (test mode must set allow_loopback)")
+        elif ip.is_link_local or ip.is_private or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            # 测试模式放行回环；其余私网/链路本地一律拒绝（生产白名单模式另行放行外部主机）
+            if not (production_mode and host_l in PRODUCTION_ALLOWED_HOSTS):
+                raise ProbeTargetRejected(f"non-public address blocked: {ip}")
+
+
+
+
 
 @dataclass
 class ProbeTarget:
@@ -48,6 +111,7 @@ class ProbeObservation:
 
 HEALTH_MAP = {
     "healthy": "healthy",
+    "redirect": "unknown",  # 3xx：目标要求重定向，未跟随，证据不足
     "offline": "offline",
     "timeout": "unknown",          # 超时 ≠ 离线：证据不足按 unknown
     "auth_rejected": "unknown",    # 401/403：目标在线但拒绝（不判死）
@@ -58,18 +122,23 @@ HEALTH_MAP = {
 def http_probe(target: ProbeTarget, client: httpx.Client | None = None) -> ProbeObservation:
     assert target.capability == "probe.http.get" and target.url
     own = client is None
-    client = client or httpx.Client(verify=True, trust_env=False)  # 本地 mock 阶段不走系统代理
+    client = client or httpx.Client(verify=True, trust_env=False, follow_redirects=False)  # 不走系统代理；禁止跟随重定向
     t0 = time.time()
+    note = ""
     try:
         r = client.get(target.url, timeout=target.timeout_seconds)
         elapsed = time.time() - t0
         if r.status_code < 300:
             status = "healthy"
+        elif r.status_code < 400:
+            status, note = "redirect", f"http {r.status_code} redirect not followed"  # SSRF：不跟随
+            r.close()
         elif r.status_code in (401, 403):
             status = "auth_rejected"
         else:
             status = "degraded"
-        note = f"http {r.status_code} in {elapsed:.2f}s"
+        if not note:
+            note = f"http {r.status_code} in {elapsed:.2f}s"
     except httpx.TimeoutException:
         status, note = "timeout", f"timeout after {target.timeout_seconds}s"
     except httpx.ConnectError:
@@ -102,12 +171,16 @@ def tcp_probe(target: ProbeTarget) -> ProbeObservation:
 
 
 def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
-              client: httpx.Client | None = None) -> ProbeObservation:
-    """执行白名单探针并写回 Registry（observed_at≠received_at：写入含处理耗时）。"""
+              client: httpx.Client | None = None, *, allow_loopback: bool = False) -> ProbeObservation:
+    """执行白名单探针并写回 Registry（observed_at≠received_at：写入含处理耗时）。
+
+    SSRF：默认拒绝回环/私网/元数据；测试夹具必须显式 allow_loopback=True。
+    """
     if target.capability not in PROBE_CAPABILITIES:
         raise ValueError(f"capability {target.capability} not in probe whitelist")
     if target.kind not in RESOURCE_KINDS:
         raise ValueError(f"bad kind {target.kind}")
+    validate_probe_target(target, allow_loopback=allow_loopback)
     obs = http_probe(target, client) if target.capability == "probe.http.get" else tcp_probe(target)
     obs.observed_at = _iso(clock())            # 探测完成时刻
     obs.received_at = _iso(clock() + 0.1)      # 写入时刻（演示 100ms 处理延迟，可注入）
@@ -123,3 +196,17 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
     rec.ttl_seconds = obs.ttl_seconds
     rec.source = obs.source
     return obs
+
+
+def run_batch(targets: list[ProbeTarget], store: RegistryStore, *, max_concurrency: int = 4,
+              allow_loopback: bool = False, clock=time.time) -> list:
+    """并发执行（有界线程池）；任一目标校验失败抛错且不执行该目标。"""
+    import concurrent.futures as cf
+    for t in targets:
+        validate_probe_target(t, allow_loopback=allow_loopback)
+    results: list = []
+    with cf.ThreadPoolExecutor(max_workers=max_concurrency) as ex:
+        futs = {ex.submit(run_probe, t, store, clock, None, allow_loopback=allow_loopback): t for t in targets}
+        for f in cf.as_completed(futs):
+            results.append(f.result())
+    return results
