@@ -1,11 +1,27 @@
-# PROPOSAL ONLY — DO NOT DEPLOY until user approves P0-06 item 2 (see PROPOSAL.md)
+# PROPOSAL v2 ONLY — DO NOT DEPLOY until user grants a NEW explicit approval.
+# Project isolation: run with `docker compose -p mwcp -f compose.yml.proposal ...`
+# (project name `mwcp` keeps networks/volumes/containers fully separate from `rakazo`.)
 services:
   mwcp-db:
     image: postgres:16@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5
     container_name: mwcp-db
     restart: unless-stopped
+    stop_grace_period: 90s
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - max_connections=50
+      - -c
+      - work_mem=4MB
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - log_min_duration_statement=500ms
     environment:
       POSTGRES_USER: mwcp
+      # 口令只经 .env 注入（600 权限，不进 git）；compose 渲染文本不含明文口令
       POSTGRES_PASSWORD: ${MWCP_PG_PASSWORD:?set in /root/magicworkshop/control-plane/.env}
       POSTGRES_DB: control_plane
     volumes:
@@ -19,9 +35,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # 注意：无 ports: —— 不向宿主/公网发布任何端口
+    # 无 ports: —— 不向宿主/公网发布任何端口（internal 网络双重保证）
+
+  mwcp-api:
+    # P1 阶段 API 也在容器内（解决「宿主回环进程连不上 internal PG」的拓扑矛盾）
+    build:
+      context: ../../backend        # 部署时由 CI 构建镜像；本地仅静态校验
+      dockerfile: Dockerfile.api    # 待 P1-03 落地时提交（同样走评审）
+    container_name: mwcp-api
+    restart: unless-stopped
+    environment:
+      MWCP_AUTH_SECRETS: ${MWCP_AUTH_SECRETS:?injected from .env}
+      MWCP_DB_DSN: postgres://mwcp:${MWCP_PG_PASSWORD}@mwcp-db:5432/control_plane
+      # 通过 Compose DNS 服务名解析，不依赖容器动态 IP
+    ports:
+      - "127.0.0.1:8123:8123"      # 唯一宿主暴露面：仅回环；接公网反代属独立审批
+    depends_on:
+      mwcp-db:
+        condition: service_healthy
+    networks:
+      - mwcp-internal
+      # P1 默认不接出网网络；将来受控探针需要出站时另行评审 mwcp-edge
+    mem_limit: 256m
+    cpus: 0.5
+
 networks:
   mwcp-internal:
-    internal: true
+    internal: true                  # 无出站网关；db/api 互通，外不达
 volumes:
   mwcp-pgdata:
+    name: mwcp-pgdata               # 显式命名，与 rakazo 卷命名空间隔离

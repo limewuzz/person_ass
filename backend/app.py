@@ -1,31 +1,83 @@
-"""MagicWorkshop Control Plane — P1 最小后端（开发期仅 127.0.0.1）。
+"""MagicWorkshop Control Plane — P1 后端（开发期仅 127.0.0.1）。
 
-仅实现 v0.4 契约中 x-phase=P1 的两个健康端点（contracts/openapi.yaml L23-78）。
-安全模型按契约 security: humanBearer —— 认证中间件在 P1-04 引入，当前阶段
-健康端点按契约允许匿名（Health 标签下 live/ready 未列 401 之外的强制鉴权差异）。
+P1-04：认证中间件（Mock OIDC/JWT，fail closed；仅健康探针免认证）。
+P1-05：Resource Registry（内存仓储 + 审计基线种子，health=unknown 待真实探针）。
 
-硬边界提醒（README）：不得接入公网反代、不得执行生产操作。
+/health/ready 语义（按 P0 评审 §B 修正）：必要依赖未连接时返回 503 + dependency_status，
+不用 HTTP 200 冒充 ready。契约 openapi.yaml 当前只声明了 200 —— 该偏差已登记为
+待契约修订项 C-1（见 docs/CHANGES-SINCE-P0.md），冻结前需补 503 响应定义。
 """
 from __future__ import annotations
 
 import os
 import time
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
+import auth as auth_mod
+from auth import AuthConfigError, Principal, TokenValidator
+from registry import RegistryStore, build_me_router, build_registry_router, seed_audit_baseline
 
 _APP_START = time.time()
-_VERSION = os.environ.get("MWCP_VERSION", "0.1.0-dev")
+_VERSION = os.environ.get("MWCP_VERSION", "0.2.0-dev")
+
+PUBLIC_PATHS = {"/api/v1/health/live", "/api/v1/health/ready", "/docs", "/openapi.json", "/redoc"}
 
 app = FastAPI(
     title="MagicWorkshop Control Plane API",
     version=_VERSION,
-    description="P1 受限开发版：仅健康端点；契约候选 v0.4-preview。",
+    description="P1 受限开发版：认证 + 只读 Registry；契约候选 v0.4-preview。",
 )
+
+# ---- 认证装配（fail closed）----
+_validator: TokenValidator | None = None
+try:
+    _secrets = auth_mod.load_secrets_from_env()
+    if _secrets:
+        _validator = TokenValidator(_secrets)
+except AuthConfigError:
+    _validator = None
+
+_validator_holder = {"validator": _validator}  # /me 用；可能为 None
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        if not path.startswith("/api/") or path in PUBLIC_PATHS:
+            return await call_next(request)
+        if _validator is None:
+            return JSONResponse(
+                status_code=503,
+                content={"error": {"code": "auth_misconfigured",
+                                   "message": "authentication is not configured (fail closed)"}},
+            )
+        header = request.headers.get("Authorization", "")
+        if not header.startswith("Bearer "):
+            return JSONResponse(status_code=401, content={"error": {"code": "unauthorized",
+                                                                    "message": "bearer token required"}})
+        try:
+            request.state.principal = _validator.decode(header[7:].strip())
+        except Exception:
+            return JSONResponse(status_code=401, content={"error": {"code": "unauthorized",
+                                                                    "message": "invalid or expired token"}})
+        return await call_next(request)
+
+
+app.add_middleware(AuthMiddleware)
+
+# ---- Registry 装配 ----
+_store = RegistryStore()
+seed_audit_baseline(_store)
+app.include_router(build_registry_router(_store))
+app.include_router(build_me_router(_validator_holder))
 
 
 @app.get("/api/v1/health/live")
 def health_live() -> dict:
-    """Liveness（契约 operationId=get_api_v1_health_live）。"""
+    """Liveness：仅代表进程活着（200）。"""
     return {
         "status": "ok",
         "component": "control-plane",
@@ -35,15 +87,20 @@ def health_live() -> dict:
 
 
 @app.get("/api/v1/health/ready")
-def health_ready() -> dict:
-    """Readiness（契约 operationId=get_api_v1_health_ready）。
-
-    P1 阶段依赖项（DB/探针）尚未接入，恒返回 ok=True 并以 deps 标注
-    UNKNOWN——遵守「不用非真实数字凑漂亮页面」的全阶段不变式。
-    """
-    return {
-        "status": "ok",
-        "component": "control-plane",
-        "version": _VERSION,
-        "deps": {"database": "UNKNOWN", "probes": "UNKNOWN"},
+def health_ready() -> JSONResponse:
+    """Readiness：必要依赖未连接 → 503 + dependency_status（不冒充 ready）。"""
+    deps = {
+        "database": "not_connected",  # P1-03 未落地（暂缓中）
+        "auth": "ok" if _validator is not None else "misconfigured",
+        "probes": "not_configured",
     }
+    ready = all(v == "ok" for v in deps.values())
+    return JSONResponse(
+        status_code=200 if ready else 503,
+        content={
+            "status": "ok" if ready else "not_ready",
+            "component": "control-plane",
+            "version": _VERSION,
+            "dependency_status": deps,  # 脱敏：只报组件状态，不含任何地址/凭据
+        },
+    )
