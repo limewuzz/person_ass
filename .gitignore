@@ -1,0 +1,61 @@
+# ---- 密钥与凭据：绝对不入库（P1-01 前置硬要求）----
+.env
+.env.*
+*.env
+!.env.example
+**/credentials/
+**/credentials.json
+*token*.json
+*secret*
+*.pem
+*.key
+!**/*.key.example
+*.htpasswd
+*.p12
+*.keystore
+id_rsa*
+id_ed25519*
+known_hosts*
+password*.txt
+password*.md
+
+# ---- 敏感文档（含明文凭据表的权威文件，禁止复制进本仓库）----
+STATE.md
+*HANDOFF*.md
+# 注意：项目外部文档本身不在此仓库，此条防止有人误拷贝进来
+
+# ---- Python ----
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# ---- Node / 前端 ----
+node_modules/
+.next/
+.vite/
+
+# ---- 数据库 ----
+*.db
+*.sqlite3
+*.sql.local
+!deploy/**/*.sql
+
+# ---- 编辑器/系统 ----
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ---- 本地产物 ----
+*.log
+logs/
+tmp/
+coverage/
+htmlcov/
