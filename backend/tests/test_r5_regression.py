@@ -424,3 +424,103 @@ def test_r9_update_during_execution_blocks_commit():
         assert st.resources["svc.r7"].base_health == "unknown"
     finally:
         P.validate_probe_target = orig
+
+
+# ---- R10 补充：状态机 / 真线程并发撤销 / 短路径脱敏矩阵 ----
+
+def test_r10_probe_authorization_state_machine():
+    """全生命周期状态断言：healthy → 禁用（拒+旧健康保留）→ owner 迁移（拒）→
+    版本化再授权（仍禁用→拒）→ 不存在 enabled 重开路径时不得写入。"""
+    import httpx
+    import probes as P
+    from probes import (ProbeTarget, ProbeTargetRejected, disable_target,
+                        register_target, run_probe_by_id)
+    st = _r7_store()
+    P.register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                      node_id="mac-mini"), allow_loopback=True)
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        obs = run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+        assert obs.health == "healthy" and st.resources["svc.r7"].base_health == "healthy"
+        # ① owner 迁移（未禁用时验证）：owner guard 拒，健康保留
+        st.resources["svc.r7"].owner_system = "owner-beta"
+        with pytest.raises(ProbeTargetRejected, match="owner_system changed"):
+            run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+        assert st.resources["svc.r7"].base_health == "healthy"
+        # ② update_target = 版本化再授权（刷新 owner，v1→v2），恢复执行
+        P.update_target(st, ProbeTarget(resource_id="svc.r7",
+                                        url="http://127.0.0.1:9/a",
+                                        node_id="mac-mini"),
+                        expected_version=1, allow_loopback=True)
+        assert run_probe_by_id(st, "svc.r7", client=client,
+                               allow_loopback=True).health == "healthy"
+        # ③ 禁用：拒绝执行，既有健康值保留（不被覆盖也不重置）
+        disable_target(st, "svc.r7", expected_version=2)
+        with pytest.raises(ProbeTargetRejected, match="disabled"):
+            run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+        assert st.resources["svc.r7"].base_health == "healthy"  # 全程未被旧结果污染
+
+
+def test_r10_concurrent_revoke_discards_result_real_threads():
+    """真线程并发：探针执行中另一线程撤销授权 → 结果作废不写健康（原子门生效）。"""
+    import threading
+    import httpx
+    import probes as P
+    from probes import (ProbeTarget, ProbeTargetRejected, disable_target,
+                        register_target, run_probe_by_id)
+    st = _r7_store()
+    P.register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                      node_id="mac-mini"), allow_loopback=True)
+    revoke_started = threading.Event()
+    def transport(req):
+        revoke_started.set()          # 探针已进入网络阶段
+        import time as _t; _t.sleep(0.2)  # 留出撤销窗口
+        return httpx.Response(200)
+    outcome = {}
+    def revoke():
+        revoke_started.wait(2)
+        disable_target(st, "svc.r7", expected_version=1)
+    with httpx.Client(transport=httpx.MockTransport(transport), trust_env=False) as client:
+        t = threading.Thread(target=revoke); t.start()
+        try:
+            run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+            outcome["result"] = "committed"
+        except ProbeTargetRejected as e:
+            outcome["result"] = "discarded"
+        t.join(2)
+    assert outcome["result"] == "discarded"
+    assert st.resources["svc.r7"].base_health == "unknown"
+
+
+def test_r10_short_path_redaction_matrix():
+    """默认拒绝矩阵：短/长/含关键词 path 一律指纹；公开白名单原样；异常同源。"""
+    import httpx
+    from probes import (ProbeTarget, ProbeTargetRejected, register_target, run_probe)
+    st = _r7_store()
+    markers = ["Ab3xZ", "SYN8Ab9", "tok_9f", "x" * 40]
+    for i, m in enumerate(markers):
+        rid = f"svc.r10.{i}"
+        st.resources[rid] = ResourceRec(id=rid, kind="service", owner_system="t",
+                                        display_name=rid, node_id="mac-mini")
+        register_target(st, ProbeTarget(resource_id=rid, node_id="mac-mini",
+                                        url=f"http://127.0.0.1:9/auth/{m}/status"),
+                        allow_loopback=True)
+    log_repr = repr(st.target_change_log)
+    for m in markers:
+        assert m not in log_repr, f"path 段泄漏: {m}"
+    # 异常消息同源脱敏（mismatch 触发）
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        with pytest.raises(ProbeTargetRejected) as ei:
+            run_probe(ProbeTarget(resource_id="svc.r10.0", node_id="mac-mini",
+                                  url="http://127.0.0.1:9/auth/OTHER9/status"),
+                      st, client=client, allow_loopback=True)
+    assert "OTHER9" not in str(ei.value) and markers[0] not in str(ei.value)
+    # 公开白名单原样显示（可读性不牺牲）
+    st.resources["svc.r10.pub"] = ResourceRec(id="svc.r10.pub", kind="service",
+                                              owner_system="t", display_name="pub",
+                                              node_id="mac-mini")
+    register_target(st, ProbeTarget(resource_id="svc.r10.pub", node_id="mac-mini",
+                                    url="http://127.0.0.1:9/health"),
+                    allow_loopback=True)
+    assert "/health" in repr(st.target_change_log)

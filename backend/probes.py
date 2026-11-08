@@ -335,7 +335,7 @@ def _audit_target_change(store, approved: "ApprovedProbeTarget", from_v: int, to
         "target_id": approved.target_id, "action": action,
         "from_version": from_v, "to_version": to_v,
         "endpoint": f"{approved.scheme or 'tcp'}://{approved.host}:{approved.port}"
-                    f"{_redact_path(approved.path)}",  # R9-P3：path 敏感段指纹替位
+                    f"{_display_path(approved.path)}",  # R10-P3：默认指纹，白名单才原样
         "query_fingerprint": _sha12(approved.query) if approved.query else None,  # R8-P3：不落原始 query
         "kind": approved.kind, "node_id": approved.node_id,
         "owner": owner, "changed_at": _iso(time.time()),
@@ -372,33 +372,24 @@ def _sha12(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
 
 
-_PATH_SECRET_KEYWORDS = ("token", "secret", "password", "credential", "apikey",
-                         "api_key", "authkey", "private")
+# R10-P3：展示层默认拒绝——原始 path/query 一律不显示，除非命中**显式公开白名单**
+# （精确匹配；未来新增公开路径需在此显式登记并走评审）。服务端授权匹配仍用原始完整 URL。
+_PUBLIC_PATHS = frozenset({"/", "/health", "/health/live", "/health/ready",
+                           "/status", "/metrics"})
 
 
-def _redact_path(path: str | None) -> str:
-    """R9-P3：path 中疑似敏感段脱敏（长随机段或含凭据关键词 → 指纹替位）。
-
-    仅用于**展示面**（审计/异常/响应）；服务端匹配仍用原始完整 URL。
-    """
-    if not path:
-        return "/"
-    out = []
-    for seg in path.split("/"):
-        low = seg.lower()
-        if seg and (len(seg) >= 20 or any(k in low for k in _PATH_SECRET_KEYWORDS)):
-            out.append(f"«{_sha12(seg)}»")
-        else:
-            out.append(seg)
-    return "/".join(out)
+def _display_path(path: str | None) -> str:
+    """展示用 path：公开白名单原样；其余整段指纹化（不做长度/关键词猜测）。"""
+    p = path or "/"
+    return p if p in _PUBLIC_PATHS else f"#p:{_sha12(p)}"
 
 
 def _fmt_endpoint(ep: tuple) -> str:
-    """端点格式化（脱敏）：query 只显示指纹；path 敏感段指纹替位（R9-P3）。"""
+    """端点格式化（R10-P3 默认拒绝）：path 仅公开白名单原样，query 一律指纹。"""
     cap, scheme, host, port, path, query = ep
-    q = f"?#sha256:{_sha12(query)}" if query else ""
+    q = f"?#q:{_sha12(query)}" if query else ""
     proto = scheme or "tcp"
-    return f"{cap} {proto}://{host}:{port}{_redact_path(path)}{q}"
+    return f"{cap} {proto}://{host}:{port}{_display_path(path)}{q}"
 
 
 def _authoritative_guard(store: RegistryStore, target: ProbeTarget) -> None:
@@ -467,22 +458,26 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
     validate_probe_target(target, allow_loopback=allow_loopback,
                           production_mode=(current_probe_mode() == "production"))
     obs = http_probe(target, client) if target.capability == "probe.http.get" else tcp_probe(target)
-    # R9-P2：提交门——执行期间授权若被禁用/更新/属主变更，结果作废，不写健康状态
-    approved_after = getattr(store, "approved_probe_targets", {}).get(target.resource_id)
-    if (approved_after is None or not approved_after.enabled
-            or approved_after.version != approved_before.version
-            or approved_after.resource_owner != approved_before.resource_owner):
-        raise ProbeTargetRejected(
-            f"authorization changed during execution for {target.resource_id}; "
-            f"result discarded (no health write)")
-    obs.observed_at = _iso(clock())            # 探测完成时刻
-    obs.received_at = _iso(clock() + 0.1)      # 写入时刻（演示 100ms 处理延迟，可注入）
-    rec = store.resources[target.resource_id]  # R5：只更新已登记资源，绝不自动创建
-    rec.base_health = obs.health
-    rec.observed_at = obs.observed_at
-    rec.received_at = obs.received_at
-    rec.ttl_seconds = obs.ttl_seconds
-    rec.source = obs.source
+    obs.observed_at = _iso(clock())            # 探测完成时刻（时间戳在锁外取，避免时钟钩子死锁）
+    obs.received_at = _iso(clock() + 0.1)      # 写入时刻
+    # R10-P2：提交门与写入**同一锁内原子完成**——撤销/更新/属主迁移无法插在门与写之间
+    with store._target_lock:
+        approved_now = getattr(store, "approved_probe_targets", {}).get(target.resource_id)
+        if (approved_now is None or not approved_now.enabled
+                or approved_now.version != approved_before.version
+                or approved_now.resource_owner != approved_before.resource_owner):
+            raise ProbeTargetRejected(
+                f"authorization changed during execution for {target.resource_id}; "
+                f"result discarded (no health write)")
+        # R10-P1：提交时重验权威资源记录（kind/node/owner 任一迁移即作废）
+        _authoritative_guard(store, target)
+        _owner_guard(store, approved_now)
+        rec = store.resources[target.resource_id]  # 只更新已登记资源，绝不自动创建
+        rec.base_health = obs.health
+        rec.observed_at = obs.observed_at
+        rec.received_at = obs.received_at
+        rec.ttl_seconds = obs.ttl_seconds
+        rec.source = obs.source
     return obs
 
 
