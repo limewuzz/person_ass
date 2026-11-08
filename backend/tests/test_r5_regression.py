@@ -276,3 +276,78 @@ def test_r7_run_by_id_uses_server_side_config():
     # 证据归属正确（P2）：写入的资源即获准目标绑定的资源
     rec = st.resources["svc.r7"]
     assert rec.source == "probe:http.get"
+
+
+# ---- R8 补充负向：并发禁用 vs 更新 / 资源迁移 / 异常脱敏 ----
+
+def test_r8_concurrent_disable_and_update_one_wins():
+    """并发 update(v1→v2) 与 disable(基于 v1)：只能一个成功，终态版本连续。"""
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    import probes as P
+    from probes import ProbeTarget, ProbeTargetRejected, disable_target, register_target, update_target
+    st = _r7_store()
+    P.register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                      node_id="mac-mini"), allow_loopback=True)
+    orig = P.validate_probe_target
+    def slow_validate(t, **kw):
+        import time as _t; _t.sleep(0.35)  # 拉长 update 的锁外窗口，让 disable 同窗竞争
+        return orig(t, **kw)
+    P.validate_probe_target = slow_validate
+    try:
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f1 = ex.submit(update_target, st, ProbeTarget(
+                resource_id="svc.r7", url="http://127.0.0.1:9/b", node_id="mac-mini"),
+                expected_version=1, allow_loopback=True)
+            import time as _t; _t.sleep(0.1)
+            f2 = ex.submit(disable_target, st, "svc.r7", expected_version=1)
+            outcomes = []
+            for f in (f1, f2):
+                try:
+                    f.result(timeout=8); outcomes.append("ok")
+                except ProbeTargetRejected:
+                    outcomes.append("rejected")
+        assert outcomes.count("ok") == 1, outcomes
+        final = st.approved_probe_targets["svc.r7"]
+        assert final.version == 2
+        # 审计版本轨迹连续：register 0→1 + 胜者 1→2，无重复提交
+        ups = [c for c in st.target_change_log if c["action"] in ("update", "disable")]
+        assert len(ups) == 1 and ups[0]["from_version"] == 1 and ups[0]["to_version"] == 2
+    finally:
+        P.validate_probe_target = orig
+
+
+def test_r8_resource_migration_rejected_at_execution():
+    """获准后权威资源记录迁移（node 改变）→ 执行拒绝（归属失效）——两条路径都必须拒。"""
+    from probes import (ProbeTarget, ProbeTargetRejected, _require_approved_target,
+                        register_target)
+    st = _r7_store()
+    register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                    node_id="mac-mini"), allow_loopback=True)
+    st.resources["svc.r7"].node_id = "us-server"  # 资产迁移
+    # 路径1：调用方随迁移改 node → 与获准绑定不符，拒
+    with pytest.raises(ProbeTargetRejected, match="approved target"):
+        _require_approved_target(st, ProbeTarget(
+            resource_id="svc.r7", url="http://127.0.0.1:9/a", node_id="us-server"))
+    # 路径2：调用方仍用旧 node（与获准一致）→ 权威记录已迁移，authoritative guard 拒
+    with pytest.raises(ProbeTargetRejected, match="authoritative resource record"):
+        _require_approved_target(st, ProbeTarget(
+            resource_id="svc.r7", url="http://127.0.0.1:9/a", node_id="mac-mini"))
+
+
+def test_r8_query_not_in_exception_messages():
+    """R8-P3：query 原始值不得进入异常消息（错误响应同源）。"""
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, run_probe
+    import httpx
+    st = _r7_store()
+    marker = "SENSITIVE_TOKEN_MARKER_XYZ"
+    register_target(st, ProbeTarget(resource_id="svc.r7",
+                                    url=f"http://127.0.0.1:9/a?token={marker}",
+                                    node_id="mac-mini"), allow_loopback=True)
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        with pytest.raises(ProbeTargetRejected) as ei:
+            run_probe(ProbeTarget(resource_id="svc.r7",
+                                  url=f"http://127.0.0.1:9/a?token=OTHER{marker}",
+                                  node_id="mac-mini"), st, client=client, allow_loopback=True)
+    assert marker not in str(ei.value), "异常消息泄漏原始 query"

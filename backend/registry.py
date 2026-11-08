@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -99,6 +100,7 @@ class RegistryStore:
 
     def __init__(self, clock=time.time) -> None:
         self.clock = clock
+        self._target_lock = threading.Lock()  # R8-P2：授权变更原子提交
         self.nodes: dict[str, NodeRec] = {}
         self.resources: dict[str, ResourceRec] = {}
         self.agents: dict[str, AgentRec] = {}
