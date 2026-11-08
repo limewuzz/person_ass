@@ -8,7 +8,7 @@ COPY backend/requirements.lock /app/requirements.lock
 RUN pip install --no-cache-dir -r requirements.lock
 
 COPY backend/app.py backend/auth.py backend/deps.py backend/registry.py backend/probes.py /app/
-COPY build/entrypoint.sh /app/entrypoint.sh
+COPY backend/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && useradd --system --no-create-home mwcp && chown -R mwcp /app
 USER mwcp
 
