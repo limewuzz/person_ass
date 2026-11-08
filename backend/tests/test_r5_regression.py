@@ -190,3 +190,89 @@ def test_production_mode_rejects_loopback_even_with_flag():
         # 生产模式拒绝回环：命中白名单分支（host 不在白名单）或 IP 分支（non-public）均为正确拒绝
         validate_probe_target(ProbeTarget(resource_id="x", url="http://127.0.0.1:1/x"),
                               allow_loopback=True, production_mode=True)
+
+
+# ---- R7 补充负向：版本冲突 / 目标禁用 / 并行修改 / 参数编码 / by-id 执行 ----
+
+def _r7_store(rid="svc.r7"):
+    from registry import RegistryStore, ResourceRec
+    st = RegistryStore()
+    st.resources[rid] = ResourceRec(id=rid, kind="service", owner_system="t",
+                                    display_name=rid, node_id="mac-mini")
+    return st
+
+
+def test_r7_update_version_conflict_rejected():
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, update_target
+    st = _r7_store()
+    register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                    node_id="mac-mini"), allow_loopback=True)
+    with pytest.raises(ProbeTargetRejected, match="version conflict"):
+        update_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/b",
+                                      node_id="mac-mini"),
+                      expected_version=99, allow_loopback=True)  # 错误版本号
+
+
+def test_r7_concurrent_modification_second_update_loses():
+    """两个并发变更都基于 v1：第一个成功升 v2，第二个拿旧版本号必须冲突（乐观锁）。"""
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, update_target
+    st = _r7_store()
+    register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                    node_id="mac-mini"), allow_loopback=True)
+    u1 = update_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/b",
+                                       node_id="mac-mini"), expected_version=1,
+                       allow_loopback=True)
+    assert u1.version == 2
+    with pytest.raises(ProbeTargetRejected, match="version conflict"):
+        update_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/c",
+                                      node_id="mac-mini"), expected_version=1,
+                      allow_loopback=True)
+    # 审计链完整：register(v0→1) + update(1→2)
+    actions = [(c["action"], c["from_version"], c["to_version"]) for c in st.target_change_log]
+    assert ("register", 0, 1) in actions and ("update", 1, 2) in actions
+
+
+def test_r7_disabled_target_rejected():
+    import httpx
+    from probes import (ProbeTarget, ProbeTargetRejected, disable_target,
+                        register_target, run_probe)
+    st = _r7_store()
+    register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                    node_id="mac-mini"), allow_loopback=True)
+    disable_target(st, "svc.r7")
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        with pytest.raises(ProbeTargetRejected, match="disabled"):
+            run_probe(ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                  node_id="mac-mini"), st, client=client, allow_loopback=True)
+
+
+def test_r7_query_param_strict_binding_no_reorder():
+    """参数编码严格语义：?a=1&b=2 与 ?b=2&a=1 视为不同目标（不做重排归一）。"""
+    from probes import ProbeTarget, ProbeTargetRejected, register_target
+    st = _r7_store()
+    register_target(st, ProbeTarget(resource_id="svc.r7",
+                                    url="http://127.0.0.1:9/x?a=1&b=2",
+                                    node_id="mac-mini"), allow_loopback=True)
+    with pytest.raises(ProbeTargetRejected, match="already approved"):
+        register_target(st, ProbeTarget(resource_id="svc.r7",
+                                        url="http://127.0.0.1:9/x?b=2&a=1",
+                                        node_id="mac-mini"), allow_loopback=True)
+
+
+def test_r7_run_by_id_uses_server_side_config():
+    """推荐执行入口：只传 resource_id，URL 由服务端获准配置构造；未登记即拒。"""
+    import httpx
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, run_probe_by_id
+    st = _r7_store()
+    with pytest.raises(ProbeTargetRejected, match="target not registered"):
+        run_probe_by_id(st, "svc.r7", allow_loopback=True)
+    register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                    node_id="mac-mini"), allow_loopback=True)
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        obs = run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+    assert obs.health == "healthy"
+    # 证据归属正确（P2）：写入的资源即获准目标绑定的资源
+    rec = st.resources["svc.r7"]
+    assert rec.source == "probe:http.get"

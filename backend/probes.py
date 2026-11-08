@@ -133,6 +133,9 @@ class ApprovedProbeTarget:
     host: str
     port: int | None
     path: str | None
+    query: str | None = None
+    kind: str = "service"
+    node_id: str | None = None
     owner: str = "local-test"
     approved_at: str = ""
     version: int = 1
@@ -140,12 +143,17 @@ class ApprovedProbeTarget:
 
 
 def _canonical_endpoint(target: ProbeTarget) -> tuple:
-    """归一化 (capability, scheme, host, port, path)；比较用。"""
+    """归一化 (capability, scheme, host, port, path, query)；比较用。
+
+    R7-P1：完整 URL 语义——**query 原样逐字符参与绑定**（不做参数重排/解码归一，
+    防止 ?probe=passive ↔ ?command=unexpected 这类语义偷换）。
+    """
     if target.capability == "probe.http.get":
         p = urllib.parse.urlsplit(target.url)
         port = p.port or (443 if p.scheme == "https" else 80)
-        return ("probe.http.get", p.scheme.lower(), p.hostname.lower().strip("."), port, p.path or "/")
-    return ("probe.tcp.check", None, target.host.lower().strip("."), int(target.port), None)
+        return ("probe.http.get", p.scheme.lower(), p.hostname.lower().strip("."), port,
+                p.path or "/", p.query or "")
+    return ("probe.tcp.check", None, target.host.lower().strip("."), int(target.port), None, None)
 
 
 @dataclass
@@ -232,15 +240,110 @@ def register_target(store: RegistryStore, target: ProbeTarget, *, allow_loopback
         raise ProbeTargetRejected(f"resource {target.resource_id} not registered in store")
     validate_probe_target(target, allow_loopback=allow_loopback,
                           production_mode=(current_probe_mode() == "production"))
-    cap, scheme, host, port, path = _canonical_endpoint(target)
+    cap, scheme, host, port, path, query = _canonical_endpoint(target)
     approved = ApprovedProbeTarget(
         target_id=f"{target.resource_id}:{cap}", resource_id=target.resource_id,
-        capability=cap, scheme=scheme, host=host, port=port, path=path,
+        capability=cap, scheme=scheme, host=host, port=port, path=path, query=query,
+        kind=target.kind, node_id=target.node_id,
         owner=owner, approved_at=_iso(time.time()))
     if not hasattr(store, "approved_probe_targets"):
         store.approved_probe_targets = {}
+    existing = store.approved_probe_targets.get(target.resource_id)
+    if existing is not None:
+        # R7-P3：已批准目标不可静默覆盖。完全相同绑定=幂等重登记（可重复执行）；
+        # 任何差异（端点/kind/node）都必须走 update_target 的显式版本化授权变更。
+        same = (_canonical_endpoint(_target_from_approved(existing)) ==
+                _canonical_endpoint(target)
+                and existing.kind == target.kind and existing.node_id == target.node_id)
+        if not same:
+            raise ProbeTargetRejected(
+                f"target for {target.resource_id} already approved "
+                f"(v{existing.version}); changing an approved target requires "
+                f"update_target with expected_version (authorization change)")
+        return existing
     store.approved_probe_targets[target.resource_id] = approved
+    _audit_target_change(store, approved, 0, 1, "register", owner)
     return approved
+
+
+def update_target(store: RegistryStore, target: ProbeTarget, *, expected_version: int,
+                  allow_loopback: bool = False, owner: str = "local-test") -> ApprovedProbeTarget:
+    """R7-P3：显式版本化变更已批准目标（乐观锁 + 审计记录）。"""
+    if not hasattr(store, "approved_probe_targets"):
+        store.approved_probe_targets = {}
+    existing = store.approved_probe_targets.get(target.resource_id)
+    if existing is None:
+        raise ProbeTargetRejected(f"no approved target for {target.resource_id}; use register_target")
+    if existing.version != expected_version:
+        raise ProbeTargetRejected(
+            f"version conflict: approved target at v{existing.version}, "
+            f"expected_version={expected_version} (concurrent modification?)")
+    if target.resource_id not in store.resources:
+        raise ProbeTargetRejected(f"resource {target.resource_id} not registered in store")
+    validate_probe_target(target, allow_loopback=allow_loopback,
+                          production_mode=(current_probe_mode() == "production"))
+    cap, scheme, host, port, path, query = _canonical_endpoint(target)
+    new = ApprovedProbeTarget(
+        target_id=existing.target_id, resource_id=target.resource_id,
+        capability=cap, scheme=scheme, host=host, port=port, path=path, query=query,
+        kind=target.kind, node_id=target.node_id,
+        owner=owner, approved_at=existing.approved_at,
+        version=existing.version + 1, enabled=existing.enabled)
+    store.approved_probe_targets[target.resource_id] = new
+    _audit_target_change(store, new, existing.version, new.version, "update", owner)
+    return new
+
+
+def disable_target(store: RegistryStore, resource_id: str, *, owner: str = "local-test") -> None:
+    """禁用已批准目标（执行即拒）；变更入审计。"""
+    approved_map = getattr(store, "approved_probe_targets", {})
+    existing = approved_map.get(resource_id)
+    if existing is None:
+        raise ProbeTargetRejected(f"no approved target for {resource_id}")
+    import dataclasses
+    disabled = dataclasses.replace(existing, enabled=False, version=existing.version + 1)
+    approved_map[resource_id] = disabled
+    _audit_target_change(store, disabled, existing.version, disabled.version, "disable", owner)
+
+
+def _audit_target_change(store, approved: "ApprovedProbeTarget", from_v: int, to_v: int,
+                         action: str, owner: str) -> None:
+    """R7-P3：所有授权变更留痕（无秘密值；P1-03 后转持久表）。"""
+    if not hasattr(store, "target_change_log"):
+        store.target_change_log = []
+    store.target_change_log.append({
+        "target_id": approved.target_id, "action": action,
+        "from_version": from_v, "to_version": to_v,
+        "endpoint": f"{approved.scheme or 'tcp'}://{approved.host}:{approved.port}{approved.path or ''}"
+                    f"{'?' + approved.query if approved.query else ''}",
+        "kind": approved.kind, "node_id": approved.node_id,
+        "owner": owner, "changed_at": _iso(time.time()),
+    })
+
+
+def _target_from_approved(a: ApprovedProbeTarget) -> ProbeTarget:
+    """从获准记录重建 ProbeTarget（服务端查找路径用；不信任调用方 URL）。"""
+    if a.capability == "probe.http.get":
+        netloc = f"{a.host}:{a.port}"
+        url = urllib.parse.urlunsplit((a.scheme, netloc, a.path or "/", a.query or "", ""))
+        return ProbeTarget(resource_id=a.resource_id, kind=a.kind, node_id=a.node_id,
+                           capability="probe.http.get", url=url)
+    return ProbeTarget(resource_id=a.resource_id, kind=a.kind, node_id=a.node_id,
+                       capability="probe.tcp.check", host=a.host, port=a.port)
+
+
+def run_probe_by_id(store: RegistryStore, resource_id: str, *, clock=time.time,
+                    client: httpx.Client | None = None,
+                    allow_loopback: bool = False) -> ProbeObservation:
+    """R7 推荐执行入口：按 resource_id 取**服务端获准配置**构造目标，
+    调用方不传 URL/port（不可偷换）；再走 run_probe 的完整校验链。"""
+    approved_map = getattr(store, "approved_probe_targets", {})
+    approved = approved_map.get(resource_id)
+    if approved is None:
+        raise ProbeTargetRejected(f"target not registered for resource {resource_id}")
+    target = _target_from_approved(approved)
+    return run_probe(target, store, clock=clock, client=client,
+                     allow_loopback=allow_loopback)
 
 
 def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> None:
@@ -253,10 +356,15 @@ def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> None:
     if not approved.enabled:
         raise ProbeTargetRejected(f"approved target disabled: {approved.target_id}")
     got = _canonical_endpoint(target)
-    want = (approved.capability, approved.scheme, approved.host, approved.port, approved.path)
+    want = _canonical_endpoint(_target_from_approved(approved))
     if got != want:
         raise ProbeTargetRejected(
             f"target mismatch with approved endpoint: got {got} want {want}")
+    # R7-P2：kind/node 同样绑定——健康证据不得错误归属到其他类别/节点
+    if target.kind != approved.kind or target.node_id != approved.node_id:
+        raise ProbeTargetRejected(
+            f"kind/node mismatch with approved target: got "
+            f"({target.kind},{target.node_id}) want ({approved.kind},{approved.node_id})")
 
 
 def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,

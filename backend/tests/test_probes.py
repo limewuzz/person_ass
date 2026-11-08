@@ -4,8 +4,10 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _probe_test_mode(monkeypatch):
-    """仅本模块内启用 test 模式（monkeypatch 作用域隔离，不污染同进程其他测试）。"""
+    """仅本模块内启用 test 模式 + 每测试清空授权表（R7-P3：换 URL 重登记会冲突）。"""
     monkeypatch.setenv("MWCP_PROBE_MODE", "test")
+    if hasattr(app_mod._store, "approved_probe_targets"):
+        app_mod._store.approved_probe_targets = {}
 
 import threading
 import time
