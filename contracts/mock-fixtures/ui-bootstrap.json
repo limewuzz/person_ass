@@ -1,0 +1,57 @@
+{
+  "app_mode": "local-rc",
+  "contract_version": "1.1.0-local-rc1",
+  "login": {
+    "sub": "admin-1",
+    "type": "actor",
+    "role": "admin",
+    "scopes": [
+      "admin:read",
+      "approvals:decide",
+      "approvals:read",
+      "health:read",
+      "probes:read",
+      "registry:read",
+      "tasks:read",
+      "tasks:write"
+    ]
+  },
+  "features": {
+    "tasks": {
+      "status": "enabled",
+      "min_phase": "P2",
+      "reason": null
+    },
+    "approvals": {
+      "status": "enabled",
+      "min_phase": "P2",
+      "reason": null
+    },
+    "workers": {
+      "status": "enabled",
+      "min_phase": "P1",
+      "reason": null
+    },
+    "real_probes": {
+      "status": "disabled",
+      "min_phase": "P2",
+      "reason": "生产白名单为空（by design）"
+    },
+    "production_db": {
+      "status": "disabled",
+      "min_phase": "P1-03",
+      "reason": "PG_RUNTIME NOT RUN"
+    },
+    "cherry_links": {
+      "status": "enabled",
+      "min_phase": "P1",
+      "reason": "仅静态外链，冻结"
+    }
+  },
+  "source_meta": {
+    "kind": "mock",
+    "observed_at": null,
+    "ttl_seconds": 60,
+    "system": "mwcp-local-rc"
+  }
+}

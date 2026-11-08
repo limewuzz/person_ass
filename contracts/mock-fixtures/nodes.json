@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "mac-mini",
+      "name": "Mac mini (home)",
+      "role": "STANDBY_GATEWAY",
+      "health": "unknown",
+      "stale": false,
+      "observed_at": "2026-11-08T15:00:00+08:00",
+      "last_seen_at": null,
+      "source": "audit:magicworkshop-audit-2026-11-08",
+      "source_system": "audit:magicworkshop-audit-2026-11-08",
+      "received_at": "2026-11-08T17:16:38+00:00",
+      "ttl_seconds": 86400
+    },
+    {
+      "id": "tencent-cloud",
+      "name": "Tencent Cloud",
+      "role": "EXISTING_BUSINESS",
+      "health": "unknown",
+      "stale": false,
+      "observed_at": "2026-11-08T15:00:00+08:00",
+      "last_seen_at": null,
+      "source": "audit:magicworkshop-audit-2026-11-08",
+      "source_system": "audit:magicworkshop-audit-2026-11-08",
+      "received_at": "2026-11-08T17:16:38+00:00",
+      "ttl_seconds": 86400
+    }
+  ],
+  "next_cursor": "tencent-cloud",
+  "page_meta": {
+    "limit": 2
+  }
+}

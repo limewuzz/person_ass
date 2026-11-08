@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "id": "wf.daily-sweep",
+      "title": "每日助手 sweep（旧系统）",
+      "summary": "Mac cron 9×/工作日；来源=审计 VERIFIED_AT_AUDIT，未接实时",
+      "enabled": false,
+      "route_ref": "/tasks?filter=workflow:daily-sweep",
+      "source_system": "daily-assistant",
+      "source_meta": {
+        "kind": "mock",
+        "observed_at": null,
+        "ttl_seconds": 60,
+        "system": "mwcp-local-rc"
+      }
+    },
+    {
+      "id": "wf.paper-push",
+      "title": "Rakazo paper_ 推送（旧系统）",
+      "summary": "cron 15 1 * * * Asia/Shanghai；只读登记，不重复建调度",
+      "enabled": false,
+      "route_ref": "/tasks?filter=workflow:paper-push",
+      "source_system": "rakazo",
+      "source_meta": {
+        "kind": "mock",
+        "observed_at": null,
+        "ttl_seconds": 60,
+        "system": "mwcp-local-rc"
+      }
+    }
+  ],
+  "next_cursor": null,
+  "source_meta": {
+    "kind": "mock",
+    "observed_at": null,
+    "ttl_seconds": 60,
+    "system": "mwcp-local-rc"
+  }
+}

@@ -43,19 +43,53 @@ class NodeRec:
     base_health: str = "unknown"  # 无探针 → unknown
 
 
-@dataclass
-class ResourceRec:
-    id: str
-    kind: str
-    owner_system: str
-    display_name: str
-    node_id: str | None
-    source: str = AUDIT_SOURCE
-    observed_at: str | None = AUDIT_OBSERVED_AT
-    received_at: str | None = None
-    ttl_seconds: int | None = 86400
-    base_health: str = "unknown"
+_AUTH_FIELDS = frozenset({"kind", "owner_system", "node_id"})
 
+
+class ResourceRec:
+    """权威资源记录（R11 起：结构化一致性）。
+
+    - `_write_rev`：任何对 kind/owner_system/node_id 的赋值（含遗留直写）都递增——
+      绕过 RegistryService 的写对探针提交门可见（R11-C1/C2 根因修复）。
+    - `generation`：仅 RegistryService 受控变更时递增的单调代数（store 级序列，
+      删除重建不复用；进程重启持久化映射见 dbpg/migrations）。
+    - `lifecycle_state`：active|disabled|deleted。
+    """
+
+    __slots__ = ("id", "kind", "owner_system", "display_name", "node_id", "source",
+                 "observed_at", "received_at", "ttl_seconds", "base_health",
+                 "generation", "lifecycle_state", "_write_rev")
+
+    def __init__(self, id: str, kind: str, owner_system: str, display_name: str,
+                 node_id: str | None, source: str = AUDIT_SOURCE,
+                 observed_at: str | None = AUDIT_OBSERVED_AT,
+                 received_at: str | None = None, ttl_seconds: int | None = 86400,
+                 base_health: str = "unknown", generation: int = 0,  # 0=未经 RegistryService 纳管
+                 lifecycle_state: str = "active"):
+        object.__setattr__(self, "id", id)
+        object.__setattr__(self, "display_name", display_name)
+        object.__setattr__(self, "source", source)
+        object.__setattr__(self, "observed_at", observed_at)
+        object.__setattr__(self, "received_at", received_at)
+        object.__setattr__(self, "ttl_seconds", ttl_seconds)
+        object.__setattr__(self, "base_health", base_health)
+        object.__setattr__(self, "kind", kind)
+        object.__setattr__(self, "owner_system", owner_system)
+        object.__setattr__(self, "node_id", node_id)
+        object.__setattr__(self, "generation", generation)
+        object.__setattr__(self, "lifecycle_state", lifecycle_state)
+        object.__setattr__(self, "_write_rev", 0)
+
+    def __setattr__(self, name, value):
+        if name in _AUTH_FIELDS:
+            object.__setattr__(self, "_write_rev", self._write_rev + 1)
+        object.__setattr__(self, name, value)
+
+    def write_rev(self) -> int:
+        return self._write_rev
+
+    def auth_snapshot(self) -> tuple:
+        return (self.kind, self.owner_system, self.node_id, self.generation, self._write_rev)
 
 @dataclass
 class AgentRec:
@@ -101,6 +135,9 @@ class RegistryStore:
     def __init__(self, clock=time.time) -> None:
         self.clock = clock
         self._target_lock = threading.Lock()  # R8-P2：授权变更原子提交
+        self._generation_seq = 0              # R11：单调资源代数序列（删除重建不复用）
+        self.approved_probe_targets: dict = {}
+        self.target_change_log: list = []
         self.nodes: dict[str, NodeRec] = {}
         self.resources: dict[str, ResourceRec] = {}
         self.agents: dict[str, AgentRec] = {}
@@ -129,6 +166,7 @@ class RegistryStore:
             "observed_at": r.observed_at, "source": r.source,
             "source_system": r.source, "received_at": r.received_at,
             "ttl_seconds": r.ttl_seconds,
+            "generation": r.generation, "lifecycle_state": r.lifecycle_state,  # 1.1 可选
         }
 
     def agent_out(self, r: AgentRec) -> dict:
@@ -325,3 +363,143 @@ def build_me_router(validator_holder: dict):
         }
 
     return router
+
+
+# ════════════════════════════════════════════════════════════════
+# R11-A：RegistryService —— 资源权威写的唯一受控入口
+# ════════════════════════════════════════════════════════════════
+
+@dataclass(frozen=True)
+class ResourceSnapshot:
+    """读者视图：不可变快照，不暴露内部可变对象。"""
+    id: str
+    kind: str
+    owner_system: str
+    display_name: str
+    node_id: str | None
+    generation: int
+    lifecycle_state: str
+    base_health: str
+    observed_at: str | None
+    received_at: str | None
+    source: str
+    ttl_seconds: int | None
+
+
+class RegistryService:
+    """受控变更接口（R11-A）：所有权威字段写经此（统一 store._target_lock）。
+
+    - 每次受控变更递增 store._generation_seq 写入 rec.generation（单调，删除重建不复用）
+    - expected_generation 乐观 CAS；delete→recreate 用全新 generation（旧观测/授权自动失效）
+    - observe() 供探针提交门：与授权校验同一锁内
+    - 遗留直写仍可发生但会递增 _write_rev——提交门双快照（generation+write_rev）比对，
+      直写无法静默生效（R11-C1/C2）
+    """
+
+    def __init__(self, store: "RegistryStore") -> None:
+        self.store = store
+
+    # ---- 读：不可变快照 ----
+    def snapshot(self, rid: str) -> ResourceSnapshot | None:
+        rec = self.store.resources.get(rid)
+        if rec is None:
+            return None
+        return ResourceSnapshot(
+            id=rec.id, kind=rec.kind, owner_system=rec.owner_system,
+            display_name=rec.display_name, node_id=rec.node_id,
+            generation=rec.generation, lifecycle_state=rec.lifecycle_state,
+            base_health=rec.base_health, observed_at=rec.observed_at,
+            received_at=rec.received_at, source=rec.source,
+            ttl_seconds=rec.ttl_seconds)
+
+    def _next_generation(self) -> int:
+        self.store._generation_seq += 1
+        return self.store._generation_seq
+
+    def _require(self, rid: str) -> "ResourceRec":
+        rec = self.store.resources.get(rid)
+        if rec is None:
+            raise ValueError(f"resource {rid} not found")
+        return rec
+
+    def _check_expected(self, rec: "ResourceRec", expected_generation: int | None) -> None:
+        if expected_generation is not None and rec.generation != expected_generation:
+            raise ValueError(f"generation conflict: resource at g{rec.generation}, "
+                             f"expected {expected_generation}")
+
+    # ---- 写：全部持统一锁 ----
+    def register(self, rec: "ResourceRec") -> ResourceSnapshot:
+        with self.store._target_lock:
+            if rec.id in self.store.resources:
+                raise ValueError(f"resource {rec.id} already exists")
+            object.__setattr__(rec, "generation", self._next_generation())
+            self.store.resources[rec.id] = rec
+            return self.snapshot(rec.id)
+
+    def transfer_owner(self, rid: str, new_owner: str,
+                       expected_generation: int | None = None) -> ResourceSnapshot:
+        with self.store._target_lock:
+            rec = self._require(rid)
+            self._check_expected(rec, expected_generation)
+            rec.owner_system = new_owner
+            object.__setattr__(rec, "generation", self._next_generation())
+            return self.snapshot(rid)
+
+    def move_node(self, rid: str, new_node: str | None,
+                  expected_generation: int | None = None) -> ResourceSnapshot:
+        with self.store._target_lock:
+            rec = self._require(rid)
+            self._check_expected(rec, expected_generation)
+            rec.node_id = new_node
+            object.__setattr__(rec, "generation", self._next_generation())
+            return self.snapshot(rid)
+
+    def change_kind(self, rid: str, new_kind: str,
+                    expected_generation: int | None = None) -> ResourceSnapshot:
+        if new_kind not in RESOURCE_KINDS:
+            raise ValueError(f"bad kind {new_kind}")
+        with self.store._target_lock:
+            rec = self._require(rid)
+            self._check_expected(rec, expected_generation)
+            rec.kind = new_kind
+            object.__setattr__(rec, "generation", self._next_generation())
+            return self.snapshot(rid)
+
+    def disable(self, rid: str, expected_generation: int | None = None) -> ResourceSnapshot:
+        with self.store._target_lock:
+            rec = self._require(rid)
+            self._check_expected(rec, expected_generation)
+            object.__setattr__(rec, "lifecycle_state", "disabled")
+            object.__setattr__(rec, "generation", self._next_generation())
+            return self.snapshot(rid)
+
+    def delete(self, rid: str, expected_generation: int | None = None) -> int:
+        with self.store._target_lock:
+            rec = self._require(rid)
+            self._check_expected(rec, expected_generation)
+            object.__setattr__(rec, "lifecycle_state", "deleted")
+            object.__setattr__(rec, "generation", self._next_generation())
+            final_gen = rec.generation
+            del self.store.resources[rid]
+            self.store.approved_probe_targets.pop(rid, None)
+            return final_gen
+
+    def recreate(self, rec: "ResourceRec") -> ResourceSnapshot:
+        """重建：全新 generation（与旧观测/旧授权天然不匹配）。"""
+        return self.register(rec)
+
+    def observe(self, rid: str, *, health: str, observed_at: str, received_at: str,
+                ttl_seconds: int, source: str,
+                expected_generation: int, expected_write_rev: int) -> None:
+        """探针提交门的受控写入（与授权校验同一锁内调用；见 probes.run_probe）。"""
+        with self.store._target_lock:
+            rec = self.store.resources.get(rid)
+            if rec is None:
+                raise ValueError(f"resource {rid} missing at commit")
+            if rec.generation != expected_generation or rec.write_rev() != expected_write_rev:
+                raise ValueError("resource mutated during execution; observation discarded")
+            rec.base_health = health
+            rec.observed_at = observed_at
+            rec.received_at = received_at
+            rec.ttl_seconds = ttl_seconds
+            rec.source = source

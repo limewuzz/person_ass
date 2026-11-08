@@ -172,7 +172,6 @@ def test_approved_target_port_swap_rejected():
     from probes import validate_probe_target
     t2 = ProbeTarget(resource_id="svc.port", capability="probe.tcp.check", host="127.0.0.1", port=10)
     # 端口替换：先过 SSRF（loopback 放行），再被绑定校验拒绝
-    st.resources["svc.port"]._ = None
     from probes import _require_approved_target
     _register_helper(st, t2)
 

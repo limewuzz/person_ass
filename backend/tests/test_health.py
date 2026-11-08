@@ -39,5 +39,6 @@ def test_registry_requires_auth():
 def test_unknown_route_404():
     t = mint_token(SECRET, sub="u1", typ="actor", role="viewer",
                    scopes=["registry:read"], jti="jti-404")
-    r = client.get("/api/v1/tasks", headers={"Authorization": f"Bearer {t}"})
-    assert r.status_code == 404  # P1-08 才实现
+    r = client.get("/api/v1/does-not-exist", headers={"Authorization": f"Bearer {t}"})
+    assert r.status_code == 404
+    # /api/v1/tasks 已在 RC 实现（GET viewer 200）——旧"P1-08 才实现"断言随之过时

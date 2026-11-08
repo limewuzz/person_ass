@@ -10,13 +10,13 @@ from pathlib import Path
 CONTRACTS = Path(__file__).resolve().parent.parent / "contracts"
 
 EXPECTED_SHA256 = {
-    "openapi.yaml": "8cee4d960834781cc217a2c99e256ece3dba43acc27fdbf1f76a7d0d3ef98425",
+    "openapi.yaml": "18b42a97b3f975fcbe9a0326a1374d56fa547268e6fdefd18dc9cb529e8f7a25",
     "worker-protocol.schema.json": "a6d3c8b46173be068bbd218b719a46e189072323fedf10ec596a82cf07108d42",
     "capability.schema.json": "2df35f89aafb2379ea5bd0dd68be3a1a0261fb3585ad9611285995b4ccf0ce9c",
 }
 
-EXPECTED_PATHS = 31
-EXPECTED_OPERATIONS = 33
+EXPECTED_PATHS = 41
+EXPECTED_OPERATIONS = 43
 
 
 def _sha256(path: Path) -> str:

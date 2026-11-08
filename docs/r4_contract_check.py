@@ -22,7 +22,7 @@ ops = [m for p in paths.values() for m in p if m in ("get", "post", "put", "dele
 out["counts"] = {"paths": len(paths), "operations": len(ops),
                  "x_phase": sum(1 for p in paths.values() for m in p.values()
                                 if isinstance(m, dict) and "x-phase" in m)}
-assert out["counts"] == {"paths": 31, "operations": 33, "x_phase": 33}, out["counts"]
+assert out["counts"] == {"paths": 41, "operations": 43, "x_phase": 43}, out["counts"]  # RC: 1.1 锁定值
 
 sys.path.insert(0, str(ROOT / "backend"))
 from fastapi.routing import APIRoute  # noqa: E402

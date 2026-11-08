@@ -25,11 +25,13 @@ ALLOWED_ALGS = {"HS256"}
 
 ACTOR_ROLES = {"viewer", "operator", "approver", "admin"}
 ROLE_SCOPES: dict[str, set[str]] = {
-    "viewer": {"health:read", "registry:read"},
-    "operator": {"health:read", "registry:read", "probes:read"},
-    "approver": {"health:read", "registry:read", "approvals:read"},
-    "admin": {"health:read", "registry:read", "probes:read", "approvals:read", "admin:read"},
-    "worker": {"worker:heartbeat", "worker:claim"},  # Worker 独立范围，无 registry 读
+    "viewer": {"health:read", "registry:read", "tasks:read"},
+    "operator": {"health:read", "registry:read", "probes:read", "tasks:read", "tasks:write"},
+    "approver": {"health:read", "registry:read", "approvals:read", "approvals:decide",
+                 "tasks:read"},
+    "admin": {"health:read", "registry:read", "probes:read", "approvals:read",
+              "approvals:decide", "admin:read", "tasks:read", "tasks:write"},
+    "worker": {"worker:heartbeat", "worker:claim"},  # Worker 独立范围，无 registry/tasks 读
 }
 # Service 身份硬边界（评审 R2 §3）：无论 token 声称什么 role/scopes，
 # service 类型一律拿不到 admin:* —— decode 时强制剥离。

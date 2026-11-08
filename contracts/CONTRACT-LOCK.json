@@ -1,0 +1,11 @@
+{
+  "version": "1.1.0-local-rc1",
+  "sha256": "18b42a97b3f975fcbe9a0326a1374d56fa547268e6fdefd18dc9cb529e8f7a25",
+  "paths": 41,
+  "operations": 43,
+  "openapi_file": "contracts/openapi.yaml",
+  "backend_head_at_lock": "7fa9f307c3633aa557d2e7eecf0bd2902cef269c",
+  "status": "FROZEN_FOR_LOCAL_RC (baseline = v0.4 31/33 byte-identical paths + 10 new read-only; Resource +optional generation/lifecycle_state)",
+  "generated_at": "2026-11-09T00:56:10+08:00",
+  "codex_note": "Use THIS file+sha for TS SDK; drift = build error"
+}

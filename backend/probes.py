@@ -137,6 +137,7 @@ class ApprovedProbeTarget:
     kind: str = "service"
     node_id: str | None = None
     resource_owner: str = ""  # R9-P1：登记时的权威资源属主；变更即旧授权失效
+    resource_generation: int = 0  # R11：登记时资源代数；受控迁移/重建即失效
     owner: str = "local-test"
     approved_at: str = ""
     version: int = 1
@@ -261,6 +262,7 @@ def register_target(store: RegistryStore, target: ProbeTarget, *, allow_loopback
             capability=cap, scheme=scheme, host=host, port=port, path=path, query=query,
             kind=target.kind, node_id=target.node_id,
             resource_owner=store.resources[target.resource_id].owner_system,
+            resource_generation=store.resources[target.resource_id].generation,
             owner=owner, approved_at=_iso(time.time()))
         store.approved_probe_targets[target.resource_id] = approved
         _audit_target_change(store, approved, 0, 1, "register", owner)
@@ -298,6 +300,7 @@ def update_target(store: RegistryStore, target: ProbeTarget, *, expected_version
             capability=cap, scheme=scheme, host=host, port=port, path=path, query=query,
             kind=target.kind, node_id=target.node_id,
             resource_owner=store.resources[target.resource_id].owner_system,  # 再授权刷新 owner
+            resource_generation=store.resources[target.resource_id].generation,
             owner=owner, approved_at=current.approved_at,
             version=current.version + 1, enabled=current.enabled)
         store.approved_probe_targets[target.resource_id] = new
@@ -438,6 +441,12 @@ def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> "Appr
     _authoritative_guard(store, target)
     # R9-P1（执行侧）：owner_system 变更 → 旧授权失效
     _owner_guard(store, approved)
+    # R11：资源代数不匹配（受控迁移/删除重建）→ 授权失效
+    rec = store.resources.get(approved.resource_id)
+    if rec is not None and rec.generation != approved.resource_generation:
+        raise ProbeTargetRejected(
+            f"resource generation changed (approved@g{approved.resource_generation}, "
+            f"now g{rec.generation}); probe authorization invalidated")
     return approved
 
 
@@ -454,13 +463,17 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
         raise ValueError(f"bad kind {target.kind}")
     if target.resource_id not in store.resources:
         raise ProbeTargetRejected(f"resource {target.resource_id} not registered (refuse auto-create)")
-    approved_before = _require_approved_target(store, target)  # 授权时点快照（版本/owner）
+    approved_before = _require_approved_target(store, target)  # 授权时点快照（版本/owner/代数）
+    _rec_pre = store.resources.get(target.resource_id)
+    _commit_write_rev = _rec_pre.write_rev() if _rec_pre is not None else -1
+    _commit_generation = _rec_pre.generation if _rec_pre is not None else -1
     validate_probe_target(target, allow_loopback=allow_loopback,
                           production_mode=(current_probe_mode() == "production"))
     obs = http_probe(target, client) if target.capability == "probe.http.get" else tcp_probe(target)
-    obs.observed_at = _iso(clock())            # 探测完成时刻（时间戳在锁外取，避免时钟钩子死锁）
-    obs.received_at = _iso(clock() + 0.1)      # 写入时刻
-    # R10-P2：提交门与写入**同一锁内原子完成**——撤销/更新/属主迁移无法插在门与写之间
+    # 真实时钟（PRD：不再人为 +0.1；两次调用=探测完成/写入两个真实时刻）
+    obs.observed_at = _iso(clock())
+    obs.received_at = _iso(clock())
+    # R10-P2/R11：提交门+写入同锁原子；授权四查 + 权威三查 + 代数/写计数双快照比对
     with store._target_lock:
         approved_now = getattr(store, "approved_probe_targets", {}).get(target.resource_id)
         if (approved_now is None or not approved_now.enabled
@@ -469,10 +482,20 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
             raise ProbeTargetRejected(
                 f"authorization changed during execution for {target.resource_id}; "
                 f"result discarded (no health write)")
-        # R10-P1：提交时重验权威资源记录（kind/node/owner 任一迁移即作废）
-        _authoritative_guard(store, target)
-        _owner_guard(store, approved_now)
-        rec = store.resources[target.resource_id]  # 只更新已登记资源，绝不自动创建
+        _authoritative_guard(store, target)      # kind/node
+        _owner_guard(store, approved_now)        # owner
+        rec = store.resources.get(target.resource_id)
+        if rec is None:
+            raise ProbeTargetRejected(f"resource {target.resource_id} missing at commit")
+        if rec.generation != approved_now.resource_generation:
+            raise ProbeTargetRejected(
+                f"resource generation changed during execution "
+                f"(g{approved_now.resource_generation}->g{rec.generation}); result discarded")
+        # R11-C1/C2：write_rev 快照比对——锁外任何直写（含 ABA 值复原）在此暴露
+        if rec.write_rev() != _commit_write_rev:
+            raise ProbeTargetRejected(
+                "resource authoritatively mutated during execution "
+                "(write_rev changed); result discarded")
         rec.base_health = obs.health
         rec.observed_at = obs.observed_at
         rec.received_at = obs.received_at

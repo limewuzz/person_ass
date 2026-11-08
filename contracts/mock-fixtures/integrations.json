@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "id": "int.google-drive",
+      "display_name": "Google Drive（OAuth 已通，会话级）",
+      "status": "unavailable",
+      "scope_labels": [
+        "drive.readonly"
+      ],
+      "last_verified_at": "2026-11-08T15:00:00+08:00"
+    },
+    {
+      "id": "int.rakazo",
+      "display_name": "Rakazo（冻结只读）",
+      "status": "unavailable",
+      "scope_labels": [],
+      "last_verified_at": null
+    }
+  ],
+  "source_meta": {
+    "kind": "mock",
+    "observed_at": null,
+    "ttl_seconds": 60,
+    "system": "mwcp-local-rc"
+  }
+}
