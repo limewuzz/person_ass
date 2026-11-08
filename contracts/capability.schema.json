@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/magicworkshop/contracts/capability.schema.json",
+  "title": "MagicWorkshop Capability Definition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "version",
+    "risk",
+    "read_only",
+    "idempotency_class",
+    "parameters",
+    "adapter_key",
+    "enabled"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.][a-z0-9_-]+)+$",
+      "maxLength": 120
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "risk": {
+      "enum": [
+        "READ",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "read_only": {
+      "type": "boolean"
+    },
+    "idempotency_class": {
+      "enum": [
+        "READ_IDEMPOTENT",
+        "WRITE_IDEMPOTENT",
+        "WRITE_UNCERTAIN",
+        "DESTRUCTIVE"
+      ]
+    },
+    "adapter_key": {
+      "type": "string",
+      "minLength": 3
+    },
+    "worker_selector": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "required_scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "requires_approval": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 120000
+    },
+    "max_attempts": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "source_system": {
+      "type": "string"
+    },
+    "source_confidence": {
+      "enum": [
+        "VERIFIED",
+        "PLANNED",
+        "UNKNOWN"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "risk": {
+            "enum": [
+              "HIGH",
+              "CRITICAL"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "enabled": {
+            "const": false
+          }
+        }
+      }
+    }
+  ]
+}

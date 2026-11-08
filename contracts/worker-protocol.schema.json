@@ -1,0 +1,333 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/magicworkshop/contracts/worker-protocol.schema.json",
+  "title": "MagicWorkshop Worker Message v1",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/Heartbeat"
+    },
+    {
+      "$ref": "#/$defs/Claim"
+    },
+    {
+      "$ref": "#/$defs/Started"
+    },
+    {
+      "$ref": "#/$defs/Finish"
+    },
+    {
+      "$ref": "#/$defs/Renew"
+    },
+    {
+      "$ref": "#/$defs/Unknown"
+    }
+  ],
+  "$defs": {
+    "Heartbeat": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "message_id",
+        "worker_id",
+        "node_id",
+        "kind",
+        "sent_at",
+        "available_capabilities",
+        "version"
+      ],
+      "properties": {
+        "protocol_version": {
+          "const": "1.0"
+        },
+        "message_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worker_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "kind": {
+          "const": "heartbeat"
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "available_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Claim": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "message_id",
+        "worker_id",
+        "node_id",
+        "kind",
+        "sent_at",
+        "limit"
+      ],
+      "properties": {
+        "protocol_version": {
+          "const": "1.0"
+        },
+        "message_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worker_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "kind": {
+          "const": "claim"
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      },
+      "additionalProperties": false
+    },
+    "Started": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "message_id",
+        "worker_id",
+        "node_id",
+        "kind",
+        "sent_at",
+        "task_id",
+        "generation",
+        "lease_token"
+      ],
+      "properties": {
+        "protocol_version": {
+          "const": "1.0"
+        },
+        "message_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worker_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "kind": {
+          "const": "started"
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "lease_token": {
+          "type": "string",
+          "minLength": 24
+        }
+      },
+      "additionalProperties": false
+    },
+    "Finish": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "message_id",
+        "worker_id",
+        "node_id",
+        "kind",
+        "sent_at",
+        "task_id",
+        "generation",
+        "lease_token",
+        "outcome"
+      ],
+      "properties": {
+        "protocol_version": {
+          "const": "1.0"
+        },
+        "message_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worker_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "kind": {
+          "const": "finish"
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "lease_token": {
+          "type": "string",
+          "minLength": 24
+        },
+        "outcome": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED"
+          ]
+        },
+        "result_summary": {
+          "type": "string",
+          "maxLength": 4000
+        }
+      },
+      "additionalProperties": false
+    },
+    "Renew": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "message_id",
+        "worker_id",
+        "node_id",
+        "kind",
+        "sent_at",
+        "task_id",
+        "generation",
+        "lease_token"
+      ],
+      "properties": {
+        "protocol_version": {
+          "const": "1.0"
+        },
+        "message_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worker_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "kind": {
+          "const": "renew"
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "lease_token": {
+          "type": "string",
+          "minLength": 24
+        }
+      },
+      "additionalProperties": false
+    },
+    "Unknown": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "message_id",
+        "worker_id",
+        "node_id",
+        "kind",
+        "sent_at",
+        "task_id",
+        "generation",
+        "reason"
+      ],
+      "properties": {
+        "protocol_version": {
+          "const": "1.0"
+        },
+        "message_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worker_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "kind": {
+          "const": "unknown"
+        },
+        "sent_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
