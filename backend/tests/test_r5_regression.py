@@ -143,3 +143,50 @@ def test_load_secrets_env_fallback(monkeypatch):
     monkeypatch.delenv("MWCP_AUTH_SECRETS_FILE", raising=False)
     monkeypatch.setenv("MWCP_AUTH_SECRETS", "dev-1:x")
     assert load_secrets_from_env() == {"dev-1": "x"}
+
+
+# ---- R6-P1 补充：已登记目标的端点偷换负向 ----
+
+def test_approved_target_url_swap_rejected():
+    """资源+目标已按 url A 登记；用同 resource_id 换 url B 执行 → 拒绝。"""
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, run_probe
+    from registry import RegistryStore, ResourceRec
+    st = RegistryStore()
+    st.resources["svc.swap"] = ResourceRec(id="svc.swap", kind="service", owner_system="t",
+                                           display_name="s", node_id=None)
+    register_target(st, ProbeTarget(resource_id="svc.swap", url="http://127.0.0.1:9/a"),
+                    allow_loopback=True)
+    with pytest.raises(ProbeTargetRejected, match="mismatch"):
+        run_probe(ProbeTarget(resource_id="svc.swap", url="http://127.0.0.1:9/b"), st,
+                  allow_loopback=True)
+
+
+def test_approved_target_port_swap_rejected():
+    from probes import ProbeTarget, ProbeTargetRejected, register_target
+    from registry import RegistryStore, ResourceRec
+    st = RegistryStore()
+    st.resources["svc.port"] = ResourceRec(id="svc.port", kind="service", owner_system="t",
+                                           display_name="p", node_id=None)
+    register_target(st, ProbeTarget(resource_id="svc.port", capability="probe.tcp.check",
+                                    host="127.0.0.1", port=9), allow_loopback=True)
+    from probes import validate_probe_target
+    t2 = ProbeTarget(resource_id="svc.port", capability="probe.tcp.check", host="127.0.0.1", port=10)
+    # 端口替换：先过 SSRF（loopback 放行），再被绑定校验拒绝
+    st.resources["svc.port"]._ = None
+    from probes import _require_approved_target
+    _register_helper(st, t2)
+
+
+def _register_helper(st, t2):
+    from probes import _require_approved_target, ProbeTargetRejected
+    with pytest.raises(ProbeTargetRejected, match="mismatch"):
+        _require_approved_target(st, t2)
+
+
+def test_production_mode_rejects_loopback_even_with_flag():
+    """R6-P2：生产模式下即使 allow_loopback=True 也拒绝回环。"""
+    from probes import ProbeTarget, ProbeTargetRejected, validate_probe_target
+    with pytest.raises(ProbeTargetRejected, match="non-public|whitelist"):
+        # 生产模式拒绝回环：命中白名单分支（host 不在白名单）或 IP 分支（non-public）均为正确拒绝
+        validate_probe_target(ProbeTarget(resource_id="x", url="http://127.0.0.1:1/x"),
+                              allow_loopback=True, production_mode=True)

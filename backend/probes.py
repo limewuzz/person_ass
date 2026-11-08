@@ -95,12 +95,13 @@ def validate_probe_target(target: ProbeTarget, *, allow_loopback: bool = False,
         ip = ipaddress.ip_address(info[4][0])
         seen.add(str(ip))
         if ip.is_loopback:
-            if not allow_loopback:
-                raise ProbeTargetRejected("loopback blocked (test mode must set allow_loopback)")
-        elif ip.is_link_local or ip.is_private or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
-            # 测试模式放行回环；其余私网/链路本地一律拒绝（生产白名单模式另行放行外部主机）
-            if not (production_mode and host_l in PRODUCTION_ALLOWED_HOSTS):
+            # R6-P2：白名单/生产模式绝不豁免回环；仅测试模式显式 allow_loopback 放行
+            if production_mode or not allow_loopback:
                 raise ProbeTargetRejected(f"non-public address blocked: {ip}")
+        elif ip.is_link_local or ip.is_private or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            # R6-P2：私网/链路本地/保留/组播无条件拒绝——白名单只决定"能否探测该资产"，
+            # 绝不自动授权其解析到非全局地址
+            raise ProbeTargetRejected(f"non-public address blocked: {ip}")
 
 
 
@@ -117,6 +118,34 @@ class ProbeTarget:
     port: int | None = None
     timeout_seconds: float = 3.0
     ttl_seconds: int = 300          # 短 TTL：真实观测
+
+
+@dataclass(frozen=True)
+class ApprovedProbeTarget:
+    """R6-P1：获准探针目标的不可变绑定（登记=授权；资源存在≠目标授权）。
+
+    canonical endpoint 在登记时固化；执行时逐字段比对，任何替换（URL/端口/能力）即拒绝。
+    """
+    target_id: str
+    resource_id: str
+    capability: str
+    scheme: str | None
+    host: str
+    port: int | None
+    path: str | None
+    owner: str = "local-test"
+    approved_at: str = ""
+    version: int = 1
+    enabled: bool = True
+
+
+def _canonical_endpoint(target: ProbeTarget) -> tuple:
+    """归一化 (capability, scheme, host, port, path)；比较用。"""
+    if target.capability == "probe.http.get":
+        p = urllib.parse.urlsplit(target.url)
+        port = p.port or (443 if p.scheme == "https" else 80)
+        return ("probe.http.get", p.scheme.lower(), p.hostname.lower().strip("."), port, p.path or "/")
+    return ("probe.tcp.check", None, target.host.lower().strip("."), int(target.port), None)
 
 
 @dataclass
@@ -192,12 +221,42 @@ def tcp_probe(target: ProbeTarget) -> ProbeObservation:
     )
 
 
-def register_target(store: RegistryStore, target: ProbeTarget, *, allow_loopback: bool = False) -> None:
-    """显式登记探针目标（唯一入口）。登记时即做 SSRF 校验；未登记资源执行时拒绝。"""
+def register_target(store: RegistryStore, target: ProbeTarget, *, allow_loopback: bool = False,
+                     owner: str = "local-test") -> ApprovedProbeTarget:
+    """显式登记探针目标（唯一授权入口）。登记=资源存在性+SSRF 校验+固化 canonical endpoint。
+
+    R6-P1：登记结果写入 store.approved_probe_targets（独立于 resources 字典）；
+    run_probe 只接受"与获准 endpoint 逐字段一致"的目标。
+    """
     if target.resource_id not in store.resources:
         raise ProbeTargetRejected(f"resource {target.resource_id} not registered in store")
     validate_probe_target(target, allow_loopback=allow_loopback,
                           production_mode=(current_probe_mode() == "production"))
+    cap, scheme, host, port, path = _canonical_endpoint(target)
+    approved = ApprovedProbeTarget(
+        target_id=f"{target.resource_id}:{cap}", resource_id=target.resource_id,
+        capability=cap, scheme=scheme, host=host, port=port, path=path,
+        owner=owner, approved_at=_iso(time.time()))
+    if not hasattr(store, "approved_probe_targets"):
+        store.approved_probe_targets = {}
+    store.approved_probe_targets[target.resource_id] = approved
+    return approved
+
+
+def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> None:
+    """执行前校验：目标必须已登记，且 canonical endpoint 逐字段一致（防偷换）。"""
+    approved_map = getattr(store, "approved_probe_targets", {})
+    approved = approved_map.get(target.resource_id)
+    if approved is None:
+        raise ProbeTargetRejected(f"target not registered for resource {target.resource_id} "
+                                  f"(resource existence is NOT probe authorization)")
+    if not approved.enabled:
+        raise ProbeTargetRejected(f"approved target disabled: {approved.target_id}")
+    got = _canonical_endpoint(target)
+    want = (approved.capability, approved.scheme, approved.host, approved.port, approved.path)
+    if got != want:
+        raise ProbeTargetRejected(
+            f"target mismatch with approved endpoint: got {got} want {want}")
 
 
 def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
@@ -213,6 +272,7 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
         raise ValueError(f"bad kind {target.kind}")
     if target.resource_id not in store.resources:
         raise ProbeTargetRejected(f"resource {target.resource_id} not registered (refuse auto-create)")
+    _require_approved_target(store, target)  # R6-P1：登记绑定校验
     validate_probe_target(target, allow_loopback=allow_loopback,
                           production_mode=(current_probe_mode() == "production"))
     obs = http_probe(target, client) if target.capability == "probe.http.get" else tcp_probe(target)
@@ -240,6 +300,7 @@ def run_batch(targets: list[ProbeTarget], store: RegistryStore, *, max_concurren
     for t in targets:
         if t.resource_id not in store.resources:
             raise ProbeTargetRejected(f"resource {t.resource_id} not registered")
+        _require_approved_target(store, t)  # R6-P1
         validate_probe_target(t, allow_loopback=allow_loopback,
                               production_mode=(current_probe_mode() == "production"))
     results: list = []

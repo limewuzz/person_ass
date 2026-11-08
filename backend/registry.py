@@ -164,7 +164,7 @@ def seed_audit_baseline(store: RegistryStore) -> None:
     ]:
         store.nodes[n.id] = n
     svcs = [
-        ("svc.mwcp.portal", "portal", "magicworkshop-server", "门户/终端/Kimi/screen", "mac-mini"),
+        ("svc.mwcp.portal", "service", "magicworkshop-server", "门户/终端/Kimi/screen（portal）", "mac-mini"),  # R6-R1：kind=service，门户为描述性标注
         ("svc.mwcp.frpc-main", "service", "magicworkshop-server", "frpc 主隧道×5", "mac-mini"),
         ("svc.mwcp.daily-assistant", "service", "daily-assistant", "执行器+8765 AI 网关", "mac-mini"),
         ("svc.mwcp.quota-relay", "service", "quota-relay", "额度中转 8799", "mac-mini"),
