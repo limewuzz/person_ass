@@ -38,23 +38,31 @@
 - requirements.lock 23 行锁定全部传递依赖
 - 全历史 secret 扫描（已知生产口令模式 / Google OAuth token 前缀 / OpenAI key 前缀 / PEM 私钥头）零命中
 
-## 附录 A：git log --oneline（提交时生成）+ diff --stat
-（随上传文件附实际输出）
-## 附录 A 实际输出
+## 附录 A：git log --oneline + diff --stat（2026-11-08 第二轮末）
+
 ```
-8f4becb P1-05: resource registry (contract shapes, provenance, UNKNOWN/STALE decay, pagination) + 10 tests
-e0caec9 P1-04: mock OIDC/JWT auth (fail-closed middleware, scope+IDOR guards, jti revocation) + 16 tests
+b4f8795 review: /health/ready 503 semantics, PG proposal v2, review docs, dep lock
+4b1e9cb P1-05: resource registry (contract shapes, provenance, UNKNOWN/STALE decay) + tests
+f7c5f46 P1-04: mock OIDC/JWT auth (fail-closed middleware, scope+IDOR guards, jti revocation) + tests
 39988d0 P0/P1: P0 report + PG isolation PROPOSAL (not deployed, pending review)
 bf6d924 P1-03(dev): minimal FastAPI health endpoints per contract, loopback-only dev
 c276993 P1-02(prep): v0.4 candidate contracts + hash/count regression tests (31 paths/33 ops verified vs Drive original)
 af815f0 P1-01: repo init with secret-exclusion .gitignore and boundary README
 
- deploy/postgres/PROPOSAL.md           |   82 ++
- deploy/postgres/compose.yml.proposal  |   67 ++
- docs/CHANGES-SINCE-P0.md              |   42 +
- docs/GLM-P0-REPORT-2026-11-08.md      |  118 +++
- docs/P1-04-AUTH-REVIEW.md             |   54 ++
- docs/P1-05-REGISTRY-REVIEW.md         |   58 ++
- tests/test_contracts.py               |   53 ++
- 21 files changed, 3433 insertions(+)
+ backend/app.py                       |  97 ++++++++---
+ backend/auth.py                      | 165 +++++++++++++++++++
+ backend/deps.py                      |  12 ++
+ backend/registry.py                  | 309 +++++++++++++++++++++++++++++++++++
+ backend/requirements.lock            |  23 +++
+ backend/requirements.txt             |   1 +
+ backend/tests/conftest.py            |   4 +
+ backend/tests/test_auth.py           | 143 ++++++++++++++++
+ backend/tests/test_health.py         |  40 +++--
+ backend/tests/test_registry.py       | 110 +++++++++++++
+ deploy/postgres/PROPOSAL.md          | 121 ++++++++------
+ deploy/postgres/compose.yml.proposal |  46 +++++-
+ docs/CHANGES-SINCE-P0.md             |  60 +++++++
+ docs/P1-04-AUTH-REVIEW.md            |  54 ++++++
+ docs/P1-05-REGISTRY-REVIEW.md        |  58 +++++++
+ 15 files changed, 1162 insertions(+), 81 deletions(-)
 ```
