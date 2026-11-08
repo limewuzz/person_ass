@@ -31,6 +31,18 @@ ROLE_SCOPES: dict[str, set[str]] = {
     "admin": {"health:read", "registry:read", "probes:read", "approvals:read", "admin:read"},
     "worker": {"worker:heartbeat", "worker:claim"},  # Worker 独立范围，无 registry 读
 }
+# Service 身份硬边界（评审 R2 §3）：无论 token 声称什么 role/scopes，
+# service 类型一律拿不到 admin:* —— decode 时强制剥离。
+SERVICE_FORBIDDEN_SCOPES = {"admin:read", "admin:write"}
+
+
+def require_worker_path_match(principal: Principal, worker_id: str) -> None:
+    """Worker 协议端点的 path id 必须等于 token subject（评审 R2 §3；
+    P1-07 的 /workers/{id}/* 端点统一走此检查）。"""
+    if principal.typ != "worker" or principal.sub != worker_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403,
+                            detail={"error": "forbidden", "reason": "worker id != token subject"})
 
 
 class AuthConfigError(Exception):
@@ -118,9 +130,12 @@ class TokenValidator:
             role = "worker"  # worker 身份不接受其他 role 字段
         elif typ in ("actor", "service") and role not in ACTOR_ROLES:
             raise _unauthorized("bad role")
+        scopes = set(claims.get("scopes", [])) & ROLE_SCOPES.get(role, set())
+        if typ == "service":
+            scopes -= SERVICE_FORBIDDEN_SCOPES  # 硬边界：service 永无 admin:*
         return Principal(
             sub=claims["sub"], typ=typ, role=role,
-            scopes=set(claims.get("scopes", [])) & ROLE_SCOPES.get(role, set()),
+            scopes=scopes,
             node_ids=set(claims["node_ids"]) if claims.get("node_ids") is not None else None,
             kinds=set(claims["kinds"]) if claims.get("kinds") is not None else None,
             jti=claims["jti"],

@@ -108,3 +108,13 @@ def test_pagination_cursor(client, hdr):
 
 def test_unknown_agent_404(client, hdr):
     assert client.get("/api/v1/agents/agent.nope", headers=hdr).status_code == 404
+
+
+# ---- P1-05 第二轮补测（评审 R2 §4）----
+
+def test_observed_vs_received_distinct_for_snapshot(client, hdr):
+    """审计快照：observed_at=证据时间(15:00)，received_at=实际装载时刻——必须可区分。"""
+    n = client.get("/api/v1/nodes/mac-mini", headers=hdr).json()
+    assert n["observed_at"] == "2026-11-08T15:00:00+08:00"  # 原始证据时间
+    assert n["received_at"] != n["observed_at"], "received_at 不得与 observed_at 填同一值"
+    assert n["received_at"] > "2026-11-08T07:00:00+00:00"  # 装载时刻晚于审计证据时刻(07:00Z)

@@ -37,7 +37,7 @@ class NodeRec:
     role: str
     source: str = AUDIT_SOURCE
     observed_at: str | None = AUDIT_OBSERVED_AT
-    received_at: str = AUDIT_OBSERVED_AT
+    received_at: str | None = None
     ttl_seconds: int | None = 86400  # 审计基线 24h 内视为未过期
     base_health: str = "unknown"  # 无探针 → unknown
 
@@ -51,7 +51,7 @@ class ResourceRec:
     node_id: str | None
     source: str = AUDIT_SOURCE
     observed_at: str | None = AUDIT_OBSERVED_AT
-    received_at: str = AUDIT_OBSERVED_AT
+    received_at: str | None = None
     ttl_seconds: int | None = 86400
     base_health: str = "unknown"
 
@@ -65,7 +65,7 @@ class AgentRec:
     capabilities: list[str] = field(default_factory=list)
     status: str = "unknown"  # 无探针
     observed_at: str | None = AUDIT_OBSERVED_AT
-    received_at: str = AUDIT_OBSERVED_AT
+    received_at: str | None = None
     ttl_seconds: int | None = 86400
     source: str = AUDIT_SOURCE
 
@@ -150,12 +150,17 @@ class RegistryStore:
 
 
 def seed_audit_baseline(store: RegistryStore) -> None:
-    """审计基线（VERIFIED_AT_AUDIT；health=unknown，等待真实探针）。"""
+    """审计基线（VERIFIED_AT_AUDIT；health=unknown，等待真实探针）。
+
+    评审 R2 §4：observed_at=原始证据时间（审计时点），received_at=实际摄取时间
+    （本进程装载快照的时刻）——两者必须可区分，不得填同一值营造实时性。
+    """
+    ingest_at = _iso(store.clock())
     for n in [
-        NodeRec("us-server", "US server (mofang)", "PRIMARY"),
-        NodeRec("mac-mini", "Mac mini (home)", "STANDBY_GATEWAY"),
-        NodeRec("ucloud-vps", "UCloud VPS", "RELAY"),
-        NodeRec("tencent-cloud", "Tencent Cloud", "EXISTING_BUSINESS"),
+        NodeRec("us-server", "US server (mofang)", "PRIMARY", received_at=ingest_at),
+        NodeRec("mac-mini", "Mac mini (home)", "STANDBY_GATEWAY", received_at=ingest_at),
+        NodeRec("ucloud-vps", "UCloud VPS", "RELAY", received_at=ingest_at),
+        NodeRec("tencent-cloud", "Tencent Cloud", "EXISTING_BUSINESS", received_at=ingest_at),
     ]:
         store.nodes[n.id] = n
     svcs = [
@@ -174,7 +179,7 @@ def seed_audit_baseline(store: RegistryStore) -> None:
         ("svc.tc.cherry-web", "service", "cherry-web", "Cherry 无头版 7180（冻结）", "tencent-cloud"),
     ]
     for sid, kind, owner, disp, node in svcs:
-        store.resources[sid] = ResourceRec(sid, kind, owner, disp, node)
+        store.resources[sid] = ResourceRec(sid, kind, owner, disp, node, received_at=ingest_at)
     for a in [
         AgentRec("agent.rakazo.chief", "Rakazo Chief", "rakazo", "us-server", ["daily-assistant:tasks"]),
         AgentRec("agent.rakazo.paper", "Rakazo paper_", "rakazo", "us-server", ["web_search"]),
@@ -183,11 +188,12 @@ def seed_audit_baseline(store: RegistryStore) -> None:
         AgentRec("agent.mac.kimi-cli", "Kimi Code CLI", "kimi", "mac-mini", []),
         AgentRec("agent.mac.dsh", "dsh harness", "dsh", "mac-mini", []),
     ]:
+        a.received_at = ingest_at
         store.agents[a.id] = a
     for c in [
-        CapabilityRec("probe.http.get", 1, "READ", True, False, False,
+        CapabilityRec("probe.http.get", 1, "READ", True, True, False,
                       {"url": "string", "timeout_seconds": "int"}),
-        CapabilityRec("probe.tcp.check", 1, "READ", True, False, False,
+        CapabilityRec("probe.tcp.check", 1, "READ", True, True, False,
                       {"host": "string", "port": "int"}),
         CapabilityRec("adapter.legacy.status", 1, "READ", True, False, False, {}),
         CapabilityRec("task.shell.exec", 1, "HIGH", False, False, True, {}),
@@ -266,6 +272,15 @@ def build_registry_router(store: RegistryStore):
                       principal: Principal = Depends(get_principal)):
         _require_scope(principal, "registry:read")
         return list_resources("service", None, cursor, limit, principal)
+
+    @router.get("/api/v1/resources/{resource_id}")
+    def get_resource(resource_id: str, principal: Principal = Depends(get_principal)):
+        _require_scope(principal, "registry:read")
+        rec = store.resources.get(resource_id)
+        if not rec:
+            raise HTTPException(status_code=404, detail={"error": "not_found"})
+        _object_guard(principal, kind=rec.kind, node_id=rec.node_id)
+        return store.resource_out(rec)
 
     @router.get("/api/v1/agents")
     def list_agents(cursor: str | None = Query(None, max_length=300), limit: int = Query(50, le=200),
