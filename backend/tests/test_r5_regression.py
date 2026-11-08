@@ -351,3 +351,76 @@ def test_r8_query_not_in_exception_messages():
                                   url=f"http://127.0.0.1:9/a?token=OTHER{marker}",
                                   node_id="mac-mini"), st, client=client, allow_loopback=True)
     assert marker not in str(ei.value), "异常消息泄漏原始 query"
+
+
+# ---- R9 补充负向：owner 再授权生命周期 / path 异常脱敏 / 执行期并发更新 ----
+
+def test_r9_owner_reapproval_lifecycle():
+    """owner 变更 → 旧授权执行拒 → update_target（版本化再授权）刷新 owner → 执行恢复。"""
+    import probes as P
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, run_probe_by_id
+    st = _r7_store()
+    P.register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                      node_id="mac-mini"), allow_loopback=True)
+    st.resources["svc.r7"].owner_system = "owner-beta"
+    import httpx
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        with pytest.raises(ProbeTargetRejected, match="owner_system changed"):
+            run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+        assert st.resources["svc.r7"].base_health == "unknown"  # 未写入健康
+        # 版本化再授权（审计留痕）后恢复执行
+        P.update_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                        node_id="mac-mini"),
+                        expected_version=1, allow_loopback=True)
+        obs = run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+        assert obs.health == "healthy"
+        assert st.approved_probe_targets["svc.r7"].resource_owner == "owner-beta"
+
+
+def test_r9_path_marker_not_in_exception_messages():
+    """R9-P3：path 敏感段不得进入异常消息（mismatch 错误同源脱敏）。"""
+    from probes import ProbeTarget, ProbeTargetRejected, register_target, run_probe
+    import httpx
+    st = _r7_store()
+    marker = "PATH_SECRET_MARKER_ABCDEF123456"
+    register_target(st, ProbeTarget(resource_id="svc.r7",
+                                    url=f"http://127.0.0.1:9/p/{marker}/a",
+                                    node_id="mac-mini"), allow_loopback=True)
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200)), trust_env=False) as client:
+        with pytest.raises(ProbeTargetRejected) as ei:
+            run_probe(ProbeTarget(resource_id="svc.r7",
+                                  url=f"http://127.0.0.1:9/p/{marker}/b",
+                                  node_id="mac-mini"), st, client=client, allow_loopback=True)
+    assert marker not in str(ei.value), "异常消息泄漏 path 敏感段"
+    assert marker not in repr(st.target_change_log)
+
+
+def test_r9_update_during_execution_blocks_commit():
+    """执行期间被 update（非 disable）→ 旧结果同样作废（版本变化即门禁）。"""
+    import httpx
+    import probes as P
+    from probes import (ProbeTarget, ProbeTargetRejected, register_target,
+                        run_probe_by_id, update_target)
+    st = _r7_store()
+    P.register_target(st, ProbeTarget(resource_id="svc.r7", url="http://127.0.0.1:9/a",
+                                      node_id="mac-mini"), allow_loopback=True)
+    orig = P.validate_probe_target
+    def hook(t, **kw):
+        if not getattr(hook, "done", False):
+            hook.done = True
+            update_target(st, ProbeTarget(resource_id="svc.r7",
+                                          url="http://127.0.0.1:9/b",
+                                          node_id="mac-mini"),
+                          expected_version=1, allow_loopback=True)
+        return orig(t, **kw)
+    P.validate_probe_target = hook
+    try:
+        with httpx.Client(transport=httpx.MockTransport(
+                lambda r: httpx.Response(200)), trust_env=False) as client:
+            with pytest.raises(ProbeTargetRejected, match="changed during execution"):
+                run_probe_by_id(st, "svc.r7", client=client, allow_loopback=True)
+        assert st.resources["svc.r7"].base_health == "unknown"
+    finally:
+        P.validate_probe_target = orig

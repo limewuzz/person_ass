@@ -136,6 +136,7 @@ class ApprovedProbeTarget:
     query: str | None = None
     kind: str = "service"
     node_id: str | None = None
+    resource_owner: str = ""  # R9-P1：登记时的权威资源属主；变更即旧授权失效
     owner: str = "local-test"
     approved_at: str = ""
     version: int = 1
@@ -259,6 +260,7 @@ def register_target(store: RegistryStore, target: ProbeTarget, *, allow_loopback
             target_id=f"{target.resource_id}:{cap}", resource_id=target.resource_id,
             capability=cap, scheme=scheme, host=host, port=port, path=path, query=query,
             kind=target.kind, node_id=target.node_id,
+            resource_owner=store.resources[target.resource_id].owner_system,
             owner=owner, approved_at=_iso(time.time()))
         store.approved_probe_targets[target.resource_id] = approved
         _audit_target_change(store, approved, 0, 1, "register", owner)
@@ -295,6 +297,7 @@ def update_target(store: RegistryStore, target: ProbeTarget, *, expected_version
             target_id=current.target_id, resource_id=target.resource_id,
             capability=cap, scheme=scheme, host=host, port=port, path=path, query=query,
             kind=target.kind, node_id=target.node_id,
+            resource_owner=store.resources[target.resource_id].owner_system,  # 再授权刷新 owner
             owner=owner, approved_at=current.approved_at,
             version=current.version + 1, enabled=current.enabled)
         store.approved_probe_targets[target.resource_id] = new
@@ -331,7 +334,8 @@ def _audit_target_change(store, approved: "ApprovedProbeTarget", from_v: int, to
     store.target_change_log.append({
         "target_id": approved.target_id, "action": action,
         "from_version": from_v, "to_version": to_v,
-        "endpoint": f"{approved.scheme or 'tcp'}://{approved.host}:{approved.port}{approved.path or ''}",
+        "endpoint": f"{approved.scheme or 'tcp'}://{approved.host}:{approved.port}"
+                    f"{_redact_path(approved.path)}",  # R9-P3：path 敏感段指纹替位
         "query_fingerprint": _sha12(approved.query) if approved.query else None,  # R8-P3：不落原始 query
         "kind": approved.kind, "node_id": approved.node_id,
         "owner": owner, "changed_at": _iso(time.time()),
@@ -368,12 +372,33 @@ def _sha12(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
 
 
+_PATH_SECRET_KEYWORDS = ("token", "secret", "password", "credential", "apikey",
+                         "api_key", "authkey", "private")
+
+
+def _redact_path(path: str | None) -> str:
+    """R9-P3：path 中疑似敏感段脱敏（长随机段或含凭据关键词 → 指纹替位）。
+
+    仅用于**展示面**（审计/异常/响应）；服务端匹配仍用原始完整 URL。
+    """
+    if not path:
+        return "/"
+    out = []
+    for seg in path.split("/"):
+        low = seg.lower()
+        if seg and (len(seg) >= 20 or any(k in low for k in _PATH_SECRET_KEYWORDS)):
+            out.append(f"«{_sha12(seg)}»")
+        else:
+            out.append(seg)
+    return "/".join(out)
+
+
 def _fmt_endpoint(ep: tuple) -> str:
-    """端点格式化（脱敏）：query 只显示指纹，不出现原始键值。"""
+    """端点格式化（脱敏）：query 只显示指纹；path 敏感段指纹替位（R9-P3）。"""
     cap, scheme, host, port, path, query = ep
     q = f"?#sha256:{_sha12(query)}" if query else ""
     proto = scheme or "tcp"
-    return f"{cap} {proto}://{host}:{port}{path or '/'}{q}"
+    return f"{cap} {proto}://{host}:{port}{_redact_path(path)}{q}"
 
 
 def _authoritative_guard(store: RegistryStore, target: ProbeTarget) -> None:
@@ -387,7 +412,17 @@ def _authoritative_guard(store: RegistryStore, target: ProbeTarget) -> None:
             f"target=({target.kind},{target.node_id}) resource=({rec.kind},{rec.node_id})")
 
 
-def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> None:
+def _owner_guard(store: RegistryStore, approved: "ApprovedProbeTarget") -> None:
+    """R9-P1：权威资源 owner_system 变更后，旧授权（旧 owner 签发）执行即失效。"""
+    rec = store.resources.get(approved.resource_id)
+    if rec is not None and approved.resource_owner and rec.owner_system != approved.resource_owner:
+        raise ProbeTargetRejected(
+            f"resource owner_system changed ({approved.resource_owner!r} -> "
+            f"{rec.owner_system!r}); probe authorization invalidated "
+            f"(update_target re-approval required)")
+
+
+def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> "ApprovedProbeTarget":
     """执行前校验：目标必须已登记，且 canonical endpoint 逐字段一致（防偷换）。"""
     approved_map = getattr(store, "approved_probe_targets", {})
     approved = approved_map.get(target.resource_id)
@@ -410,6 +445,9 @@ def _require_approved_target(store: RegistryStore, target: ProbeTarget) -> None:
             f"({target.kind},{target.node_id}) want ({approved.kind},{approved.node_id})")
     # R8-P1（执行侧）：获准后权威资源记录若迁移/改类，执行即拒
     _authoritative_guard(store, target)
+    # R9-P1（执行侧）：owner_system 变更 → 旧授权失效
+    _owner_guard(store, approved)
+    return approved
 
 
 def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
@@ -425,10 +463,18 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
         raise ValueError(f"bad kind {target.kind}")
     if target.resource_id not in store.resources:
         raise ProbeTargetRejected(f"resource {target.resource_id} not registered (refuse auto-create)")
-    _require_approved_target(store, target)  # R6-P1：登记绑定校验
+    approved_before = _require_approved_target(store, target)  # 授权时点快照（版本/owner）
     validate_probe_target(target, allow_loopback=allow_loopback,
                           production_mode=(current_probe_mode() == "production"))
     obs = http_probe(target, client) if target.capability == "probe.http.get" else tcp_probe(target)
+    # R9-P2：提交门——执行期间授权若被禁用/更新/属主变更，结果作废，不写健康状态
+    approved_after = getattr(store, "approved_probe_targets", {}).get(target.resource_id)
+    if (approved_after is None or not approved_after.enabled
+            or approved_after.version != approved_before.version
+            or approved_after.resource_owner != approved_before.resource_owner):
+        raise ProbeTargetRejected(
+            f"authorization changed during execution for {target.resource_id}; "
+            f"result discarded (no health write)")
     obs.observed_at = _iso(clock())            # 探测完成时刻
     obs.received_at = _iso(clock() + 0.1)      # 写入时刻（演示 100ms 处理延迟，可注入）
     rec = store.resources[target.resource_id]  # R5：只更新已登记资源，绝不自动创建
