@@ -1,0 +1,27 @@
+# PROPOSAL ONLY — DO NOT DEPLOY until user approves P0-06 item 2 (see PROPOSAL.md)
+services:
+  mwcp-db:
+    image: postgres:16@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5
+    container_name: mwcp-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mwcp
+      POSTGRES_PASSWORD: ${MWCP_PG_PASSWORD:?set in /root/magicworkshop/control-plane/.env}
+      POSTGRES_DB: control_plane
+    volumes:
+      - mwcp-pgdata:/var/lib/postgresql/data
+    networks:
+      - mwcp-internal
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mwcp -d control_plane"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # 注意：无 ports: —— 不向宿主/公网发布任何端口
+networks:
+  mwcp-internal:
+    internal: true
+volumes:
+  mwcp-pgdata:
