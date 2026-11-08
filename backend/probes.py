@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import os
 import socket
 import time
 from dataclasses import dataclass, field
@@ -32,6 +33,19 @@ BLOCKED_LITERAL_HOSTS = {
     "100.100.100.100",                        # 阿里云元数据
 }
 PRODUCTION_ALLOWED_HOSTS: set[str] = set()   # 生产白名单：空 = 禁止一切生产目标
+
+# 执行模式由服务端环境决定（MWCP_PROBE_MODE=production|test），调用方不可传参覆盖（R5-P1）。
+# 每次调用即时读取（避免测试间 import 顺序污染）；production：主机必须在白名单；
+# test：仅供本地测试进程（loopback 需逐目标 allow_loopback）。
+def current_probe_mode() -> str:
+    m = os.environ.get("MWCP_PROBE_MODE", "production").strip().lower()
+    if m not in ("production", "test"):
+        raise RuntimeError(f"MWCP_PROBE_MODE must be production|test, got {m!r}")
+    return m
+
+MAX_CONCURRENCY = 16        # 全局并发硬上限
+MAX_BATCH_SIZE = 64         # 单批目标总数硬上限
+ALLOWED_PORT_RANGE = (1, 65535)
 
 
 class ProbeTargetRejected(ValueError):
@@ -59,9 +73,17 @@ def validate_probe_target(target: ProbeTarget, *, allow_loopback: bool = False,
     else:
         raise ProbeTargetRejected(f"capability {target.capability} not in whitelist")
     host_l = host.lower().strip(".")
+    if target.capability == "probe.tcp.check":
+        if not (ALLOWED_PORT_RANGE[0] <= int(target.port) <= ALLOWED_PORT_RANGE[1]):
+            raise ProbeTargetRejected("port out of allowed range")
     if production_mode:
         if host_l not in PRODUCTION_ALLOWED_HOSTS:
             raise ProbeTargetRejected("host not in production whitelist (empty by design)")
+        # 白名单域名也不得解析进私网/元数据（防重绑定的白名单侧加固）
+    elif current_probe_mode() == "production" and not production_mode:
+        # 默认入口语义：未显式指定 production_mode 的调用按当前服务端模式判定
+        if host_l not in PRODUCTION_ALLOWED_HOSTS:
+            raise ProbeTargetRejected("production mode: host not in whitelist")
     if host_l in BLOCKED_LITERAL_HOSTS:
         raise ProbeTargetRejected("cloud metadata endpoint blocked")
     try:
@@ -170,26 +192,33 @@ def tcp_probe(target: ProbeTarget) -> ProbeObservation:
     )
 
 
+def register_target(store: RegistryStore, target: ProbeTarget, *, allow_loopback: bool = False) -> None:
+    """显式登记探针目标（唯一入口）。登记时即做 SSRF 校验；未登记资源执行时拒绝。"""
+    if target.resource_id not in store.resources:
+        raise ProbeTargetRejected(f"resource {target.resource_id} not registered in store")
+    validate_probe_target(target, allow_loopback=allow_loopback,
+                          production_mode=(current_probe_mode() == "production"))
+
+
 def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
               client: httpx.Client | None = None, *, allow_loopback: bool = False) -> ProbeObservation:
     """执行白名单探针并写回 Registry（observed_at≠received_at：写入含处理耗时）。
 
-    SSRF：默认拒绝回环/私网/元数据；测试夹具必须显式 allow_loopback=True。
+    R5-P1：模式由模块 PROBE_MODE 决定（不可调用方覆盖）；目标必须先 register_target；
+    未登记资源一律拒绝且绝不自动创建；测试 loopback 豁免需逐目标显式声明。
     """
     if target.capability not in PROBE_CAPABILITIES:
         raise ValueError(f"capability {target.capability} not in probe whitelist")
     if target.kind not in RESOURCE_KINDS:
         raise ValueError(f"bad kind {target.kind}")
-    validate_probe_target(target, allow_loopback=allow_loopback)
+    if target.resource_id not in store.resources:
+        raise ProbeTargetRejected(f"resource {target.resource_id} not registered (refuse auto-create)")
+    validate_probe_target(target, allow_loopback=allow_loopback,
+                          production_mode=(current_probe_mode() == "production"))
     obs = http_probe(target, client) if target.capability == "probe.http.get" else tcp_probe(target)
     obs.observed_at = _iso(clock())            # 探测完成时刻
     obs.received_at = _iso(clock() + 0.1)      # 写入时刻（演示 100ms 处理延迟，可注入）
-    rec = store.resources.get(target.resource_id)
-    if rec is None:
-        from registry import ResourceRec
-        rec = ResourceRec(id=target.resource_id, kind=target.kind, owner_system="probe",
-                          display_name=target.resource_id, node_id=target.node_id)
-        store.resources[target.resource_id] = rec
+    rec = store.resources[target.resource_id]  # R5：只更新已登记资源，绝不自动创建
     rec.base_health = obs.health
     rec.observed_at = obs.observed_at
     rec.received_at = obs.received_at
@@ -200,10 +229,19 @@ def run_probe(target: ProbeTarget, store: RegistryStore, clock=time.time,
 
 def run_batch(targets: list[ProbeTarget], store: RegistryStore, *, max_concurrency: int = 4,
               allow_loopback: bool = False, clock=time.time) -> list:
-    """并发执行（有界线程池）；任一目标校验失败抛错且不执行该目标。"""
+    """并发执行（有界线程池）；任一目标校验失败抛错且不执行该目标。
+
+    R5：总数 ≤ MAX_BATCH_SIZE；并发钳制到 [1, MAX_CONCURRENCY]。
+    """
     import concurrent.futures as cf
+    if len(targets) > MAX_BATCH_SIZE:
+        raise ProbeTargetRejected(f"batch too large: {len(targets)} > {MAX_BATCH_SIZE}")
+    max_concurrency = max(1, min(int(max_concurrency), MAX_CONCURRENCY))
     for t in targets:
-        validate_probe_target(t, allow_loopback=allow_loopback)
+        if t.resource_id not in store.resources:
+            raise ProbeTargetRejected(f"resource {t.resource_id} not registered")
+        validate_probe_target(t, allow_loopback=allow_loopback,
+                              production_mode=(current_probe_mode() == "production"))
     results: list = []
     with cf.ThreadPoolExecutor(max_workers=max_concurrency) as ex:
         futs = {ex.submit(run_probe, t, store, clock, None, allow_loopback=allow_loopback): t for t in targets}

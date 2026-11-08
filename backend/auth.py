@@ -110,7 +110,7 @@ class TokenValidator:
             claims = jwt.decode(
                 token, secret, algorithms=["HS256"],
                 issuer=self.issuer, audience=self.audience,
-                options={"require": ["exp", "iss", "aud", "sub", "typ", "jti"]},
+                options={"require": ["exp", "iss", "aud", "sub", "typ", "jti", "nbf", "iat"]},
             )
         except jwt.ExpiredSignatureError as e:
             raise _unauthorized("token expired") from e
@@ -125,10 +125,12 @@ class TokenValidator:
         if self.revocations.is_revoked(claims["jti"]):
             raise _unauthorized("token revoked")
         typ = claims["typ"]
+        if typ not in ("actor", "service", "worker"):
+            raise _unauthorized("unknown identity type")  # A2：类型白名单，未知一律 401
         role = claims.get("role", "")
         if typ == "worker":
             role = "worker"  # worker 身份不接受其他 role 字段
-        elif typ in ("actor", "service") and role not in ACTOR_ROLES:
+        elif role not in ACTOR_ROLES:
             raise _unauthorized("bad role")
         scopes = set(claims.get("scopes", [])) & ROLE_SCOPES.get(role, set())
         if typ == "service":
@@ -149,10 +151,21 @@ def _unauthorized(msg: str) -> Exception:
 
 
 def load_secrets_from_env() -> dict[str, str]:
-    """MWCP_AUTH_SECRETS='kid1:secret1,kid2:secret2'（仅部署环境注入，不入库）。"""
-    raw = os.environ.get("MWCP_AUTH_SECRETS", "")
+    """优先读 MWCP_AUTH_SECRETS_FILE（文件型 secret，entrypoint 挂载），
+    回退 MWCP_AUTH_SECRETS 环境变量（仅本地开发）。格式 'kid1:secret1,kid2:secret2'
+    （文件可含多行，行内逗号分隔亦可）。密钥值不进日志/异常。"""
+    raw = ""
+    path = os.environ.get("MWCP_AUTH_SECRETS_FILE", "")
+    if path and os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                raw = fh.read()
+        except OSError:
+            raw = ""
+    if not raw:
+        raw = os.environ.get("MWCP_AUTH_SECRETS", "")
     out: dict[str, str] = {}
-    for pair in raw.split(","):
+    for pair in raw.replace("\n", ",").split(","):
         if ":" in pair:
             k, v = pair.split(":", 1)
             k, v = k.strip(), v.strip()

@@ -292,6 +292,7 @@ def build_registry_router(store: RegistryStore):
 
     @router.get("/api/v1/agents/{id}")
     def get_agent(id: str, principal: Principal = Depends(get_principal)):
+        _require_scope(principal, "registry:read")  # A1：详情与列表同标准
         rec = store.agents.get(id)
         if not rec:
             raise HTTPException(status_code=404, detail={"error": "not_found"})

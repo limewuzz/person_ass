@@ -1,4 +1,12 @@
 """P1-06 探针测试：Mock 目标（本地临时 HTTP 服务）+ 超时/拒绝/鉴权/过期/传播。"""
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _probe_test_mode(monkeypatch):
+    """仅本模块内启用 test 模式（monkeypatch 作用域隔离，不污染同进程其他测试）。"""
+    monkeypatch.setenv("MWCP_PROBE_MODE", "test")
+
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -9,6 +17,7 @@ from fastapi.testclient import TestClient
 import app as app_mod
 from auth import mint_token
 from probes import ProbeTarget, ProbeTargetRejected, run_probe, run_batch, validate_probe_target
+from registry import ResourceRec
 from registry import _iso
 
 SECRET = "test-secret-only-for-local-tests"
@@ -49,6 +58,12 @@ def client():
     return TestClient(app_mod.app, raise_server_exceptions=False)
 
 
+def _register(store, rid):
+    if rid not in store.resources:
+        store.resources[rid] = ResourceRec(id=rid, kind="service", owner_system="probe-test",
+                                           display_name=rid, node_id=None)
+
+
 def _t(url, **kw) -> ProbeTarget:
     base = dict(resource_id="svc.mock.target", kind="service", url=url,
                 timeout_seconds=0.8, ttl_seconds=60)
@@ -59,6 +74,7 @@ def _t(url, **kw) -> ProbeTarget:
 def test_healthy_probe_lives_not_fake(mock_server, client):
     """UNKNOWN→HEALTHY：真实观测改变 health，provenance 三时刻可区分。"""
     store = app_mod._store
+    _register(store, "svc.mock.target")
     obs = run_probe(_t(mock_server + "/ok"), store, allow_loopback=True)
     assert obs.status == "healthy" and obs.health == "healthy"
     rec = store.resources["svc.mock.target"]
@@ -73,12 +89,14 @@ def test_healthy_probe_lives_not_fake(mock_server, client):
 
 def test_timeout_is_unknown_not_offline(mock_server):
     store = app_mod._store
+    _register(store, "svc.mock.target")
     obs = run_probe(_t(mock_server + "/slow", timeout_seconds=0.3), store, allow_loopback=True)
     assert obs.status == "timeout" and obs.health == "unknown"  # 超时≠离线
 
 
 def test_auth_rejected_is_unknown_with_note(mock_server):
     store = app_mod._store
+    _register(store, "svc.mock.target")
     obs = run_probe(_t(mock_server + "/denied"), store, allow_loopback=True)
     assert obs.status == "auth_rejected" and obs.health == "unknown"
     assert "401" in obs.note
@@ -86,12 +104,14 @@ def test_auth_rejected_is_unknown_with_note(mock_server):
 
 def test_5xx_is_degraded(mock_server):
     store = app_mod._store
+    _register(store, "svc.mock.target")
     obs = run_probe(_t(mock_server + "/sick"), store, allow_loopback=True)
     assert obs.status == "degraded" and obs.health == "degraded"
 
 
 def test_offline_on_refused():
     store = app_mod._store
+    _register(store, "svc.mock.target")
     obs = run_probe(_t("http://127.0.0.1:1/x", timeout_seconds=0.5), store, allow_loopback=True)
     assert obs.status == "offline" and obs.health == "offline"
 
@@ -100,6 +120,7 @@ def test_ttl_expiry_marks_stale(mock_server):
     """短 TTL 过期 → stale=true（假时钟推进验证衰减）。"""
     import datetime as dt
     store = app_mod._store
+    _register(store, "svc.mock.target")
     run_probe(_t(mock_server + "/ok", ttl_seconds=30), store, allow_loopback=True)
     import app as m
     fut = dt.datetime.now(dt.timezone.utc).timestamp() + 31
@@ -122,9 +143,11 @@ def test_tcp_probe_healthy_loopback(mock_server):
     import urllib.parse as up
     port = up.urlparse(mock_server).port
     store = app_mod._store
+    _register(store, "svc.mock.tcp")
     obs = run_probe(ProbeTarget(resource_id="svc.mock.tcp", capability="probe.tcp.check",
                                 host="127.0.0.1", port=port, ttl_seconds=60), store, allow_loopback=True)
     assert obs.health == "healthy"
+    _register(store, "svc.mock.tcp2")
     obs2 = run_probe(ProbeTarget(resource_id="svc.mock.tcp2", capability="probe.tcp.check",
                                  host="127.0.0.1", port=1, timeout_seconds=0.5), store, allow_loopback=True)
     assert obs2.health == "offline"
@@ -180,6 +203,7 @@ def test_redirect_not_followed(mock_server):
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
         store = app_mod._store
+        _register(store, "svc.mock.target")
         obs = run_probe(_t(f"http://127.0.0.1:{srv.server_port}/r"), store, allow_loopback=True)
         assert obs.status == "redirect" and obs.health == "unknown"
         assert "not followed" in obs.note
@@ -192,6 +216,7 @@ def test_batch_concurrency_cap(mock_server):
     import time as tt
     store = app_mod._store
     t0 = tt.time()
+    _register(store, "svc.mock.b1"); _register(store, "svc.mock.b2")
     run_batch([_t(mock_server + "/slow", resource_id="svc.mock.b1"),
                _t(mock_server + "/slow", resource_id="svc.mock.b2")],
               store, max_concurrency=1, allow_loopback=True)

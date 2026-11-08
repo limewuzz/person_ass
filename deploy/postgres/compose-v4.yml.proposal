@@ -50,8 +50,8 @@ services:
 
   mwcp-api:
     build:
-      context: ../../backend
-      dockerfile: Dockerfile.api       # 部署 Gate 前提交评审
+      context: ../..                # R5-D2：构建上下文=仓库根（与 Dockerfile COPY backend/… 匹配）
+      dockerfile: backend/Dockerfile.api
     container_name: mwcp-api
     restart: unless-stopped
     environment:

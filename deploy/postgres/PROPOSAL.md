@@ -1,4 +1,12 @@
-# 独立 PostgreSQL 提案 v3（⚠ 未部署——评审中，部署需用户新一轮明确批准）
+# 独立 PostgreSQL 提案（⚠ 未部署——评审中，部署需用户新一轮明确批准）
+
+## v5 变更（R5-D1/D2/D3/D4 修复，对应 GPT-6 独立评审 §5）
+- D1 **角色顺序**：`init/00-init-roles.sh` 重写——先 CREATE 两个角色，后 GRANT/ALTER DEFAULT PRIVILEGES（原顺序在空集群必失败）
+- D2 **构建上下文**：compose `context: ../..`（仓库根）+ `dockerfile: backend/Dockerfile.api`，全部 COPY 源路径经独立测试逐项存在性验证
+- D3 **密码不进 argv**：删除 `psql -v` 传参，改为 heredoc stdin + SQL 转义（进程参数/日志/环境展开均无明文）
+- D4 **API secret 接通**：entrypoint 只传 `MWCP_AUTH_SECRETS_FILE`/`MWCP_PG_APP_PASSWORD_FILE` 路径（不再写临时明文 env 文件、变量正确 export）；`auth.load_secrets_from_env()` 优先读文件（功能测试覆盖）；readiness 的 database 仍诚实 `not_connected`（P1-03 前不得宣称 ready）
+- 静态证据：`compose-v5.yml.proposal`（=修复后 v4 内容正名版；v4 文件保留且同步修复供 GPT-6 测试路径引用）
+
 
 状态：**PROPOSAL v3 / NOT DEPLOYED** ｜ 2026-11-08 ｜ 本版按 R2 评审 BLOCK-01~06 逐项修订
 文件：`compose-v3.yml.proposal`（本目录）、`init-roles.sql`；v2 文件保留供对照但已作废。
