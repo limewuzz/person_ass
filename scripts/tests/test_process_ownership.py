@@ -3,6 +3,10 @@ from pathlib import Path
 import subprocess,sys,json,shutil
 import pytest
 SOURCE=Path(__file__).resolve().parents[1]/'mw.mjs'
+# /proc/<pid>/stat 是 Linux 语义（进程起始 ticks）；macOS 无 /proc。
+# 交接文档验证目标为 Linux x86_64（CI 覆盖）；非 Linux 显式 SKIP，不视为失败。
+pytestmark=pytest.mark.skipif(not Path('/proc/self/stat').exists(),
+                              reason='requires Linux /proc (CI target); skipped on macOS')
 @pytest.mark.parametrize('wrong_ticks',[True,False])
 def test_stop_refuses_a_foreign_or_reused_pid(tmp_path,wrong_ticks):
     (tmp_path/'scripts').mkdir();(tmp_path/'.runtime').mkdir();shutil.copyfile(SOURCE,tmp_path/'scripts/mw.mjs')
