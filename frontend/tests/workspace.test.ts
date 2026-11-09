@@ -96,14 +96,21 @@ describe("user work submission recovery", () => {
     expect(writeTask).not.toHaveBeenCalled();
   });
   it("cannot route arbitrary prompts, agents, uploads or execution capabilities through TaskCreate", () => {
-    expect(taskBody({ ...draft(), workItemId: work.id })).toEqual({
-      work_item_id: work.id,
-      capability: "local.simulate",
-      resource_id: "local-ledger",
-      arguments: { outcome: "SUCCEEDED" },
-      dry_run: true,
-      origin: { channel: "web", source_ref: "user-workspace" },
-    });
+    const forged = {
+      ...draft(),
+      workItemId: work.id,
+      title: "Run a real command",
+      capability: "production.execute",
+      resource_id: "legacy-system",
+      agent_id: "unapproved-agent",
+      arguments: { command: "ignored", upload: "unapproved-path" },
+    };
+    const body = taskBody(forged);
+    expect(body.capability).toBe("local.simulate");
+    expect(body.resource_id).toBe("local-ledger");
+    expect(body.dry_run).toBe(true);
+    expect(body.arguments).toEqual({ outcome: "SUCCEEDED" });
+    expect(body).not.toHaveProperty("agent_id");
   });
 });
 describe("joining paginated related records", () => {
