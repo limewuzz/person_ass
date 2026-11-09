@@ -30,8 +30,18 @@ const run = (cmd, args, cwd = root, env = {}) => {
   if (r.error) throw r.error;
   if (r.status !== 0) process.exit(r.status ?? 1);
 };
-const ticks = (pid) =>
-  readFileSync(`/proc/${pid}/stat`, "utf8").split(") ")[1].split(" ")[19];
+// 进程起始 ticks：Linux /proc（权威语义）。macOS 无 /proc，降级为 ps 的进程启动时刻
+// （lstart→epoch 秒），与 pid+nonce 共同构成所有权判据；停止仍拒绝复用/外来 pid。
+const ticks = (pid) => {
+  if (existsSync(`/proc/${pid}/stat`))
+    return readFileSync(`/proc/${pid}/stat`, "utf8").split(") ")[1].split(" ")[19];
+  const ps = spawnSync("ps", ["-o", "lstart=,epoch=", "-p", String(pid)], {
+    encoding: "utf8",
+  });
+  if (ps.status !== 0 || !ps.stdout.trim()) return "unknown";
+  const [, epoch] = ps.stdout.trim().split(/\s+(?=\d{5,})/).reverse();
+  return epoch?.trim() ?? "unknown";
+};
 if (command === "supervise") {
   const nonce = process.argv[3];
   const child = spawn(
