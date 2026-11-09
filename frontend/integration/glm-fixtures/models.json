@@ -1,0 +1,53 @@
+{
+  "items": [
+    {
+      "id": "model.deepseek-flash",
+      "title": "DeepSeek flash（经 Mac 8765 网关）",
+      "summary": "主通道；来源=审计 VERIFIED_AT_AUDIT；额度/时延 UNKNOWN",
+      "enabled": false,
+      "route_ref": null,
+      "source_system": "daily-assistant",
+      "source_meta": {
+        "kind": "mock",
+        "observed_at": null,
+        "ttl_seconds": 60,
+        "system": "mwcp-local-rc"
+      }
+    },
+    {
+      "id": "model.kimi-k3",
+      "title": "Kimi k3（网关备通道）",
+      "summary": "fallback；来源=审计 VERIFIED_AT_AUDIT",
+      "enabled": false,
+      "route_ref": null,
+      "source_system": "daily-assistant",
+      "source_meta": {
+        "kind": "mock",
+        "observed_at": null,
+        "ttl_seconds": 60,
+        "system": "mwcp-local-rc"
+      }
+    },
+    {
+      "id": "model.codex-cliproxy",
+      "title": "Codex 系列（US cliproxy）",
+      "summary": "不经 Mac；gpt-6.x/5.6 系；来源=审计 VERIFIED_AT_AUDIT",
+      "enabled": false,
+      "route_ref": null,
+      "source_system": "cliproxy",
+      "source_meta": {
+        "kind": "mock",
+        "observed_at": null,
+        "ttl_seconds": 60,
+        "system": "mwcp-local-rc"
+      }
+    }
+  ],
+  "next_cursor": null,
+  "source_meta": {
+    "kind": "mock",
+    "observed_at": null,
+    "ttl_seconds": 60,
+    "system": "mwcp-local-rc"
+  }
+}

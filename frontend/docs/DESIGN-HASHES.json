@@ -1,0 +1,10 @@
+{
+  "public/versions/v1.0/index.html": {
+    "sha256": "7fc6bbc75391b43afec7d2414c5079f9ea743574b38f9661e1d6795b52496655",
+    "bytes": 35476
+  },
+  "public/versions/v2.0-prism/index.html": {
+    "sha256": "5865ecfc6842b1faa012ddfea466321a504b10f1d8beb845c1d243247fb0cf94",
+    "bytes": 59796
+  }
+}

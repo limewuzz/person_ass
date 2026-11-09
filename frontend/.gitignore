@@ -1,0 +1,11 @@
+node_modules/
+dist/
+evidence/
+playwright-report/
+test-results/
+.env*
+*.tsbuildinfo
+__pycache__/
+.pytest_cache/
+
+test-results-*/
