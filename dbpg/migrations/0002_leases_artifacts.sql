@@ -1,5 +1,4 @@
 -- 0002：Worker 租约与 Artifact（repository.py 对应表；PG_RUNTIME NOT RUN）
-BEGIN;
 CREATE TABLE IF NOT EXISTS task_leases (
   id BIGSERIAL PRIMARY KEY,
   task_id UUID NOT NULL,
@@ -28,4 +27,3 @@ CREATE TABLE IF NOT EXISTS artifacts (
 CREATE OR REPLACE FUNCTION audit_retention_days() RETURNS int AS $$
   SELECT 90;  -- 单用户轻量控制平面默认；可由 SOP 调整后重编译
 $$ LANGUAGE sql IMMUTABLE;
-COMMIT;

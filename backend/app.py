@@ -20,6 +20,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 import auth as auth_mod
 import queries as Q
+from service_container import get_container, readiness_check
 from auth import AuthConfigError, Principal, TokenValidator
 from approvals import ApprovalService
 from deps import get_principal

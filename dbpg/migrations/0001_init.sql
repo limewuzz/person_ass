@@ -1,6 +1,5 @@
 -- MagicWorkshop Control Plane 0001（PG v5 起点的完整 DDL；PG_RUNTIME NOT RUN）
 -- 对应 PRD §E：唯一约束=幂等/审批/出队盒；generation 单调（序列+触发器禁回退）
-BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 资源代数序列（删除重建不复用；进程重启持久）
@@ -118,4 +117,3 @@ CREATE TABLE outbox (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   dispatched_at TIMESTAMPTZ,
   UNIQUE(aggregate, aggregate_id, kind, created_at));  -- inbox 去重同表反向用途
-COMMIT;

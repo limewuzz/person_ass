@@ -179,15 +179,17 @@ def test_outbox_claim_is_not_delivery():
 
 def test_outbox_confirm_after_claim():
     c = FakeConn(lambda s, p: ([], 1))
-    assert R.PgOutboxRepository(c).confirm_dispatched(42) is True
+    assert R.PgOutboxRepository(c).confirm_dispatched(
+        42, claim_token="tok") is True
     sql = last_sql(c)
     assert "dispatched_at=now()" in sql
-    assert "claimed_at is not null" in sql
+    assert "claim_token=%s" in sql
 
 
 def test_outbox_fail_releases_claim_for_retry():
     c = FakeConn(lambda s, p: ([], 1))
-    assert R.PgOutboxRepository(c).fail_delivery(42, error="timeout") is True
+    assert R.PgOutboxRepository(c).fail_delivery(
+        42, claim_token="tok", error="timeout") is True
     sql = last_sql(c)
     assert "claimed_at=null" in sql and "last_error=%s" in sql
 
@@ -206,20 +208,21 @@ def test_outbox_full_lifecycle_claim_confirm_no_reclaim():
     """领取→确认→过期回收不捡已投递事件。"""
     delivered = {"done": False}
     def matcher(s, p):
-        if "update outbox set claimed_at=now()" in s:
-            return ([(1, "agg", "1", "ev", "{}", 1)], 1)
+        if "update outbox set" in s and "claim_token=%s" in s:
+            return ([(1, "agg", "1", "ev", "{}", 1, "tok_1")], 1)
         if "update outbox set dispatched_at=now()" in s and not delivered["done"]:
             delivered["done"] = True
             return ([], 1)
-        if "update outbox set claimed_at=null, claim_expires_at=null" in s:
+        if "update outbox set claim_token=null, claimed_at=null" in s:
             return ([], 0)
         return ([], 0)
     c = FakeConn(matcher,
                  columns=["id", "aggregate", "aggregate_id", "kind", "payload",
-                          "attempt_count"])
+                          "attempt_count", "claim_token"])
     repo = R.PgOutboxRepository(c)
     events = repo.claim_batch(limit=1)
-    assert repo.confirm_dispatched(events[0]["id"]) is True
+    assert repo.confirm_dispatched(events[0]["id"],
+                                   claim_token=events[0]["claim_token"]) is True
     assert repo.reclaim_expired(now=99999.0) == []
 
 
@@ -319,3 +322,140 @@ def test_0003_adds_missing_columns_and_outbox_reliability():
                     "ADD COLUMN IF NOT EXISTS attempt_count",
                     "idx_outbox_reclaim"):
         assert snippet in sql, snippet
+
+
+# ════════ Phase A2: MigrationRunner — advisory lock + checksum + 原子 ════════
+
+def test_migration_uses_advisory_lock():
+    c = FakeConn(lambda s, p: ([], 0))
+    runner = R.MigrationRunner(c, migrations_dir="/tmp")
+    tmp = pathlib.Path("/tmp/mig_lock_test"); tmp.mkdir(exist_ok=True)
+    (tmp / "0001_test.sql").write_text("CREATE TABLE t(id int);")
+    runner2 = R.MigrationRunner(c, migrations_dir=str(tmp))
+    try:
+        runner2.apply("0001_test", "0001_test.sql")
+    except Exception:
+        pass
+    lock_sql = [sql for sql, _ in c.calls if "pg_advisory_xact_lock" in sql]
+    assert lock_sql, "advisory lock not used"
+
+
+def test_migration_rejects_duplicate():
+    def matcher(s, p):
+        if "select 1 from schema_migrations where version" in s:
+            return ([(1,)], 1)  # 已存在
+        return ([], 0)
+    c = FakeConn(matcher)
+    tmp = pathlib.Path("/tmp/mig_dup"); tmp.mkdir(exist_ok=True)
+    (tmp / "x.sql").write_text("SELECT 1;")
+    runner = R.MigrationRunner(c, migrations_dir=str(tmp))
+    import pytest as _pytest
+    with _pytest.raises(ValueError, match="already applied"):
+        runner.apply("0001_x", "x.sql")
+
+
+def test_migration_file_checksum_recorded():
+    """版本记录包含 checksum——防已应用迁移被改写。"""
+    c = FakeConn(lambda s, p: ([], 0))
+    tmp = pathlib.Path("/tmp/mig_hash"); tmp.mkdir(exist_ok=True)
+    (tmp / "0001_h.sql").write_text("CREATE TABLE h(id int);")
+    runner = R.MigrationRunner(c, migrations_dir=str(tmp))
+    try:
+        runner.apply("0001_h", "0001_h.sql")
+    except Exception:
+        pass
+    insert = [p for sql, p in c.calls if "insert into schema_migrations" in sql]
+    assert insert and len(insert[0]) == 2  # (version, checksum)
+    assert len(insert[0][1]) == 64  # SHA-256 hex
+
+
+def test_migration_no_begin_commit_in_files():
+    """迁移文件不含 BEGIN;/COMMIT;——事务由 Runner 统一管理。"""
+    for f in sorted(MIG_DIR.glob("*.sql")):
+        content = f.read_text()
+        assert "BEGIN;" not in content, f"{f.name} contains BEGIN;"
+        assert "COMMIT;" not in content, f"{f.name} contains COMMIT;"
+
+
+# ════════ Phase A3: Registry ABA — 权威变更原子 bump ════════
+
+def test_bump_generation_with_owner_change_atomic():
+    """owner 变更 + generation 推进在同一 UPDATE——不依赖调用方额外调 bump。"""
+    c = FakeConn(lambda s, p: ([(5,)], 1))
+    repo = R.PgRegistryRepository(c)
+    result = repo.bump_generation("svc.x", expected_generation=3, new_owner="owner-beta")
+    assert result == 5
+    sql = last_sql(c)
+    assert "owner_system = %s" in sql  # owner 变更在同一语句
+    assert "generation = nextval" in sql  # generation 推进也在
+    params = last_params(c)
+    assert "owner-beta" in params
+
+
+def test_bump_generation_kind_and_node_atomic():
+    c = FakeConn(lambda s, p: ([(6,)], 1))
+    repo = R.PgRegistryRepository(c)
+    repo.bump_generation("svc.x", expected_generation=5,
+                         new_kind="agent", new_node="us-server")
+    sql = last_sql(c)
+    assert "kind = %s" in sql and "node_id = %s" in sql
+
+
+def test_bump_generation_aba_detected():
+    """A→B→A：generation 已推进两次 → expected 旧值无法通过。"""
+    c = FakeConn(lambda s, p: ([], 0))  # 0 行=generation 不匹配
+    repo = R.PgRegistryRepository(c)
+    import pytest as _pytest
+    with _pytest.raises(ValueError, match="generation conflict"):
+        repo.bump_generation("svc.x", expected_generation=1)  # 旧值=ABA 后无法通过
+
+
+# ════════ Phase A4: Outbox — claim token + ACK + 退避 ════════
+
+def test_outbox_claim_assigns_unique_token():
+    c = FakeConn(lambda s, p: ([(1, "agg", "1", "ev", "{}", 1, "tok_abc")], 1),
+                 columns=["id", "aggregate", "aggregate_id", "kind", "payload",
+                          "attempt_count", "claim_token"])
+    events = R.PgOutboxRepository(c).claim_batch(limit=1)
+    assert events and events[0]["claim_token"] == "tok_abc"
+    sql = last_sql(c)
+    assert "claim_token=%s" in sql  # 分配 token
+
+
+def test_outbox_ack_requires_correct_token():
+    c = FakeConn(lambda s, p: ([], 1))
+    assert R.PgOutboxRepository(c).confirm_dispatched(
+        42, claim_token="correct_token") is True
+    sql = last_sql(c)
+    assert "claim_token=%s" in sql  # 验证 token
+    assert "claim_expires_at > now()" in sql  # 验证未过期
+
+
+def test_outbox_ack_wrong_token_rejected():
+    c = FakeConn(lambda s, p: ([], 0))  # 0 行=token 不匹配
+    assert R.PgOutboxRepository(c).confirm_dispatched(
+        42, claim_token="wrong") is False
+
+
+def test_outbox_fail_sets_next_retry_at():
+    c = FakeConn(lambda s, p: ([], 1))
+    assert R.PgOutboxRepository(c).fail_delivery(
+        42, claim_token="tok", error="timeout") is True
+    sql = last_sql(c)
+    assert "next_retry_at=now() + make_interval" in sql  # 退避
+
+
+def test_outbox_max_attempts_dead_letter():
+    """有界重试：attempt_count >= MAX_ATTEMPTS 的事件不再被领取。"""
+    c = FakeConn(lambda s, p: ([], 0))
+    repo = R.PgOutboxRepository(c)
+    repo.claim_batch(limit=1)
+    sql = last_sql(c)
+    assert "attempt_count < %s" in sql  # 领取时排除已达上限的
+
+
+def test_outbox_at_least_once_not_exactly_once():
+    """at-least-once：reclaim 后可重新领取（同一事件可能投递多次——消费者必须幂等）。"""
+    c = FakeConn(lambda s, p: ([(7,)], 1), columns=["id"])
+    ids = R.PgOutboxRepository(c).reclaim_expired(now=2000.0)
+    assert 7 in ids  # 可重投

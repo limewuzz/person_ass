@@ -1,5 +1,4 @@
 -- 0003：Gate B 前置整改——补齐 repository.py 引用的全部列/约束/索引
-BEGIN;
 
 -- 1) tasks 表补列（insert_task 引用 dry_run / args_redacted / origin_external_ref /
 --    work_item_id / trace_id 已有；dry_run+args_redacted 此前缺列）
@@ -34,4 +33,3 @@ ALTER TABLE outbox ADD CONSTRAINT chk_outbox_dispatch CHECK (
 CREATE INDEX IF NOT EXISTS idx_outbox_reclaim
   ON outbox(claim_expires_at) WHERE dispatched_at IS NULL;
 
-COMMIT;

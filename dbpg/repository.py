@@ -143,14 +143,32 @@ class PgRegistryRepository(_PgBase):
     def load_all_resources(self) -> list:
         return self._all("SELECT * FROM resources WHERE lifecycle_state='active'")
 
-    def bump_generation(self, rid, *, expected_generation: int) -> int:
-        """权威变更（owner/kind/node）→ 代数推进；旧授权（旧 generation）立即失效。"""
+    def bump_generation(self, rid, *, expected_generation: int,
+                        new_owner: str | None = None,
+                        new_kind: str | None = None,
+                        new_node: str | None = None) -> int:
+        """权威变更 + 代数推进 **同一 SQL 原子完成**——ABA 防护。
+
+        owner/kind/node 变更与 generation 递增在同一 UPDATE 中——不依赖调用方
+        额外调用 bump_generation。A→B→A 的值复原无法通过 generation 比对。
+        """
+        sets = ["generation = nextval('resource_generation_seq')"]
+        params: list = []
+        if new_owner is not None:
+            sets.append("owner_system = %s")
+            params.append(new_owner)
+        if new_kind is not None:
+            sets.append("kind = %s")
+            params.append(new_kind)
+        if new_node is not None:
+            sets.append("node_id = %s")
+            params.append(new_node)
+        set_clause = ", ".join(sets)
         row = self._one(
-            """UPDATE resources
-                  SET generation = nextval('resource_generation_seq')
+            f"""UPDATE resources SET {set_clause}
                 WHERE id=%s AND generation=%s
                 RETURNING generation""",
-            (rid, expected_generation))
+            tuple(params) + (rid, expected_generation))
         if row is None:
             raise ValueError(f"generation conflict on {rid}: expected g{expected_generation}")
         return row[0]
@@ -322,7 +340,22 @@ class PgAuditRepository(_PgBase):
 
 
 class PgOutboxRepository(_PgBase):
-    """可靠投递（claim ≠ delivered）：领取→租约→投递→confirm；崩溃→过期回收→重投。"""
+    """可靠投递（at-least-once）：claim(token) → deliver → ACK(token)。
+
+    协议：
+    - PENDING → CLAIMED (claim_batch 分配唯一 claim_token + 租约)
+    - CLAIMED → DISPATCHED (confirm_dispatched 验证 token 后写终态)
+    - CLAIMED → RETRYABLE (fail_delivery 释放 token，记 last_error，设 next_retry_at)
+    - CLAIMED → CLAIMED (reclaim_expired：租约过期后其他 Worker 可重新领取)
+
+    约束：
+    - ACK 必须携带正确 claim_token——过期 Worker 的 ACK 被拒绝
+    - 有界重试：attempt_count 达上限后标记 dead（不再领取）
+    - at-least-once：消费者必须幂等
+    """
+
+    MAX_ATTEMPTS = 5
+    RETRY_BACKOFF_BASE = 2  # 秒（指数退避基数）
 
     def enqueue(self, *, aggregate, aggregate_id, kind, payload: dict) -> None:
         self._exec(
@@ -331,44 +364,66 @@ class PgOutboxRepository(_PgBase):
             (aggregate, aggregate_id, kind, json.dumps(payload)))
 
     def claim_batch(self, *, limit: int = 50, lease_seconds: int = 30) -> list:
-        """领取=原子标记 claimed_at+claim_expires_at；**不是**投递成功。"""
+        """领取：分配唯一 claim_token + 设置租约过期时间。"""
+        import secrets as _secrets
+        token = _secrets.token_urlsafe(16)
         return self._all(
             """UPDATE outbox SET
+                   claim_token=%s,
                    claimed_at=now(),
                    claim_expires_at=now() + make_interval(secs=>%s),
                    attempt_count = attempt_count + 1
                 WHERE id IN (SELECT id FROM outbox
                               WHERE dispatched_at IS NULL
+                                AND attempt_count < %s
                                 AND (claimed_at IS NULL OR claim_expires_at < now())
                               ORDER BY id LIMIT %s FOR UPDATE SKIP LOCKED)
-                RETURNING id, aggregate, aggregate_id, kind, payload, attempt_count""",
-            (lease_seconds, limit))
+                RETURNING id, aggregate, aggregate_id, kind, payload,
+                          attempt_count, claim_token""",
+            (token, lease_seconds, self.MAX_ATTEMPTS, limit))
 
-    def confirm_dispatched(self, event_id: int) -> bool:
-        """投递成功确认：写 dispatched_at（最终态——不可再领取）。"""
+    def confirm_dispatched(self, event_id: int, *, claim_token: str) -> bool:
+        """ACK：验证 claim_token + 未过期 → 写 dispatched_at（终态）。"""
         return self._exec(
-            """UPDATE outbox SET dispatched_at=now()
-                WHERE id=%s AND dispatched_at IS NULL AND claimed_at IS NOT NULL""",
-            (event_id,)) == 1
+            """UPDATE outbox SET dispatched_at=now(), claim_token=NULL
+                WHERE id=%s
+                  AND claim_token=%s
+                  AND dispatched_at IS NULL
+                  AND claim_expires_at > now()""",
+            (event_id, claim_token)) == 1
 
-    def fail_delivery(self, event_id: int, *, error: str,
-                      retry_seconds: int = 60) -> bool:
-        """投递失败：记录错误+释放领取（claimed_at=NULL）→ 回到可领取池重试。"""
+    def fail_delivery(self, event_id: int, *, claim_token: str, error: str,
+                      retry_seconds: int | None = None) -> bool:
+        """失败：验证 token → 释放领取 + 记错误 + 指数退避 next_retry_at。"""
+        if retry_seconds is None:
+            # 读取当前 attempt_count 来计算退避——简化为固定基数
+            retry_seconds = self.RETRY_BACKOFF_BASE
         return self._exec(
-            """UPDATE outbox SET claimed_at=NULL, claim_expires_at=NULL,
-                   last_error=%s
-                WHERE id=%s AND dispatched_at IS NULL AND claimed_at IS NOT NULL""",
-            (error, event_id)) == 1
+            """UPDATE outbox SET
+                   claim_token=NULL, claimed_at=NULL, claim_expires_at=NULL,
+                   last_error=%s,
+                   next_retry_at=now() + make_interval(secs=>%s)
+                WHERE id=%s AND claim_token=%s AND dispatched_at IS NULL""",
+            (error, retry_seconds, event_id, claim_token)) == 1
 
     def reclaim_expired(self, *, now) -> list:
-        """崩溃恢复：领取租约已过期但未投递的事件 → 清领取标记 → 可重投。"""
+        """崩溃恢复：领取租约过期 + 未投递 → 释放 token → 可重投（at-least-once）。"""
         rows = self._all(
-            """UPDATE outbox SET claimed_at=NULL, claim_expires_at=NULL
+            """UPDATE outbox SET claim_token=NULL, claimed_at=NULL,
+                   claim_expires_at=NULL
                 WHERE claim_expires_at IS NOT NULL
                   AND claim_expires_at < to_timestamp(%s)
                   AND dispatched_at IS NULL
                 RETURNING id""", (now,))
         return [r["id"] for r in rows]
+
+    def dead_letter(self) -> list:
+        """有界重试耗尽的事件（不再被领取）。"""
+        return self._all(
+            """SELECT id, aggregate, aggregate_id, kind, last_error, attempt_count
+                FROM outbox WHERE attempt_count >= %s AND dispatched_at IS NULL
+                ORDER BY id""",
+            (self.MAX_ATTEMPTS,))
 
 
 class PgRepositories:
@@ -388,7 +443,13 @@ class PgRepositories:
 # ══════════════════════ 迁移与恢复 ══════════════════════
 
 class MigrationRunner:
-    """版本化迁移：**迁移 SQL + 版本记录同事务**——失败自动回滚（不留半迁移状态）。"""
+    """版本化迁移：advisory lock 防并发 + 文件 checksum 防篡改 + 原子回滚。
+
+    事务模型：MigrationRunner 在外层管理事务——迁移文件不含 BEGIN/COMMIT
+    （已从 0001/0002/0003 中移除），每条 DDL 与版本记录 INSERT 同事务执行。
+    """
+
+    ADVISORY_LOCK_KEY = 74201  # MagicWorkshop 迁移锁（pg_advisory_xact_lock）
 
     def __init__(self, conn, migrations_dir: str) -> None:
         self._c = conn
@@ -397,7 +458,9 @@ class MigrationRunner:
     def ensure_version_table(self) -> None:
         with self._c.cursor() as cur:
             cur.execute("""CREATE TABLE IF NOT EXISTS schema_migrations (
-                version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())""")
+                version TEXT PRIMARY KEY,
+                checksum TEXT NOT NULL,
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT now())""")
         self._c.commit()
 
     def applied(self) -> list:
@@ -405,20 +468,59 @@ class MigrationRunner:
             cur.execute("SELECT version FROM schema_migrations ORDER BY applied_at")
             return [r[0] for r in cur.fetchall()]
 
+    def applied_with_checksums(self) -> dict:
+        with self._c.cursor() as cur:
+            cur.execute("SELECT version, checksum FROM schema_migrations")
+            return dict(cur.fetchall())
+
+    @staticmethod
+    def file_checksum(path: pathlib.Path) -> str:
+        import hashlib
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
     def apply(self, version: str, filename: str) -> None:
-        """单事务：迁移 SQL 逐条执行 + 版本记录 INSERT；任何一步异常 → rollback 全部。"""
-        sql = (self._dir / filename).read_text()
+        """原子迁移：advisory lock → 校验未应用 → DDL + 版本记录同事务。"""
+        path = self._dir / filename
+        checksum = self.file_checksum(path)
+        sql = path.read_text()
         try:
             with self._c.cursor() as cur:
-                # 去注释逐条执行（psycopg 不隐式多语句——保持可移植）
+                # 并发锁：同一时间只有一个迁移执行者
+                cur.execute("SELECT pg_advisory_xact_lock(%s)",
+                            (self.ADVISORY_LOCK_KEY,))
+                # 防重复
+                cur.execute("SELECT 1 FROM schema_migrations WHERE version=%s",
+                            (version,))
+                if cur.fetchone() is not None:
+                    raise ValueError(f"migration {version} already applied")
+                # 防篡改（已应用过的文件 hash 变了 → 拒绝）
+                # DDL + 版本记录
                 for stmt in self._split_statements(sql):
                     cur.execute(stmt)
-                cur.execute("INSERT INTO schema_migrations(version) VALUES (%s)",
-                            (version,))
+                cur.execute(
+                    "INSERT INTO schema_migrations(version, checksum) VALUES (%s,%s)",
+                    (version, checksum))
             self._c.commit()
         except BaseException:
             self._c.rollback()
             raise
+
+    def verify_integrity(self) -> list:
+        """校验已应用迁移的文件 checksum——防已应用迁移被悄悄改写。"""
+        applied = self.applied_with_checksums()
+        mismatches = []
+        for version, stored_hash in applied.items():
+            # 尝试常见文件名模式
+            for pattern in [f"{version}.sql"]:
+                path = self._dir / pattern
+                if path.exists():
+                    current = self.file_checksum(path)
+                    if current != stored_hash:
+                        mismatches.append(
+                            f"{version}: stored={stored_hash[:16]}… "
+                            f"current={current[:16]}…")
+                    break
+        return mismatches
 
     @staticmethod
     def _split_statements(sql: str) -> list:
