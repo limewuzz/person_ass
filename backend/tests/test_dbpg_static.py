@@ -26,17 +26,25 @@ def test_no_secrets_in_sql():
         assert pat not in SQL, f"敏感字样 {pat} 不应出现在迁移 SQL"
 
 
-def test_pg_repository_is_explicitly_not_run():
+def test_pg_repository_implemented_but_connection_fail_closed():
+    """部署工程轮：适配器已完整实现（dbpg/repository.py）；
+    连接注入前 factory 拒绝启动（fail-closed）。真实库验证 = Gate B（NOT_RUN）。"""
     import sys
     sys.path.insert(0, str(ROOT / "backend"))
-    from dbpg_shim import PgRepoProbe  # noqa: F401
+    sys.path.insert(0, str(ROOT))
+    from dbpg.repository import repository_factory, PgRepositories
+    import pytest
+    with pytest.raises(RuntimeError, match="fail-closed"):
+        repository_factory(mode="postgres", conn=None)
 
-def test_pg_blueprint_methods_raise_not_implemented():
+def test_pg_blueprint_methods_have_real_sql():
+    """适配器方法不再 NotImplementedError——断言 SQL 语句已实现（离线断言）。"""
     import sys
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
-    from dbpg_shim import _mod
-    repo = _mod.PgTaskRepo(conn=None)
-    for fn, args in [("insert_task", {}), ("cas_update_state", ("t", "a", "b")),
-                     ("conditional_finish", ("t", 1, "h", "SUCCEEDED"))]:
-        with pytest.raises(NotImplementedError):
-            getattr(repo, fn)(*args)
+    sys.path.insert(0, str(ROOT))
+    from dbpg import repository as R
+    import inspect
+    for cls in (R.PgTaskRepository, R.PgRegistryRepository,
+                R.PgApprovalRepository, R.PgLeaseRepository):
+        src = inspect.getsource(cls)
+        assert "NotImplementedError" not in src, cls.__name__
