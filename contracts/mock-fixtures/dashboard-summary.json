@@ -1,39 +1,73 @@
 {
-  "nodes": [
-    {
-      "id": "us-server",
-      "name": "US server (mofang)",
-      "health": "unknown",
-      "stale": true
-    },
-    {
-      "id": "mac-mini",
-      "name": "Mac mini (home)",
-      "health": "unknown",
-      "stale": true
-    },
-    {
-      "id": "ucloud-vps",
-      "name": "UCloud VPS",
-      "health": "unknown",
-      "stale": true
-    },
-    {
-      "id": "tencent-cloud",
-      "name": "Tencent Cloud",
-      "health": "unknown",
-      "stale": true
-    }
-  ],
+  "nodes": {
+    "items": [
+      {
+        "id": "us-server",
+        "name": "US server (mofang)",
+        "role": "PRIMARY",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      },
+      {
+        "id": "mac-mini",
+        "name": "Mac mini (home)",
+        "role": "STANDBY_GATEWAY",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      },
+      {
+        "id": "ucloud-vps",
+        "name": "UCloud VPS",
+        "role": "RELAY",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      },
+      {
+        "id": "tencent-cloud",
+        "name": "Tencent Cloud",
+        "role": "EXISTING_BUSINESS",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      }
+    ],
+    "next_cursor": null
+  },
   "task_counts": {
     "queued": 0,
+    "leased": 0,
     "running": 0,
     "succeeded": 0,
     "failed": 0,
-    "canceled": 1,
+    "canceled": 0,
     "expired": 0,
     "waiting_approval": 0,
-    "needs_reconciliation": 0
+    "needs_reconciliation": 0,
+    "active": 0,
+    "external": null
   },
   "approval_counts": {
     "pending": 0,
@@ -42,75 +76,17 @@
     "expired": 0,
     "consumed": 0
   },
-  "recent_events": [
-    {
-      "id": "ae-1",
-      "actor_ref": "admin-1",
-      "action": "work_item.create",
-      "resource_ref": "wi-ec48f5d3-e892-4fd3-972a-383df0ac2a7e",
-      "result": "ok",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": ""
-    },
-    {
-      "id": "ae-2",
-      "actor_ref": "admin-1",
-      "action": "work_item.create",
-      "resource_ref": "wi-e7561975-5f25-4252-8d98-8b07f93954bd",
-      "result": "ok",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": ""
-    },
-    {
-      "id": "ae-3",
-      "actor_ref": "admin-1",
-      "action": "work_item.create",
-      "resource_ref": "wi-41b245fa-0473-467f-a644-1aead6eed657",
-      "result": "ok",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": ""
-    },
-    {
-      "id": "ae-4",
-      "actor_ref": "admin-1",
-      "action": "work_item.create",
-      "resource_ref": "wi-efd752e8-9946-4249-b5c4-063dd720fd44",
-      "result": "ok",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": ""
-    },
-    {
-      "id": "ae-5",
-      "actor_ref": "admin-1",
-      "action": "task.create",
-      "resource_ref": "tk-04a55da9-47fc-497a-aaae-2931554b9f43",
-      "result": "ok",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": "d4af5f6b-418f-48fd-bfc9-78daaf6eec2c"
-    },
-    {
-      "id": "ae-6",
-      "actor_ref": "admin-1",
-      "action": "task.transition",
-      "resource_ref": "tk-04a55da9-47fc-497a-aaae-2931554b9f43",
-      "result": "QUEUED->CANCELED",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": "d4af5f6b-418f-48fd-bfc9-78daaf6eec2c"
-    },
-    {
-      "id": "ae-7",
-      "actor_ref": "w-real",
-      "action": "worker.heartbeat",
-      "resource_ref": "w-real",
-      "result": "ok",
-      "created_at": "2026-11-08T17:16:41+00:00",
-      "trace_id": ""
-    }
-  ],
+  "recent_events": [],
   "source_meta": {
+    "data_mode": "MOCK",
+    "freshness": "FRESH",
+    "source_system": "mwcp-local-rc",
+    "observed_at": "2026-11-08T19:10:36.560648+00:00",
+    "received_at": "2026-11-08T19:10:36.560653+00:00",
+    "ttl_seconds": 5,
+    "as_of": "2026-11-08T19:10:36.560655+00:00",
+    "reason_code": "LOCAL_SYNTHETIC_ONLY",
     "kind": "mock",
-    "observed_at": null,
-    "ttl_seconds": 60,
     "system": "mwcp-local-rc"
   }
 }

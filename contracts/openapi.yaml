@@ -1,12 +1,14 @@
 openapi: 3.1.0
 info:
   title: MagicWorkshop Control Plane API
-  version: 1.1.0-draft-local
-  description: '**Candidate design, not a running service.** US primary, Mac warm-standby gateway. Cherry Studio
-    frozen and out of scope. API operations marked x-phase; P2 write operations MUST NOT be enabled in P1.
+  version: 1.1.1-local-integrated
+  description: '**Candidate design, not a running service.** US primary, Mac warm-standby
+    gateway. Cherry Studio frozen and out of scope. API operations marked x-phase;
+    P2 write operations MUST NOT be enabled in P1.
 
-    MagicWorkshop v1.1 local development baseline: retains v0.4 paths; extension routes added for frontend. Candidate
-    contract only, NOT an approval to deploy, connect real services, or execute production probes.'
+    MagicWorkshop v1.1 local development baseline: retains v0.4 paths; extension routes
+    added for frontend. Candidate contract only, NOT an approval to deploy, connect
+    real services, or execute production probes.'
 servers:
 - url: https://control.example.invalid
   description: Placeholder. Must be replaced only after approved TLS+auth deployment.
@@ -63,6 +65,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/health/ready:
     get:
       tags:
@@ -101,6 +110,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessStatus'
   /api/v1/me:
     get:
       tags:
@@ -139,6 +155,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/nodes:
     get:
       tags:
@@ -173,6 +196,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -222,6 +252,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -263,6 +300,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -312,6 +356,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -353,6 +404,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -402,6 +460,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -442,6 +507,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -490,6 +562,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -530,6 +609,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -586,6 +672,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -627,6 +720,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -676,6 +776,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -721,6 +828,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: cursor
         in: query
@@ -762,6 +876,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -817,6 +938,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: id
         in: path
@@ -864,6 +992,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -919,6 +1054,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: id
         in: path
@@ -966,6 +1108,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1021,6 +1170,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: id
         in: path
@@ -1068,6 +1224,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1123,6 +1286,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: id
         in: path
@@ -1170,6 +1340,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1231,6 +1408,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: id
         in: path
@@ -1278,6 +1462,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1333,6 +1524,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
       - name: id
         in: path
@@ -1375,6 +1573,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1426,6 +1631,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1489,6 +1701,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
       - workerBearer: []
       requestBody:
@@ -1544,6 +1763,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1613,6 +1839,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency, authentication configuration or new
+            local API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
       - workerBearer: []
       requestBody:
@@ -1638,7 +1871,8 @@ paths:
     get:
       tags:
       - UI
-      summary: UI feature capability and source provenance; local mode defaults to MOCK, no impersonated LIVE.
+      summary: UI feature capability and source provenance; local mode defaults to
+        MOCK, no impersonated LIVE.
       operationId: get_api_v1_ui_bootstrap
       x-phase: P1
       x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
@@ -1674,7 +1908,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1683,7 +1918,8 @@ paths:
     get:
       tags:
       - UI
-      summary: Derived summary from registry/tasks; do not invent counts, represent unavailable values as null.
+      summary: Derived summary from registry/tasks; do not invent counts, represent
+        unavailable values as null.
       operationId: get_api_v1_dashboard_summary
       x-phase: P1
       x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
@@ -1719,7 +1955,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1743,7 +1980,8 @@ paths:
     get:
       tags:
       - Observability
-      summary: Cursor-paginated JSON event history; distinct from text/event-stream /events.
+      summary: Cursor-paginated JSON event history; distinct from text/event-stream
+        /events.
       operationId: get_api_v1_events_history
       x-phase: P1
       x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
@@ -1779,7 +2017,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1839,7 +2078,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1891,7 +2131,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1951,7 +2192,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -1975,7 +2217,8 @@ paths:
     get:
       tags:
       - Catalogs
-      summary: Read-only model gateway catalog, no request routing or model parameter changes.
+      summary: Read-only model gateway catalog, no request routing or model parameter
+        changes.
       operationId: get_api_v1_models
       x-phase: P2
       x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
@@ -2011,7 +2254,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -2071,7 +2315,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -2131,7 +2376,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -2191,7 +2437,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: Dependency unavailable (not synthetic health)
+          description: Unavailable dependency, authentication configuration or new
+            local API
           content:
             application/json:
               schema:
@@ -2227,7 +2474,7 @@ components:
     Error:
       type: object
       properties:
-        error:
+        error: &id001
           type: object
           required:
           - code
@@ -2241,8 +2488,9 @@ components:
               minLength: 1
             details_redacted:
               type: object
-              description: Optional non-sensitive error context; no raw URL path/query or secrets.
-        trace_id:
+              description: Optional non-sensitive error context; no raw URL path/query
+                or secrets.
+        trace_id: &id002
           type: string
           format: uuid
       required:
@@ -2576,6 +2824,21 @@ components:
         trace_id:
           type: string
           format: uuid
+        risk:
+          type: string
+          enum:
+          - READ
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        dry_run:
+          type: boolean
+        arguments_redacted:
+          type: object
+          additionalProperties: true
+        origin:
+          $ref: '#/components/schemas/Origin'
       required:
       - id
       - resource_id
@@ -2668,6 +2931,22 @@ components:
         created_at:
           type: string
           format: date-time
+        requester_ref:
+          type: string
+        scope:
+          type: string
+        action:
+          type: string
+        resource_id:
+          type: string
+        arguments_redacted:
+          type: object
+          additionalProperties: true
+        target_generation:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
       required:
       - id
       - task_id
@@ -3098,7 +3377,8 @@ components:
       - items
     DataSourceMeta:
       type: object
-      description: Observed data provenance; frontend MUST NOT infer LIVE from HTTP 200.
+      description: Observed data provenance; frontend MUST NOT infer LIVE from HTTP
+        200.
       properties:
         data_mode:
           type: string
@@ -3351,7 +3631,8 @@ components:
       - source_meta
     ResourceGenerationMeta:
       type: object
-      description: For resource registry and probe CAS; omitted from v0.4 resources until backend extension is implemented.
+      description: For resource registry and probe CAS; omitted from v0.4 resources
+        until backend extension is implemented.
       properties:
         resource_id:
           type: string
@@ -3380,6 +3661,26 @@ components:
       - lifecycle_state
       - owner_system
       - updated_at
+    ReadinessStatus:
+      type: object
+      required:
+      - error
+      - trace_id
+      - status
+      - checked_at
+      - dependency_status
+      properties:
+        error: *id001
+        trace_id: *id002
+        status:
+          const: not_ready
+        checked_at:
+          type: string
+          format: date-time
+        dependency_status:
+          type: object
+          additionalProperties:
+            type: string
 x-release-status: LOCAL_DESIGN_CONTRACT_ONLY
 x-preserved-v0.4:
   paths: 31

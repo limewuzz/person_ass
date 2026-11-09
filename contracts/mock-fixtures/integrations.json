@@ -2,8 +2,8 @@
   "items": [
     {
       "id": "int.google-drive",
-      "display_name": "Google Drive（OAuth 已通，会话级）",
-      "status": "unavailable",
+      "display_name": "Google Drive（此控制平面未授权）",
+      "status": "UNAVAILABLE",
       "scope_labels": [
         "drive.readonly"
       ],
@@ -12,15 +12,21 @@
     {
       "id": "int.rakazo",
       "display_name": "Rakazo（冻结只读）",
-      "status": "unavailable",
+      "status": "UNAVAILABLE",
       "scope_labels": [],
       "last_verified_at": null
     }
   ],
   "source_meta": {
-    "kind": "mock",
+    "data_mode": "MOCK",
+    "freshness": "UNKNOWN",
+    "source_system": "mwcp-local-rc",
     "observed_at": null,
-    "ttl_seconds": 60,
+    "received_at": "2026-11-08T19:10:36.572279+00:00",
+    "ttl_seconds": null,
+    "as_of": "2026-11-08T19:10:36.572287+00:00",
+    "reason_code": "LOCAL_SYNTHETIC_ONLY",
+    "kind": "mock",
     "system": "mwcp-local-rc"
   }
 }
