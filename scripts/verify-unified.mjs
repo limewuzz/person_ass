@@ -145,7 +145,7 @@ try {
     [
       "-m",
       "pytest",
-      "../dbpg/tests",
+      "dbpg/tests",
       "-q",
       `--junitxml=${join(out, "dbpg-offline.xml")}`,
     ],
