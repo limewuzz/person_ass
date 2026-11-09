@@ -154,7 +154,11 @@ if (command === "supervise") {
     console.log("Removed stale owned state; no process signalled");
     process.exit(0);
   }
-  const cmdline = readFileSync(`/proc/${s.pid}/cmdline`, "utf8");
+  // macOS 无 /proc/cmdline：用 ps 命令行等价判定（语义一致：找 supervise+nonce）
+  const cmdline = existsSync(`/proc/${s.pid}/cmdline`)
+    ? readFileSync(`/proc/${s.pid}/cmdline`, "utf8")
+    : (spawnSync("ps", ["-o", "command=", "-p", String(s.pid)], { encoding: "utf8" })
+        .stdout ?? "");
   if (
     s.root !== root ||
     ticks(s.pid) !== s.start_ticks ||
