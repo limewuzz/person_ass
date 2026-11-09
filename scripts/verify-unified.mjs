@@ -139,6 +139,19 @@ try {
     backend,
     { MWCP_PROBE_MODE: "test" },
   );
+  await run(
+    "dbpg-offline",
+    py,
+    [
+      "-m",
+      "pytest",
+      "../dbpg/tests",
+      "-q",
+      `--junitxml=${join(out, "dbpg-offline.xml")}`,
+    ],
+    backend,
+    { PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1" },
+  );
   await run("route-coverage", py, ["tools/route_coverage.py"], backend);
   await run("runtime-contract", py, [
     "integration/audit_glm.py",
