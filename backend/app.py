@@ -684,7 +684,7 @@ async def events_sse(
 @app.get("/api/v1/events/history")
 def events_history(
     cursor: str | None = Query(None, max_length=300),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(25, ge=1, le=100),
     principal: Principal = Depends(get_principal),
 ):
     _require_scope(principal, "tasks:read")

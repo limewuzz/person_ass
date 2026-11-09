@@ -29,6 +29,9 @@ with zipfile.ZipFile(out/'MagicWorkshop-validation.zip','w',zipfile.ZIP_DEFLATED
  inventory=[]
  for folder in [ev/'screenshots',ev/'live-integration/screenshots']:
   for p in sorted(folder.glob('*.png')):inventory.append({'path':str(p.relative_to(ev)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size})
+ for folder in [ev/'workspace',ev/'prefix']:
+  for p in sorted(folder.glob('*')):
+   if p.is_file() and p.suffix in {'.png','.xml'}:z.write(p,str(p.relative_to(ev)))
  z.writestr('SCREENSHOT-INVENTORY.json',json.dumps(inventory,indent=2))
  z.write(out/'RELEASE-IDENTITY.json','RELEASE-IDENTITY.json')
 shutil.copyfile(root/'docs/GLM-DEPLOYMENT-HANDOFF.md',out/'GLM-DEPLOYMENT-HANDOFF.md')

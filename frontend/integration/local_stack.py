@@ -3,13 +3,14 @@ The BFF validates locked JSON responses; it does NOT rename backend DTOs.
 """
 
 from __future__ import annotations
-import argparse, asyncio, hashlib, hmac, json, os, re, secrets, sys, time, uuid
+import argparse, asyncio, hashlib, hmac, ipaddress, json, os, re, secrets, sys, time, uuid
 from pathlib import Path
 from datetime import datetime, timezone
 import httpx, uvicorn, yaml
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from jsonschema import Draft202012Validator, FormatChecker
+from starlette.datastructures import MutableHeaders
 
 ROOT = Path(__file__).resolve().parents[1]
 contract = yaml.safe_load((ROOT.parent / "contracts/openapi.yaml").read_text())
@@ -37,6 +38,40 @@ def error(status, code):
         },
         status_code=status,
     )
+
+
+class LoopbackBoundary:
+    """Pure ASGI boundary: preserve SSE disconnect/cancellation semantics."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        request = Request(scope)
+        # The ephemeral issuer is not a production login, even behind a proxy.
+        try:
+            local_peer = request.client is not None and ipaddress.ip_address(request.client.host).is_loopback
+        except ValueError:
+            local_peer = False
+        local_hosts = {"127.0.0.1:5174", "localhost:5174", "127.0.0.1:8128", "localhost:8128"}
+
+        async def guarded_send(message):
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers["Cache-Control"] = "no-store"
+                headers["X-Content-Type-Options"] = "nosniff"
+                headers["X-Frame-Options"] = "DENY"
+                headers["Referrer-Policy"] = "same-origin"
+                headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+            await send(message)
+
+        if not local_peer or request.headers.get("host", "").lower() not in local_hosts:
+            return await error(403, "loopback_only")(scope, receive, guarded_send)
+        await self.app(scope, receive, guarded_send)
+
+
+app.add_middleware(LoopbackBoundary)
 
 
 def lookup(path, method):

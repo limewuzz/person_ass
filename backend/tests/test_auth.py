@@ -36,6 +36,20 @@ def test_missing_token_401(client):
     assert client.get("/api/v1/nodes").status_code == 401
 
 
+@pytest.mark.parametrize("path", ["me", "ui/bootstrap", "tasks", "audit", "events"])
+def test_private_data_and_sse_never_infer_admin_from_anonymous_request(client, path):
+    r = client.get("/api/v1/" + path)
+    assert r.status_code == 401
+    assert "items" not in r.json()
+
+
+@pytest.mark.parametrize("limit, expected", [(0, 400), (1, 200), (100, 200), (101, 400), ("invalid", 400)])
+def test_event_history_limit_matches_frozen_request_schema(client, limit, expected):
+    t = mint_token(SECRET, sub="limit-test", typ="actor", role="admin",
+                   scopes=["tasks:read"], jti="limit-test")
+    assert client.get("/api/v1/events/history", params={"limit": limit}, headers=_hdr(t)).status_code == expected
+
+
 def test_expired_token_401(client):
     t = viewer_token(jti="jti-exp", ttl_seconds=-10)
     assert client.get("/api/v1/nodes", headers=_hdr(t)).status_code == 401

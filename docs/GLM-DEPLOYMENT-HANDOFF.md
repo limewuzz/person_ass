@@ -2,6 +2,10 @@
 
 **Status: UNIFIED LOCAL RC; DEPLOYMENT_BLOCKED; DEPLOYED=NO.** This document transfers the integrated project and verification tools. It does not authorize or certify production or PostgreSQL runtime. GLM must obtain the user's separate Gate B authorization before isolated PG tests and separate authorization for production changes.
 
+## Current user-workspace increment
+
+The current increment is based on GLM Phase A commit `920c7343548a8520feb4b6ab1dfa0f42760ab42b`, branch `feature/user-workbench`, and targets `v0.1_personal`. It adds a user-facing root, retains the original 22 templates (Motion now `/architecture`), corrects the query limit and hardens the loopback issuer. See [current release and reproduction](USER-WORKSPACE-RELEASE.md) and [backend-owner contract request](WORKSPACE-CONTRACT-REQUEST.md). Current exact test counts and commit/tree are recorded in the generated release identity/verification, superseding historical integration counts below. This change has not been deployed and does not certify the separate public deployment. GLM Phase A PG implementation is preserved; its runtime and production wiring are not validated here.
+
 ## 1. Repository, release identity and contract
 
 Repository: https://github.com/limewuzz/person_ass . Target: `v0.1_personal`; integration branch: `integration/unified-magicworkshop`. Base: `5509483bb079763b6f8c0e2b4046d776452c7fd2` (merged PR #1). The unrelated `main` at `658e3f9193e4707e94547082841dc943c10db4d9` is not merged or modified.

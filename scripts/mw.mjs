@@ -200,6 +200,7 @@ else if (command === "contract") {
           encoding: "utf8",
         }).trim(),
         mode: "loopback",
+        web_base: process.env.MW_WEB_BASE ?? "/",
         contract_sha256: JSON.parse(
           readFileSync(join(root, "contracts/CONTRACT-LOCK.json")),
         ).sha256,
