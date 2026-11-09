@@ -103,8 +103,8 @@ export function Dashboard({ home = false }: { home?: boolean }) {
             : "所有状态带有来源。未知不等于健康，缓存不等于在线。"
         }
       >
-        <Link className="button primary" to="/tasks">
-          进入工作台 <ArrowUpRight size={15} />
+        <Link className="button primary" to="/">
+          进入用户工作坊 <ArrowUpRight size={15} />
         </Link>
       </PageHeader>
       <div className="meta-strip">

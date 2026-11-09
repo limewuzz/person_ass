@@ -257,12 +257,16 @@ export function ConfirmationDialog({
   onConfirm,
   onClose,
   pending = false,
+  confirmLabel = "确认 · LOCAL MOCK",
+  confirmDisabled = false,
 }: {
   title: string;
   children: ReactNode;
   onConfirm: () => void;
   onClose: () => void;
   pending?: boolean;
+  confirmLabel?: string;
+  confirmDisabled?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -274,22 +278,31 @@ export function ConfirmationDialog({
     <dialog
       aria-label={title}
       ref={ref}
-      onCancel={onClose}
+      onCancel={(e) => {
+        if (pending) e.preventDefault();
+        else onClose();
+      }}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape" && !pending) onClose();
       }}
     >
       <div className="dialog-head">
         <h2>{title}</h2>
-        <button onClick={onClose} aria-label="关闭">
+        <button disabled={pending} onClick={onClose} aria-label="关闭">
           <X size={18} />
         </button>
       </div>
       {children}
       <div className="dialog-actions">
-        <button onClick={onClose}>返回</button>
-        <button className="primary" disabled={pending} onClick={onConfirm}>
-          {pending ? "提交中…" : "确认 · LOCAL MOCK"}
+        <button disabled={pending} onClick={onClose}>
+          返回
+        </button>
+        <button
+          className="primary"
+          disabled={pending || confirmDisabled}
+          onClick={onConfirm}
+        >
+          {pending ? "提交中…" : confirmLabel}
         </button>
       </div>
     </dialog>

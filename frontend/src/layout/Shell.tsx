@@ -71,6 +71,10 @@ export function Shell() {
         <div className="side-label">WORKSPACE / 本地工作区</div>
         <nav aria-label="主要导航">
           <NavLink to="/" end>
+            <Icons.Sparkles size={16} />
+            用户工作坊
+          </NavLink>
+          <NavLink to="/architecture" end>
             <Icons.Orbit size={16} />
             架构首页 <small>V2</small>
           </NavLink>
@@ -92,8 +96,12 @@ export function Shell() {
             </b>
             <p>LOCAL MOCK · 尚未部署</p>
             <div>
-              <a href="/versions/v1.0/">V1.0 历史 ↗</a>
-              <a href="/versions/v2.0-prism/">Prism 历史 ↗</a>
+              <a href={`${import.meta.env.BASE_URL}versions/v1.0/`}>
+                V1.0 历史 ↗
+              </a>
+              <a href={`${import.meta.env.BASE_URL}versions/v2.0-prism/`}>
+                Prism 历史 ↗
+              </a>
             </div>
           </div>
           <small>单用户 · 清晰边界 · 可追踪</small>

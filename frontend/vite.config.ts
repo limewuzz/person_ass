@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+const webBase = process.env.MW_WEB_BASE ?? "/";
+if (!/^\/(?:[a-zA-Z0-9_-]+\/)*$/.test(webBase))
+  throw Error("MW_WEB_BASE must be a root-relative directory, e.g. / or /app/");
 export default defineConfig({
+  base: webBase,
   plugins: [react()],
   server: {
     host: "127.0.0.1",

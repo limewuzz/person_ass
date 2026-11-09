@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [v0.1_personal]
   push:
-    branches: [v0.1_personal, 'integration/**']
+    branches: [v0.1_personal, 'integration/**', 'feature/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +45,9 @@ jobs:
             frontend/evidence/release/
             frontend/evidence/*junit.xml
             frontend/evidence/live-integration/junit.xml
+            frontend/evidence/prefix/junit.xml
+            frontend/evidence/workspace/
+            frontend/evidence/prefix/*.png
             frontend/evidence/screenshots/home-1600.png
             frontend/evidence/screenshots/tasks-390.png
             frontend/evidence/live-integration/screenshots/real-task-success.png

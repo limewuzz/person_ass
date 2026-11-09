@@ -65,7 +65,7 @@ for (const width of [1600, 1280, 768, 390])
     await page.setViewportSize({ width, height: 1000 });
     const tid = await create(page);
     for (const path of [
-      "/",
+      "/architecture",
       ...routes.map((r) => `/${r}`),
       "/nodes/us-server",
       "/services/svc.mwcp.portal",

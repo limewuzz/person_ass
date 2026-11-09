@@ -2,6 +2,9 @@ import { useSyncExternalStore } from "react";
 let connected = typeof navigator === "undefined" || navigator.onLine;
 const listeners = new Set<() => void>();
 export function setConnected(value: boolean) {
+  // A cached/service-worker response must never restore write permission while
+  // the browser itself is offline.
+  value = value && (typeof navigator === "undefined" || navigator.onLine);
   if (connected !== value) {
     connected = value;
     listeners.forEach((fn) => fn());

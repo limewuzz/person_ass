@@ -153,6 +153,7 @@ try {
     { PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1" },
   );
   await run("route-coverage", py, ["tools/route_coverage.py"], backend);
+  await run("dbpg-offline", py, ["-m", "pytest", "dbpg/tests", "-q", `--junitxml=${join(out,"dbpg-offline.xml")}`], backend);
   await run("runtime-contract", py, [
     "integration/audit_glm.py",
     "--backend",
@@ -251,6 +252,7 @@ try {
     ),
   );
   await stopStack();
+  await run("prefixed-deployment", process.execPath, ["scripts/check-prefixed.mjs"]);
   await run("unified-lifecycle", py, ["scripts/lifecycle_smoke.py"], backend);
   if (git(backend, "status", "--porcelain"))
     throw Error("Verification mutated source");

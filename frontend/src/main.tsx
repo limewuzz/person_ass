@@ -7,6 +7,14 @@ import { pages } from "./app/catalog";
 import { StatePanel } from "./components/ui";
 import "./styles/tokens.css";
 import { API_MODE, establishLocalSession } from "./api/client";
+import {
+  WorkspaceLayout,
+  WorkspaceHome,
+  WorkspaceHistory,
+  WorkspaceResults,
+  WorkspaceAssistants,
+  WorkspaceTask,
+} from "./workspace/Workspace";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: false, refetchOnWindowFocus: false, staleTime: 1000 },
@@ -17,6 +25,7 @@ async function start() {
   if (API_MODE === "mock") {
     const { worker } = await import("./mocks/browser");
     await worker.start({
+      serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
       onUnhandledRequest(request, print) {
         if (new URL(request.url).pathname.startsWith("/api/")) print.error();
       },
@@ -36,10 +45,23 @@ async function start() {
   }
   createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter
+        basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}
+      >
         <Routes>
+          <Route element={<WorkspaceLayout />}>
+            <Route index element={<WorkspaceHome />} />
+            <Route path="workbench" element={<WorkspaceHome />} />
+            <Route path="workbench/history" element={<WorkspaceHistory />} />
+            <Route path="workbench/results" element={<WorkspaceResults />} />
+            <Route
+              path="workbench/assistants"
+              element={<WorkspaceAssistants />}
+            />
+            <Route path="workbench/tasks/:id" element={<WorkspaceTask />} />
+          </Route>
           <Route element={<Shell />}>
-            <Route index element={<Dashboard home />} />
+            <Route path="architecture" element={<Dashboard home />} />
             {pages.map(([k]) => (
               <Route
                 key={k}

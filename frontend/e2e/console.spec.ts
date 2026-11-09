@@ -17,7 +17,7 @@ const routes = [
   "artifacts",
   "knowledge",
 ];
-async function ready(page: Page, path = "/") {
+async function ready(page: Page, path = "/architecture") {
   await page.goto(path);
   await expect(page.getByRole("main")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -228,7 +228,7 @@ test("basic WCAG checks on home, mobile catalog and modal", async ({
 }) => {
   const { default: AxeBuilder } = await import("@axe-core/playwright");
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of ["/", "/agents", "/tasks"]) {
+  for (const path of ["/", "/architecture", "/agents", "/tasks"]) {
     await ready(page, path);
     expect(
       (
