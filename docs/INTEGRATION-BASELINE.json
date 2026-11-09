@@ -1,0 +1,7 @@
+{
+  "original_drive_id": "1O49fYI3wax8yLdvMO0ZWTOagvjlFnoX4",
+  "zip_sha256": "350c36e8dc405ec886615fc1c64100420495236927a6d92db1c593ac807f015a",
+  "reported_glm_head": "f13d6e52ce3b7e021ed982225a41caad2ae2571e",
+  "contract_sha256": "18b42a97b3f975fcbe9a0326a1374d56fa547268e6fdefd18dc9cb529e8f7a25",
+  "scope": "User authorized isolated backend corrections; original GLM package untouched; no production/PG/Docker"
+}

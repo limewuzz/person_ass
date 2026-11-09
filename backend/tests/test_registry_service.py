@@ -1,4 +1,5 @@
 """R11-A：RegistryService 受控变更 / 单调代数 / 快照不可变 / 统一锁。"""
+
 import threading
 import pytest
 
@@ -28,16 +29,24 @@ def test_service_register_assigns_monotonic_generation():
 def test_transfer_owner_bumps_generation_and_revokes_probe_auth():
     import probes as P
     from probes import ProbeTarget, ProbeTargetRejected, register_target
+
     st = _store_with()
     svc = RegistryService(st)
-    P.register_target(st, ProbeTarget(resource_id="svc.x", node_id="mac-mini",
-                                      url="http://127.0.0.1:9/a"), allow_loopback=True)
+    P.register_target(
+        st,
+        ProbeTarget(
+            resource_id="svc.x", node_id="mac-mini", url="http://127.0.0.1:9/a"
+        ),
+        allow_loopback=True,
+    )
     g0 = st.resources["svc.x"].generation
     svc.transfer_owner("svc.x", "owner-b")
     assert st.resources["svc.x"].generation > g0
     import httpx
-    with httpx.Client(transport=httpx.MockTransport(
-            lambda r: httpx.Response(200)), trust_env=False) as client:
+
+    with httpx.Client(
+        transport=httpx.MockTransport(lambda r: httpx.Response(200)), trust_env=False
+    ) as client:
         with pytest.raises(ProbeTargetRejected, match="owner_system changed"):
             P.run_probe_by_id(st, "svc.x", client=client, allow_loopback=True)
 
@@ -62,7 +71,7 @@ def test_snapshot_is_immutable_view():
     svc = RegistryService(st)
     snap = svc.snapshot("svc.x")
     assert isinstance(snap, ResourceSnapshot)
-    st.resources["svc.x"].owner_system = "someone-else"  # 内部变化不影响快照
+    RegistryService(st).transfer_owner("svc.x", "someone-else")  # 内部变化不影响快照
     assert snap.owner_system == "owner-a"
 
 
@@ -75,20 +84,29 @@ def test_service_writer_vs_probe_commit_same_protocol():
     import httpx
     import probes as P
     from probes import ProbeTarget, ProbeTargetRejected, register_target
+
     st = _store_with()
     svc = RegistryService(st)
-    P.register_target(st, ProbeTarget(resource_id="svc.x", node_id="mac-mini",
-                                      url="http://127.0.0.1:9/a"), allow_loopback=True)
+    P.register_target(
+        st,
+        ProbeTarget(
+            resource_id="svc.x", node_id="mac-mini", url="http://127.0.0.1:9/a"
+        ),
+        allow_loopback=True,
+    )
     gate_seen = threading.Event()
 
     def transport(req):
-        svc.transfer_owner("svc.x", "owner-b")   # 受控写：网络阶段（提交锁外）
+        svc.transfer_owner("svc.x", "owner-b")  # 受控写：网络阶段（提交锁外）
         gate_seen.set()
         return httpx.Response(200)
 
-    with httpx.Client(transport=httpx.MockTransport(transport),
-                      trust_env=False) as client:
-        with pytest.raises(ProbeTargetRejected, match="owner_system changed|generation changed"):
+    with httpx.Client(
+        transport=httpx.MockTransport(transport), trust_env=False
+    ) as client:
+        with pytest.raises(
+            ProbeTargetRejected, match="owner_system changed|generation changed"
+        ):
             P.run_probe_by_id(st, "svc.x", client=client, allow_loopback=True)
     assert gate_seen.is_set()
     assert st.resources["svc.x"].base_health == "unknown"
@@ -98,5 +116,14 @@ def test_aba_raw_writes_detected_by_write_rev():
     st = _store_with()
     rec = st.resources["svc.x"]
     r0 = rec.write_rev()
-    rec.owner_system = "b"; rec.owner_system = "owner-a"  # ABA
-    assert rec.owner_system == "owner-a" and rec.write_rev() == r0 + 2
+    with pytest.raises(AttributeError):
+        rec.owner_system = "b"
+    service = RegistryService(st)
+    g0 = rec.generation
+    service.transfer_owner("svc.x", "b")
+    service.transfer_owner("svc.x", "owner-a")
+    assert (
+        rec.owner_system == "owner-a"
+        and rec.write_rev() == r0 + 2
+        and rec.generation > g0
+    )

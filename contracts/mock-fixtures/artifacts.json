@@ -1,9 +1,4 @@
 {
   "items": [],
-  "source_meta": {
-    "kind": "unavailable",
-    "observed_at": null,
-    "ttl_seconds": 60,
-    "system": "mwcp-local-rc"
-  }
+  "next_cursor": null
 }

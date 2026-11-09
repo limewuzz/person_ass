@@ -1,11 +1,10 @@
 {
-  "version": "1.1.0-local-rc1",
-  "sha256": "18b42a97b3f975fcbe9a0326a1374d56fa547268e6fdefd18dc9cb529e8f7a25",
+  "version": "1.1.1-local-integrated",
+  "sha256": "e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa",
   "paths": 41,
   "operations": 43,
   "openapi_file": "contracts/openapi.yaml",
-  "backend_head_at_lock": "7fa9f307c3633aa557d2e7eecf0bd2902cef269c",
-  "status": "FROZEN_FOR_LOCAL_RC (baseline = v0.4 31/33 byte-identical paths + 10 new read-only; Resource +optional generation/lifecycle_state)",
-  "generated_at": "2026-11-09T00:56:10+08:00",
-  "codex_note": "Use THIS file+sha for TS SDK; drift = build error"
+  "baseline_sha256": "18b42a97b3f975fcbe9a0326a1374d56fa547268e6fdefd18dc9cb529e8f7a25",
+  "status": "FROZEN_FOR_ISOLATED_LOCAL_INTEGRATION",
+  "change_log": "Add optional redacted Task/Approval context and explicit dependency 503 responses. All 41 paths/43 operations retained. Original GLM input archived. No production authorization."
 }

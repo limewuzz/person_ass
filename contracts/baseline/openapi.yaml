@@ -1,0 +1,3391 @@
+openapi: 3.1.0
+info:
+  title: MagicWorkshop Control Plane API
+  version: 1.1.0-draft-local
+  description: '**Candidate design, not a running service.** US primary, Mac warm-standby gateway. Cherry Studio
+    frozen and out of scope. API operations marked x-phase; P2 write operations MUST NOT be enabled in P1.
+
+    MagicWorkshop v1.1 local development baseline: retains v0.4 paths; extension routes added for frontend. Candidate
+    contract only, NOT an approval to deploy, connect real services, or execute production probes.'
+servers:
+- url: https://control.example.invalid
+  description: Placeholder. Must be replaced only after approved TLS+auth deployment.
+tags:
+- name: Health
+- name: Registry
+- name: WorkItems
+- name: Tasks
+- name: Approvals
+- name: Observability
+- name: Artifacts
+- name: Integrations
+- name: Workers
+- name: UI
+- name: Catalogs
+security:
+- humanBearer: []
+paths:
+  /api/v1/health/live:
+    get:
+      tags:
+      - Health
+      summary: Liveness
+      operationId: get_api_v1_health_live
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/health/ready:
+    get:
+      tags:
+      - Health
+      summary: Readiness
+      operationId: get_api_v1_health_ready
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me:
+    get:
+      tags:
+      - Registry
+      summary: List Registry Me
+      operationId: get_api_v1_me
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/nodes:
+    get:
+      tags:
+      - Registry
+      summary: List Registry NodeList
+      operationId: get_api_v1_nodes
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/resources:
+    get:
+      tags:
+      - Registry
+      summary: List Registry ResourceList
+      operationId: get_api_v1_resources
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/services:
+    get:
+      tags:
+      - Registry
+      summary: List Registry ResourceList
+      operationId: get_api_v1_services
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/agents:
+    get:
+      tags:
+      - Registry
+      summary: List Registry AgentList
+      operationId: get_api_v1_agents
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/capabilities:
+    get:
+      tags:
+      - Registry
+      summary: List Registry CapabilityList
+      operationId: get_api_v1_capabilities
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/work-items:
+    get:
+      tags:
+      - WorkItems
+      summary: List WorkItems WorkItemList
+      operationId: get_api_v1_work_items
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItemList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+    post:
+      tags:
+      - WorkItems
+      summary: Create new control-ledger work item
+      operationId: post_api_v1_work_items
+      x-phase: P1
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkItemCreate'
+  /api/v1/tasks:
+    get:
+      tags:
+      - Tasks
+      summary: List Tasks TaskList
+      operationId: get_api_v1_tasks
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+    post:
+      tags:
+      - Tasks
+      summary: Create asynchronous task (P2 gated)
+      operationId: post_api_v1_tasks
+      x-phase: P2
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          minLength: 12
+          maxLength: 256
+  /api/v1/approvals:
+    get:
+      tags:
+      - Approvals
+      summary: List Approvals ApprovalList
+      operationId: get_api_v1_approvals
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/observations:
+    get:
+      tags:
+      - Observability
+      summary: List Observability ObservationList
+      operationId: get_api_v1_observations
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservationList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/audit:
+    get:
+      tags:
+      - Observability
+      summary: List Observability AuditEventList
+      operationId: get_api_v1_audit
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/artifacts:
+    get:
+      tags:
+      - Artifacts
+      summary: List Artifacts ArtifactList
+      operationId: get_api_v1_artifacts
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/integrations:
+    get:
+      tags:
+      - Integrations
+      summary: List Integrations IntegrationList
+      operationId: get_api_v1_integrations
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/nodes/{id}:
+    get:
+      tags:
+      - Registry
+      summary: Get one Registry
+      operationId: get_api_v1_nodes_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/resources/{id}:
+    get:
+      tags:
+      - Registry
+      summary: Get one Registry
+      operationId: get_api_v1_resources_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/agents/{id}:
+    get:
+      tags:
+      - Registry
+      summary: Get one Registry
+      operationId: get_api_v1_agents_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/work-items/{id}:
+    get:
+      tags:
+      - WorkItems
+      summary: Get one WorkItems
+      operationId: get_api_v1_work_items_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/tasks/{id}:
+    get:
+      tags:
+      - Tasks
+      summary: Get one Tasks
+      operationId: get_api_v1_tasks_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/approvals/{id}:
+    get:
+      tags:
+      - Approvals
+      summary: Get one Approvals
+      operationId: get_api_v1_approvals_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/artifacts/{id}:
+    get:
+      tags:
+      - Artifacts
+      summary: Get one Artifacts
+      operationId: get_api_v1_artifacts_id
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/tasks/{id}/events:
+    get:
+      tags:
+      - Tasks
+      summary: Task event timeline
+      operationId: get_api_v1_tasks_id_events
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskEventList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/tasks/{id}/cancel:
+    post:
+      tags:
+      - Tasks
+      summary: Request cancellation; best effort
+      operationId: post_api_v1_tasks_id_cancel
+      x-phase: P2
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/approvals/{id}/approve:
+    post:
+      tags:
+      - Approvals
+      summary: Approve specific approval
+      operationId: post_api_v1_approvals_id_approve
+      x-phase: P2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/approvals/{id}/reject:
+    post:
+      tags:
+      - Approvals
+      summary: Reject specific approval
+      operationId: post_api_v1_approvals_id_reject
+      x-phase: P2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/events:
+    get:
+      tags:
+      - Observability
+      summary: Authorized SSE event stream; Last-Event-ID resume
+      operationId: get_api_v1_events
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE records carrying redacted TaskEvent; cursor IDs
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+  /api/v1/workers/{worker_id}/heartbeat:
+    post:
+      tags:
+      - Workers
+      summary: Authenticated worker operation
+      operationId: post_api_v1_workers_worker_id_heartbeat
+      x-phase: P1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - workerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerHeartbeat'
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/workers/{worker_id}/claim:
+    post:
+      tags:
+      - Workers
+      summary: Authenticated worker operation
+      operationId: post_api_v1_workers_worker_id_claim
+      x-phase: P2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerClaimResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - workerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerClaim'
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/workers/{worker_id}/tasks/{task_id}/started:
+    post:
+      tags:
+      - Workers
+      summary: Authenticated worker operation
+      operationId: post_api_v1_workers_worker_id_tasks_task_id_started
+      x-phase: P2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - workerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerStarted'
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/workers/{worker_id}/tasks/{task_id}/finish:
+    post:
+      tags:
+      - Workers
+      summary: Authenticated worker operation
+      operationId: post_api_v1_workers_worker_id_tasks_task_id_finish
+      x-phase: P2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found or hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - workerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerResult'
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/ui/bootstrap:
+    get:
+      tags:
+      - UI
+      summary: UI feature capability and source provenance; local mode defaults to MOCK, no impersonated LIVE.
+      operationId: get_api_v1_ui_bootstrap
+      x-phase: P1
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UIBootstrap'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/dashboard/summary:
+    get:
+      tags:
+      - UI
+      summary: Derived summary from registry/tasks; do not invent counts, represent unavailable values as null.
+      operationId: get_api_v1_dashboard_summary
+      x-phase: P1
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/events/history:
+    get:
+      tags:
+      - Observability
+      summary: Cursor-paginated JSON event history; distinct from text/event-stream /events.
+      operationId: get_api_v1_events_history
+      x-phase: P1
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditHistoryList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/tasks/{id}/attempts:
+    get:
+      tags:
+      - Tasks
+      summary: Redacted task attempt history, object-level authorization required.
+      operationId: get_api_v1_tasks_id_attempts
+      x-phase: P2
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAttemptList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/workflows:
+    get:
+      tags:
+      - Catalogs
+      summary: Read-only workflow catalog. Existing cron never triggered or duplicated.
+      operationId: get_api_v1_workflows
+      x-phase: P2
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayRecordList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/network/links:
+    get:
+      tags:
+      - Catalogs
+      summary: Read-only graph links; UNKNOWN unless independently verified.
+      operationId: get_api_v1_network_links
+      x-phase: P2
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayRecordList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/models:
+    get:
+      tags:
+      - Catalogs
+      summary: Read-only model gateway catalog, no request routing or model parameter changes.
+      operationId: get_api_v1_models
+      x-phase: P2
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayRecordList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/projects:
+    get:
+      tags:
+      - Catalogs
+      summary: Read-only repo/project index; no code execution.
+      operationId: get_api_v1_projects
+      x-phase: P2
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayRecordList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/compute/runs:
+    get:
+      tags:
+      - Catalogs
+      summary: Read-only compute run index, no Colab/GPU operations.
+      operationId: get_api_v1_compute_runs
+      x-phase: P3
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayRecordList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+  /api/v1/knowledge:
+    get:
+      tags:
+      - Catalogs
+      summary: Read-only knowledge index, no Notion writes.
+      operationId: get_api_v1_knowledge
+      x-phase: P3
+      x-live-data-policy: NO_PRODUCTION_ACCESS_WITHOUT_NEW_APPROVAL
+      responses:
+        '200':
+          description: Read-only result with explicit source/provenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayRecordList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/idempotency/lease error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Dependency unavailable (not synthetic health)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 300
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+components:
+  securitySchemes:
+    humanBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Human/agent auth; required object-level authorization.
+    workerBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Opaque
+      description: Separate Worker issuer/audience and scopes; never use a human token.
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              minLength: 1
+            message:
+              type: string
+              minLength: 1
+            details_redacted:
+              type: object
+              description: Optional non-sensitive error context; no raw URL path/query or secrets.
+        trace_id:
+          type: string
+          format: uuid
+      required:
+      - error
+      - trace_id
+    PageMeta:
+      type: object
+      properties:
+        next_cursor:
+          type:
+          - string
+          - 'null'
+    Origin:
+      type: object
+      properties:
+        channel:
+          enum:
+          - web
+          - android
+          - cli
+          - rakazo
+          - system
+          - other
+        source_ref:
+          type:
+          - string
+          - 'null'
+      required:
+      - channel
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        role:
+          enum:
+          - PRIMARY
+          - STANDBY_GATEWAY
+          - RELAY
+          - EXISTING_BUSINESS
+          - WORKER
+        health:
+          enum:
+          - healthy
+          - degraded
+          - offline
+          - unknown
+        observed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        last_seen_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        stale:
+          type: boolean
+        source:
+          type: string
+          minLength: 1
+      required:
+      - id
+      - name
+      - role
+      - health
+      - stale
+      - source
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        kind:
+          enum:
+          - node
+          - service
+          - agent
+          - model
+          - project
+          - integration
+          - artifact
+          - workflow
+        node_id:
+          type:
+          - string
+          - 'null'
+        owner_system:
+          type: string
+          minLength: 1
+        display_name:
+          type: string
+          minLength: 1
+        health:
+          enum:
+          - healthy
+          - degraded
+          - offline
+          - unknown
+        observed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        stale:
+          type: boolean
+        source:
+          type: string
+          minLength: 1
+        generation:
+          type: integer
+          minimum: 1
+        lifecycle_state:
+          type: string
+          enum:
+          - ACTIVE
+          - DISABLED
+          - DELETED
+      required:
+      - id
+      - kind
+      - owner_system
+      - display_name
+      - health
+      - stale
+      - source
+    Capability:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        version:
+          type: integer
+          minimum: 1
+        risk:
+          enum:
+          - READ
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        read_only:
+          type: boolean
+        enabled:
+          type: boolean
+        requires_approval:
+          type: boolean
+        args_schema:
+          type: object
+      required:
+      - name
+      - version
+      - risk
+      - enabled
+      - read_only
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        display_name:
+          type: string
+          minLength: 1
+        owner_system:
+          type: string
+          minLength: 1
+        runtime_node_id:
+          type:
+          - string
+          - 'null'
+        status:
+          enum:
+          - available
+          - degraded
+          - offline
+          - unknown
+        capabilities:
+          type: array
+          items:
+            type: string
+        observed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+      required:
+      - id
+      - display_name
+      - owner_system
+      - status
+      - capabilities
+    WorkItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+        kind:
+          enum:
+          - task
+          - idea
+          - paper
+          - issue
+          - project
+        status:
+          enum:
+          - open
+          - in_progress
+          - blocked
+          - done
+          - archived
+        source_system:
+          type:
+          - string
+          - 'null'
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+      required:
+      - id
+      - title
+      - kind
+      - status
+      - created_at
+      - created_by
+    WorkItemCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        kind:
+          enum:
+          - task
+          - idea
+          - paper
+          - issue
+          - project
+        source_system:
+          type:
+          - string
+          - 'null'
+        source_external_id:
+          type:
+          - string
+          - 'null'
+      required:
+      - title
+      - kind
+    TaskCreate:
+      type: object
+      properties:
+        work_item_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        capability:
+          type: string
+          minLength: 1
+        resource_id:
+          type: string
+          minLength: 1
+        arguments:
+          type: object
+          additionalProperties: true
+        dry_run:
+          type: boolean
+          default: false
+        origin:
+          $ref: '#/components/schemas/Origin'
+      required:
+      - capability
+      - resource_id
+      - arguments
+      - origin
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        work_item_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        resource_id:
+          type: string
+          minLength: 1
+        capability:
+          type: string
+          minLength: 1
+        state:
+          enum:
+          - DRAFT
+          - VALIDATING
+          - WAITING_APPROVAL
+          - QUEUED
+          - LEASED
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+          - CANCELED
+          - EXPIRED
+          - NEEDS_RECONCILIATION
+        generation:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        trace_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - resource_id
+      - capability
+      - state
+      - generation
+      - created_at
+      - updated_at
+      - trace_id
+    TaskAccepted:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          minLength: 1
+        trace_id:
+          type: string
+          format: uuid
+        poll_url:
+          type: string
+          minLength: 1
+        replayed:
+          type: boolean
+      required:
+      - task_id
+      - state
+      - trace_id
+      - poll_url
+      - replayed
+    TaskEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        sequence:
+          type: integer
+          minimum: 1
+        kind:
+          type: string
+          minLength: 1
+        occurred_at:
+          type: string
+          format: date-time
+        summary:
+          type: string
+          minLength: 1
+        trace_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - task_id
+      - sequence
+      - kind
+      - occurred_at
+      - summary
+      - trace_id
+    Approval:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        state:
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - EXPIRED
+          - CONSUMED
+        risk:
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - task_id
+      - state
+      - risk
+      - expires_at
+      - created_at
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        storage_system:
+          type: string
+          minLength: 1
+        uri:
+          type: string
+          minLength: 1
+        sha256:
+          type:
+          - string
+          - 'null'
+          pattern: ^[0-9a-f]{64}$
+        byte_size:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      required:
+      - id
+      - storage_system
+      - uri
+    Observation:
+      type: object
+      properties:
+        resource_id:
+          type: string
+          minLength: 1
+        status:
+          enum:
+          - healthy
+          - degraded
+          - offline
+          - unknown
+        observed_at:
+          type: string
+          format: date-time
+        ttl_seconds:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          minLength: 1
+        stale:
+          type: boolean
+        details_redacted:
+          type: object
+      required:
+      - resource_id
+      - status
+      - observed_at
+      - ttl_seconds
+      - source
+      - stale
+    Integration:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        display_name:
+          type: string
+          minLength: 1
+        status:
+          enum:
+          - PLANNED
+          - PROBED
+          - CONNECTED
+          - UNAVAILABLE
+          - UNKNOWN
+        last_verified_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        scope_labels:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - display_name
+      - status
+      - scope_labels
+    WorkerHeartbeat:
+      type: object
+      properties:
+        node_id:
+          type: string
+          minLength: 1
+        version:
+          type: string
+          minLength: 1
+        available_capabilities:
+          type: array
+          items:
+            type: string
+        observed_at:
+          type: string
+          format: date-time
+      required:
+      - node_id
+      - version
+      - available_capabilities
+      - observed_at
+    WorkerClaim:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 1
+        capabilities:
+          type: array
+          items:
+            type: string
+      required:
+      - limit
+    WorkerTask:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        capability:
+          type: string
+          minLength: 1
+        resource_id:
+          type: string
+          minLength: 1
+        arguments:
+          type: object
+        generation:
+          type: integer
+          minimum: 1
+        lease_token:
+          type: string
+          minLength: 1
+        lease_until:
+          type: string
+          format: date-time
+      required:
+      - task_id
+      - capability
+      - resource_id
+      - generation
+      - lease_token
+      - lease_until
+    WorkerClaimResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkerTask'
+      required:
+      - tasks
+    WorkerResult:
+      type: object
+      properties:
+        generation:
+          type: integer
+          minimum: 1
+        lease_token:
+          type: string
+          minLength: 1
+        outcome:
+          enum:
+          - SUCCEEDED
+          - FAILED
+        result_summary:
+          type: string
+          maxLength: 4000
+      required:
+      - generation
+      - lease_token
+      - outcome
+    WorkerStarted:
+      type: object
+      properties:
+        generation:
+          type: integer
+          minimum: 1
+        lease_token:
+          type: string
+          minLength: 1
+      required:
+      - generation
+      - lease_token
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        actor_ref:
+          type: string
+          minLength: 1
+        action:
+          type: string
+          minLength: 1
+        resource_ref:
+          type: string
+          minLength: 1
+        result:
+          type: string
+          minLength: 1
+        created_at:
+          type: string
+          format: date-time
+        trace_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - actor_ref
+      - action
+      - resource_ref
+      - result
+      - created_at
+      - trace_id
+    Me:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          minLength: 1
+        display_name:
+          type: string
+          minLength: 1
+        allowed_scopes:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - role
+      - display_name
+      - allowed_scopes
+    Status:
+      type: object
+      properties:
+        status:
+          enum:
+          - ok
+          - degraded
+        checked_at:
+          type: string
+          format: date-time
+      required:
+      - status
+      - checked_at
+    NodeList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    ResourceList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    CapabilityList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Capability'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    AgentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    WorkItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkItem'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    TaskList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    TaskEventList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskEvent'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    ApprovalList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Approval'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    ArtifactList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    ObservationList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Observation'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    IntegrationList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Integration'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    AuditEventList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+      required:
+      - items
+    DataSourceMeta:
+      type: object
+      description: Observed data provenance; frontend MUST NOT infer LIVE from HTTP 200.
+      properties:
+        data_mode:
+          type: string
+          enum:
+          - LIVE
+          - MOCK
+          - UNAVAILABLE
+        freshness:
+          type: string
+          enum:
+          - FRESH
+          - STALE
+          - UNKNOWN
+        source_system:
+          type: string
+        observed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        received_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        ttl_seconds:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+        reason_code:
+          type:
+          - string
+          - 'null'
+        as_of:
+          type: string
+          format: date-time
+      required:
+      - data_mode
+      - freshness
+      - source_system
+      - observed_at
+      - received_at
+      - ttl_seconds
+      - as_of
+    FeatureState:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - AVAILABLE
+          - MOCK_ONLY
+          - DISABLED
+          - NOT_IMPLEMENTED
+        reason:
+          type:
+          - string
+          - 'null'
+        min_phase:
+          type: string
+          enum:
+          - P1
+          - P2
+          - P3
+      required:
+      - status
+      - min_phase
+    UIBootstrap:
+      type: object
+      properties:
+        contract_version:
+          type: string
+          minLength: 1
+        server_time:
+          type: string
+          format: date-time
+        app_mode:
+          enum:
+          - LOCAL_MOCK
+          - STAGING
+          - PRODUCTION
+        identity:
+          $ref: '#/components/schemas/Me'
+        features:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FeatureState'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+      required:
+      - contract_version
+      - server_time
+      - app_mode
+      - features
+      - source_meta
+    DashboardSummary:
+      type: object
+      properties:
+        nodes:
+          $ref: '#/components/schemas/NodeList'
+        task_counts:
+          type: object
+          additionalProperties:
+            type:
+            - integer
+            - 'null'
+            minimum: 0
+        approval_counts:
+          type: object
+          additionalProperties:
+            type:
+            - integer
+            - 'null'
+            minimum: 0
+        recent_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+      required:
+      - nodes
+      - task_counts
+      - approval_counts
+      - recent_events
+      - source_meta
+    DisplayRecord:
+      type: object
+      description: Read-only metadata for a future integration; not evidence of connectivity.
+      properties:
+        id:
+          type: string
+          minLength: 1
+        title:
+          type: string
+          minLength: 1
+        summary:
+          type: string
+        source_system:
+          type: string
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+        route_ref:
+          type:
+          - string
+          - 'null'
+        enabled:
+          type: boolean
+      required:
+      - id
+      - title
+      - source_meta
+      - enabled
+    DisplayRecordList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisplayRecord'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+      required:
+      - items
+      - next_cursor
+      - source_meta
+    AuditHistoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+      required:
+      - items
+      - next_cursor
+      - source_meta
+    TaskAttemptSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        task_id:
+          type: string
+          minLength: 1
+        worker_id:
+          type:
+          - string
+          - 'null'
+        state:
+          type: string
+          enum:
+          - QUEUED
+          - LEASED
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+          - EXPIRED
+          - NEEDS_RECONCILIATION
+        generation:
+          type: integer
+          minimum: 0
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        error_code:
+          type:
+          - string
+          - 'null'
+      required:
+      - id
+      - task_id
+      - state
+      - generation
+    TaskAttemptList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskAttemptSummary'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+      required:
+      - items
+      - next_cursor
+      - source_meta
+    ResourceGenerationMeta:
+      type: object
+      description: For resource registry and probe CAS; omitted from v0.4 resources until backend extension is implemented.
+      properties:
+        resource_id:
+          type: string
+          minLength: 1
+        generation:
+          type: integer
+          minimum: 1
+        lifecycle_state:
+          enum:
+          - ACTIVE
+          - DISABLED
+          - DELETED
+        owner_system:
+          type: string
+          minLength: 1
+        node_id:
+          type:
+          - string
+          - 'null'
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - resource_id
+      - generation
+      - lifecycle_state
+      - owner_system
+      - updated_at
+x-release-status: LOCAL_DESIGN_CONTRACT_ONLY
+x-preserved-v0.4:
+  paths: 31
+  operations: 33
+x-security-boundaries:
+- Cherry Studio fully frozen (static link only)
+- No production probes; empty production allowlist
+- No PostgreSQL/container deployment without separate authorization
+- P2 writes local Mock/isolated platform state only; no legacy writes
