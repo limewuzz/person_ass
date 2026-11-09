@@ -1,0 +1,48 @@
+import { test, expect } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+test("actual GLM drift is visible and does not crash or silently load MSW", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  const remote: string[] = [];
+  page.on("pageerror", (e) => pageErrors.push(e.message));
+  page.on("request", (r) => {
+    if (new URL(r.url()).hostname !== "127.0.0.1") remote.push(r.url());
+  });
+  mkdirSync("evidence/glm-baseline/screenshots", { recursive: true });
+  for (const width of [1600, 1280, 768, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/dashboard");
+    await expect(
+      page.getByText("接口响应与锁定契约不一致，已暂停读取"),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        navigator.serviceWorker.getRegistrations().then((r) => r.length),
+      ),
+    ).toBe(0);
+    await page.screenshot({
+      path: `evidence/glm-baseline/screenshots/contract-blocked-${width}.png`,
+      fullPage: true,
+    });
+  }
+  await page.goto("/nodes");
+  await expect(
+    page.getByText("US server (mofang)", { exact: true }),
+  ).toBeVisible();
+  const workerStatus = await page.evaluate(async () => {
+    const s = await fetch("/local/session", { method: "POST" }).then((r) =>
+      r.json(),
+    );
+    return (
+      await fetch("/api/v1/workers/forged/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-MW-CSRF": s.csrf },
+        body: "{}",
+      })
+    ).status;
+  });
+  expect(workerStatus).toBe(403);
+  expect(pageErrors).toEqual([]);
+  expect(remote).toEqual([]);
+});

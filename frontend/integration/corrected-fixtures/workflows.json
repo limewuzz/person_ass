@@ -1,0 +1,57 @@
+{
+  "items": [
+    {
+      "id": "wf.daily-sweep",
+      "title": "每日助手 sweep（旧系统）",
+      "enabled": false,
+      "route_ref": "/tasks?filter=workflow:daily-sweep",
+      "source_meta": {
+        "data_mode": "MOCK",
+        "freshness": "UNKNOWN",
+        "source_system": "mwcp-local-rc",
+        "observed_at": null,
+        "received_at": "2026-11-08T19:10:36.474796+00:00",
+        "ttl_seconds": null,
+        "as_of": "2026-11-08T19:10:36.474804+00:00",
+        "reason_code": "LOCAL_SYNTHETIC_ONLY",
+        "kind": "mock",
+        "system": "mwcp-local-rc"
+      },
+      "summary": "Mac cron 9×/工作日；来源=审计 VERIFIED_AT_AUDIT，未接实时",
+      "source_system": "daily-assistant"
+    },
+    {
+      "id": "wf.paper-push",
+      "title": "Rakazo paper_ 推送（旧系统）",
+      "enabled": false,
+      "route_ref": "/tasks?filter=workflow:paper-push",
+      "source_meta": {
+        "data_mode": "MOCK",
+        "freshness": "UNKNOWN",
+        "source_system": "mwcp-local-rc",
+        "observed_at": null,
+        "received_at": "2026-11-08T19:10:36.474809+00:00",
+        "ttl_seconds": null,
+        "as_of": "2026-11-08T19:10:36.474810+00:00",
+        "reason_code": "LOCAL_SYNTHETIC_ONLY",
+        "kind": "mock",
+        "system": "mwcp-local-rc"
+      },
+      "summary": "cron 15 1 * * * Asia/Shanghai；只读登记，不重复建调度",
+      "source_system": "rakazo"
+    }
+  ],
+  "next_cursor": null,
+  "source_meta": {
+    "data_mode": "MOCK",
+    "freshness": "UNKNOWN",
+    "source_system": "mwcp-local-rc",
+    "observed_at": null,
+    "received_at": "2026-11-08T19:10:36.522318+00:00",
+    "ttl_seconds": null,
+    "as_of": "2026-11-08T19:10:36.522331+00:00",
+    "reason_code": "LOCAL_SYNTHETIC_ONLY",
+    "kind": "mock",
+    "system": "mwcp-local-rc"
+  }
+}

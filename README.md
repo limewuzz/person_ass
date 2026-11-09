@@ -1,23 +1,32 @@
-# MagicWorkshop isolated backend · Local integration RC
+# MagicWorkshop · unified local RC
 
-Corrected independent copy of GLM RC f13d6e5. Original source ZIP SHA and scope are in docs/INTEGRATION-BASELINE.json. This copy is authorized for local code, synthetic data and loopback tests only. No PostgreSQL/Docker/production adapters are started.
+Single-user control plane with the accepted React/Vite frontend and FastAPI backend in one repository. **LOCAL RC only; DEPLOYMENT_BLOCKED.** PostgreSQL is an unimplemented runtime blueprint; no production deployment has occurred.
+
+Target branch: `v0.1_personal`. The independent `main` branch is unchanged. Architecture, commands and remaining production gates: [GLM deployment handoff](docs/GLM-DEPLOYMENT-HANDOFF.md). Source provenance: [frontend import](docs/FRONTEND-PROVENANCE.md).
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r backend/requirements.lock
-MWCP_PROBE_MODE=test .venv/bin/python -m pytest backend/tests tests -q
-.venv/bin/python tools/route_coverage.py
-.venv/bin/python tools/export_fixtures.py
+npm ci --prefix frontend
+cd frontend
+npx playwright install chromium
+cd ..
+node scripts/mw.mjs start            # local API + BFF + Vite, background, 127.0.0.1 only
+node scripts/mw.mjs stop             # signal only the recorded owned process group
+node scripts/mw.mjs contract         # root OpenAPI → SDK, drift and route checks
+node scripts/mw.mjs test             # clean Git required; full local RC including static-build E2E
+node scripts/mw.mjs build            # frontend/dist, loopback API mode, no MSW fallback
+node scripts/mw.mjs start --static   # serve that build through the same session BFF
+node scripts/mw.mjs stop
+node scripts/mw.mjs package          # exact-HEAD source/static/evidence + GLM handoff in release/
 ```
 
-For the whole UI/API demo, use the frontend repository's scripts/start-integration.mjs with this backend directory and MW_PYTHON set to the interpreter above. It generates independent in-memory Mock JWT material, starts the new API at 127.0.0.1:8127 and the same-origin session BFF at 8128, with the frontend at 5174. No credentials are copied from existing services. Raw Worker endpoints require a Worker token; the browser cannot reach them through the BFF.
+Open http://127.0.0.1:5174. Ports 5174/8127/8128 must be free; the launcher refuses to reuse or stop existing services. Logs and owner state: `.runtime/`; validation: `frontend/evidence/`. For Python outside `.venv`, set `MW_PYTHON` to its interpreter. Pure MSW frontend demo: `npm --prefix frontend run dev` (5173).
 
-All execution is a synthetic local.simulate/local-ledger task. It requires dry_run=true and a UUID Idempotency-Key, server-enforced MEDIUM approval, immutable request binding and resource generation. Worker claims are filtered by advertised/requested capabilities. Approval is consumed atomically with lease allocation. A lost approved task reconciles instead of being blindly requeued. Successful mock results have real in-memory bytes/digests in the Artifact registry; these are not private Drive downloads.
+`contracts/openapi.yaml` is the sole active contract: 1.1.1-local-integrated, 41 paths / 43 operations, SHA `e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa`. Historical `contracts/baseline` is reference evidence. Frontend SDK and BFF consume the root file; no active frontend copy exists.
 
-ResourceRec rejects public assignment. RegistryService mutations, controlled map insert/replace/delete and final probe commit use one reentrant lock. Generations advance even for ABA/delete-recreate; authority changes invalidate prior health observations. Only explicit test MockTransport probes are exercised. The production allowlist remains empty and DNS connection pinning is still a future gate.
+The 22 accepted templates and V1/Prism bytes are retained. Only `local.simulate` on `local-ledger` may execute, with server-enforced MEDIUM approval. A synthetic worker operates the new in-memory ledger; restart loses state. Unknown external sources remain UNKNOWN/UNAVAILABLE. Local session identity, cookie flags and JWT issuer are not production OIDC/TLS.
 
-The compatible 1.1.1 contract remains 41/43 and is shared byte-for-byte with the frontend. See contracts/CHANGELOG-1.1.1.md and docs/TEST-MIGRATIONS.md for the explicit compatibility and regression changes. Exported fixtures are schema-validated; tests do not mutate them.
+CI runs backend tests in both orders, route/runtime schema checks, BFF security, ownership guards, TypeScript/lint/Vitest, shared SDK generation, production frontend build, 8 Mock and 7 static-loopback browser cases, finite secret scan and dependency audits. Actions use read-only contents permissions and no service credentials or PG. Source must stay clean. Reports do not trigger Vite reloads.
 
-Readiness intentionally returns 503/not_ready because real PG/probes are not connected. All state is process-local; restarting the API resets the ledger. Database DDL/repository material is a static proposal and contains a deliberately unimplemented PG adapter. No PG transaction, backup/restore, production OIDC/JTI persistence, real Worker or server capacity claim is made.
-
-DEPLOYED=NO. APPROVED=LOCAL ONLY. Cherry and all legacy business, credentials, ports, reverse proxies and jobs remain frozen. Future production, real probes, PG runtime, credential rotation and external identity require their separate gates.
+No Cherry Studio, Rakazo, 8765, existing databases, reverse proxies, cron or server business is accessed. PG, persistent transactions/recovery, production identities/TLS, real workers/probes, credential rotation and US capacity/isolation remain separate gates for GLM after user authorization. Legacy Docker/Postgres files are historical proposals, not deployable production instructions.

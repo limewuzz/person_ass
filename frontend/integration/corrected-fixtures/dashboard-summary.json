@@ -1,0 +1,92 @@
+{
+  "nodes": {
+    "items": [
+      {
+        "id": "us-server",
+        "name": "US server (mofang)",
+        "role": "PRIMARY",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      },
+      {
+        "id": "mac-mini",
+        "name": "Mac mini (home)",
+        "role": "STANDBY_GATEWAY",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      },
+      {
+        "id": "ucloud-vps",
+        "name": "UCloud VPS",
+        "role": "RELAY",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      },
+      {
+        "id": "tencent-cloud",
+        "name": "Tencent Cloud",
+        "role": "EXISTING_BUSINESS",
+        "health": "unknown",
+        "stale": false,
+        "observed_at": "2026-11-08T15:00:00+08:00",
+        "last_seen_at": null,
+        "source": "audit:magicworkshop-audit-2026-11-08",
+        "source_system": "audit:magicworkshop-audit-2026-11-08",
+        "received_at": "2026-11-08T19:10:36+00:00",
+        "ttl_seconds": 86400
+      }
+    ],
+    "next_cursor": null
+  },
+  "task_counts": {
+    "queued": 0,
+    "leased": 0,
+    "running": 0,
+    "succeeded": 0,
+    "failed": 0,
+    "canceled": 0,
+    "expired": 0,
+    "waiting_approval": 0,
+    "needs_reconciliation": 0,
+    "active": 0,
+    "external": null
+  },
+  "approval_counts": {
+    "pending": 0,
+    "approved": 0,
+    "rejected": 0,
+    "expired": 0,
+    "consumed": 0
+  },
+  "recent_events": [],
+  "source_meta": {
+    "data_mode": "MOCK",
+    "freshness": "FRESH",
+    "source_system": "mwcp-local-rc",
+    "observed_at": "2026-11-08T19:10:36.560648+00:00",
+    "received_at": "2026-11-08T19:10:36.560653+00:00",
+    "ttl_seconds": 5,
+    "as_of": "2026-11-08T19:10:36.560655+00:00",
+    "reason_code": "LOCAL_SYNTHETIC_ONLY",
+    "kind": "mock",
+    "system": "mwcp-local-rc"
+  }
+}

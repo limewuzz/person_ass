@@ -1,0 +1,485 @@
+[
+  {
+    "path": "/api/v1/health/live",
+    "method": "get",
+    "operationId": "get_api_v1_health_live",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/health/ready",
+    "method": "get",
+    "operationId": "get_api_v1_health_ready",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/me",
+    "method": "get",
+    "operationId": "get_api_v1_me",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Me"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/nodes",
+    "method": "get",
+    "operationId": "get_api_v1_nodes",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/NodeList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/resources",
+    "method": "get",
+    "operationId": "get_api_v1_resources",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ResourceList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/services",
+    "method": "get",
+    "operationId": "get_api_v1_services",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ResourceList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/agents",
+    "method": "get",
+    "operationId": "get_api_v1_agents",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AgentList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/capabilities",
+    "method": "get",
+    "operationId": "get_api_v1_capabilities",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/CapabilityList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/work-items",
+    "method": "get",
+    "operationId": "get_api_v1_work_items",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/WorkItemList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/work-items",
+    "method": "post",
+    "operationId": "post_api_v1_work_items",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/WorkItem"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkItemCreate"
+    }
+  },
+  {
+    "path": "/api/v1/tasks",
+    "method": "get",
+    "operationId": "get_api_v1_tasks",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/TaskList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/tasks",
+    "method": "post",
+    "operationId": "post_api_v1_tasks",
+    "responses": {
+      "202": {
+        "$ref": "#/components/schemas/TaskAccepted"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/TaskCreate"
+    }
+  },
+  {
+    "path": "/api/v1/approvals",
+    "method": "get",
+    "operationId": "get_api_v1_approvals",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ApprovalList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/observations",
+    "method": "get",
+    "operationId": "get_api_v1_observations",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ObservationList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/audit",
+    "method": "get",
+    "operationId": "get_api_v1_audit",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AuditEventList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/artifacts",
+    "method": "get",
+    "operationId": "get_api_v1_artifacts",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ArtifactList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/integrations",
+    "method": "get",
+    "operationId": "get_api_v1_integrations",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/IntegrationList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/nodes/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_nodes_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Node"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/resources/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_resources_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Resource"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/agents/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_agents_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Agent"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/work-items/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_work_items_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/WorkItem"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/tasks/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_tasks_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Task"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/approvals/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_approvals_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Approval"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/artifacts/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_artifacts_id",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Artifact"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/tasks/{id}/events",
+    "method": "get",
+    "operationId": "get_api_v1_tasks_id_events",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/TaskEventList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/tasks/{id}/cancel",
+    "method": "post",
+    "operationId": "post_api_v1_tasks_id_cancel",
+    "responses": {
+      "202": {
+        "$ref": "#/components/schemas/Task"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/approvals/{id}/approve",
+    "method": "post",
+    "operationId": "post_api_v1_approvals_id_approve",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Approval"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/approvals/{id}/reject",
+    "method": "post",
+    "operationId": "post_api_v1_approvals_id_reject",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Approval"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/events",
+    "method": "get",
+    "operationId": "get_api_v1_events",
+    "responses": {
+      "200": {}
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/heartbeat",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_heartbeat",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkerHeartbeat"
+    }
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/claim",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_claim",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/WorkerClaimResponse"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkerClaim"
+    }
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/tasks/{task_id}/started",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_tasks_task_id_started",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkerStarted"
+    }
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/tasks/{task_id}/finish",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_tasks_task_id_finish",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkerResult"
+    }
+  },
+  {
+    "path": "/api/v1/ui/bootstrap",
+    "method": "get",
+    "operationId": "get_api_v1_ui_bootstrap",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/UIBootstrap"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/dashboard/summary",
+    "method": "get",
+    "operationId": "get_api_v1_dashboard_summary",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DashboardSummary"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/events/history",
+    "method": "get",
+    "operationId": "get_api_v1_events_history",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AuditHistoryList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/tasks/{id}/attempts",
+    "method": "get",
+    "operationId": "get_api_v1_tasks_id_attempts",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/TaskAttemptList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/workflows",
+    "method": "get",
+    "operationId": "get_api_v1_workflows",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/network/links",
+    "method": "get",
+    "operationId": "get_api_v1_network_links",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/models",
+    "method": "get",
+    "operationId": "get_api_v1_models",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/projects",
+    "method": "get",
+    "operationId": "get_api_v1_projects",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/compute/runs",
+    "method": "get",
+    "operationId": "get_api_v1_compute_runs",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/knowledge",
+    "method": "get",
+    "operationId": "get_api_v1_knowledge",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  }
+]

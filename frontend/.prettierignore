@@ -1,0 +1,6 @@
+public/
+src/api/generated/
+src/mocks/schemas.json
+docs/
+contracts/
+evidence/

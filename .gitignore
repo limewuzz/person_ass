@@ -59,3 +59,14 @@ logs/
 tmp/
 coverage/
 htmlcov/
+
+# Unified local verification and handoff artifacts
+frontend/evidence/
+frontend/playwright-report/
+frontend/test-results*/
+evidence/
+.runtime/
+release/
+*.tsbuildinfo
+!docs/GLM-DEPLOYMENT-HANDOFF.md
+!deploy/local.env.example

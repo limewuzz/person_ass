@@ -1,0 +1,70 @@
+--- a/backend/app.py
++++ b/backend/app.py
+@@ -166,12 +166,16 @@
+ 
+ 
+ @app.post("/api/v1/tasks")
+-def create_task(body: dict = Body(...), principal: Principal = Depends(get_principal)):
++def create_task(request: Request, body: dict = Body(...), principal: Principal = Depends(get_principal)):
+     _require_scope(principal, "tasks:write")
+     try:
+         # 风险/审批要求：能力表未接生产 → 本地策略默认 READ 需审批与否由 body 控制，
+         # 但 HIGH/CRITICAL 服务端硬拒（不依赖 UI）
+-        risk = body.get("risk", "READ")
++        key = request.headers.get("Idempotency-Key", "")
++        if not (12 <= len(key) <= 256):
++            raise TaskEngineError("bad_idempotency_key", "Idempotency-Key header required", 400)
++        local_simulation = body.get("capability") == "local.simulate" and body.get("resource_id") == "local-ledger"
++        risk = "MEDIUM" if local_simulation else body.get("risk", "READ")
+         if risk in ("HIGH", "CRITICAL"):
+             return JSONResponse(status_code=403, content={
+                 "error": {"code": "risk_blocked",
+@@ -180,25 +184,20 @@
+             principal_id=principal.sub,
+             capability=body["capability"], capability_version=int(body.get("capability_version", 1)),
+             resource_id=body["resource_id"],
+-            idempotency_key=body.get("idempotency_key") or os.urandom(16).hex(),
++            idempotency_key=key,
+             arguments=body.get("arguments", {}),
+             origin_channel=body.get("origin", {}).get("channel", "web"),
+             origin_external_ref=body.get("origin", {}).get("source_ref"),
+             work_item_id=body.get("work_item_id"),
+-            requires_approval=bool(body.get("requires_approval", False)),
++            requires_approval=local_simulation or bool(body.get("requires_approval", False)),
+             risk=risk, dry_run=bool(body.get("dry_run", False)))
+     except TaskEngineError as e:
+         return _engine_err(e)
+     if task.requires_approval:
+         _approvals.create_for_task(task, risk=task.risk)
+-    if replayed:
+-        out = _engine.task_out(task)
+-        return JSONResponse(status_code=200, content={**out, "replayed": True})
+-    out = _engine.task_out(task)
+-    return JSONResponse(status_code=201, content={
++    return JSONResponse(status_code=202, content={
+         "task_id": task.id, "state": task.state, "trace_id": task.trace_id,
+-        "poll_url": f"/api/v1/tasks/{task.id}", "replayed": False, **{k: out[k] for k in
+-        ("capability", "resource_id", "generation")}})
++        "poll_url": f"/api/v1/tasks/{task.id}", "replayed": replayed})
+ 
+ 
+ @app.get("/api/v1/tasks/{id}")
+--- a/backend/approvals.py
++++ b/backend/approvals.py
+@@ -6,6 +6,7 @@
+ from __future__ import annotations
+ 
+ import secrets
++from datetime import datetime, timezone
+ import threading
+ import uuid
+ from dataclasses import dataclass, field
+@@ -52,7 +53,7 @@
+                 id=f"ap-{uuid.uuid4()}", task_id=task.id, risk=risk,
+                 payload_hash=task.request_hash,
+                 expires_at=self.clock() + APPROVAL_TTL_SECONDS,
+-                expires_at_iso=_now_iso(),
++                expires_at_iso=datetime.fromtimestamp(self.clock() + APPROVAL_TTL_SECONDS, timezone.utc).isoformat(),
+                 confirm_token=secrets.token_urlsafe(16))
+             self.approvals[rec.id] = rec
+             self.engine.audit("system", "approval.created", rec.id,
