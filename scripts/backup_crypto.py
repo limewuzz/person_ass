@@ -19,7 +19,15 @@ import tempfile
 
 MAGIC = b'MWCP-BACKUP-1\n'
 HEADER = json.dumps({'cipher': 'AES-256-CBC', 'kdf': 'PBKDF2-SHA256',
-                     'iterations': 200000}, sort_keys=True).encode()
+                     'iterations': 200000, 'salt_bytes': 8}, sort_keys=True).encode()
+
+
+def salt_options():
+    # OpenSSL 3.2 changed the PBKDF2 salt default to 16 bytes. Keep the
+    # envelope portable to 3.0 (whose fixed/default size is 8 bytes).
+    help_result = subprocess.run(['openssl', 'enc', '-help'],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return ['-saltlen', '8'] if b'-saltlen' in help_result.stderr else []
 
 
 def read_key(path):
@@ -75,6 +83,7 @@ def encrypt(source, output, enc_key, mac_key):
             os.write(key_out, key + b'\n'); os.close(key_out); key_out = -1
             args = ['openssl', 'enc', '-aes-256-cbc', '-salt', '-pbkdf2',
                     '-iter', '200000', '-md', 'sha256', '-pass', f'fd:{key_in}', '-out', str(cipher)]
+            args += salt_options()
             if str(source) != '-':
                 with open(source, 'rb') as stream:
                     result = subprocess.run(args, stdin=stream, stdout=subprocess.DEVNULL,
@@ -131,7 +140,7 @@ def decrypt(source, output, enc_key, mac_key):
             os.write(key_out, key + b'\n'); os.close(key_out); key_out = -1
             result = subprocess.run(['openssl', 'enc', '-d', '-aes-256-cbc', '-pbkdf2',
                 '-iter', '200000', '-md', 'sha256', '-pass', f'fd:{key_in}',
-                '-in', str(cipher), '-out', str(plain)], stdout=subprocess.DEVNULL,
+                '-in', str(cipher), '-out', str(plain), *salt_options()], stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE, pass_fds=(key_in,))
             if result.returncode: raise ValueError('Backup decryption failed')
             plain.chmod(0o600)
