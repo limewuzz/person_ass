@@ -20,3 +20,7 @@ Historical HTML fingerprints are independently checked on every contract/build v
 | frontend/public/versions/v2.0-prism/index.html | 59796 | 5865ecfc6842b1faa012ddfea466321a504b10f1d8beb845c1d243247fb0cf94 |
 
 `UNIFIED-BASELINE.json` lists every original backend path. Review the PR diff to confirm no baseline deletion; historical documents retain their original bytes. The only active contract SHA remains e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa (41/43). Git history and the published PR provide the final source identity; deployment packages include RELEASE-IDENTITY.json generated from the actual clean HEAD and tree.
+
+## V2 repair provenance (2026-11-10)
+
+Full-stack source imported from verified private Drive ZIP: SHA256 `313a87f6cfd5e18336f0eb676a3072f38941d6b01b951f898f9740954733c2c6`, 230 files. Its reconstructed tree exactly matches `24ac3b87b5b4f2c51ea4e859f5d349fc4e1ea2e3`. Local import commit `1c3fc76` preserves parent `ae654d4` and all original paths. The ZIP's claimed original HEAD is provenance metadata, not a recreated commit identity. Frontend changes repair V2 scope/SDK/Mock/CSRF and extend browser regression; V1/Prism bytes remain covered by check-design.

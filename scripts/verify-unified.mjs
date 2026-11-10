@@ -41,6 +41,9 @@ for (const dir of [backend])
       .sha256 !== sha
   )
     throw Error("Lock mismatch");
+const lock = JSON.parse(
+  readFileSync(join(backend, "contracts/CONTRACT-LOCK.json")),
+);
 const steps = [];
 let stack;
 function save(status) {
@@ -52,8 +55,8 @@ function save(status) {
         tree: git(backend, "rev-parse", "HEAD^{tree}"),
         heads,
         contract_sha256: sha,
-        paths: 41,
-        operations: 43,
+        paths: lock.paths,
+        operations: lock.operations,
         status,
         steps,
         deployed: false,
@@ -251,8 +254,12 @@ try {
     ),
   );
   await stopStack();
-  await run("prefixed-deployment", process.execPath, ["scripts/check-prefixed.mjs"]);
-  await run("https-session-candidate",process.execPath,["scripts/check-session.mjs"]);
+  await run("prefixed-deployment", process.execPath, [
+    "scripts/check-prefixed.mjs",
+  ]);
+  await run("https-session-candidate", process.execPath, [
+    "scripts/check-session.mjs",
+  ]);
   await run("unified-lifecycle", py, ["scripts/lifecycle_smoke.py"], backend);
   if (git(backend, "status", "--porcelain"))
     throw Error("Verification mutated source");

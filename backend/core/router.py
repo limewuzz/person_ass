@@ -52,7 +52,7 @@ def build_core_v2_router(
             principal, client_platform=platform, device_id=device_id
         )
         engine.audit(principal.sub, "auth.session.create", rec.session_id, f"platform={platform}")
-        resp = JSONResponse(session_mgr.session_out(rec), status_code=200)
+        resp = JSONResponse(session_mgr.session_out(rec), status_code=200, headers={"Cache-Control": "no-store"})
         resp.set_cookie(
             key="mw_session",
             value=rec.session_id,
@@ -61,6 +61,7 @@ def build_core_v2_router(
             samesite="strict",
             path="/api",
         )
+        resp.set_cookie("mwcp_csrf", rec.csrf_token, secure=True, samesite="strict", path="/")
         return resp
 
     @router.post("/api/v1/auth/logout")
@@ -84,6 +85,7 @@ def build_core_v2_router(
             status_code=200,
         )
         resp.delete_cookie("mw_session", path="/api")
+        resp.delete_cookie("mwcp_csrf", path="/", secure=True, samesite="strict")
         return resp
 
     @router.post("/api/v1/auth/revoke")

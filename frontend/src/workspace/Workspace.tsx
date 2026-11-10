@@ -253,28 +253,37 @@ export function WorkspaceHome() {
   });
   const syncMutation = useMutation({
     mutationFn: async () => {
-      await api.POST("/api/v1/clients/devices", {
-        body: {
-          device_id: "web-workspace-primary",
-          platform: "web",
-          app_version: "2.0.0-rc1",
-          os_arch: "browser-wasm",
-          keystore_kind: "web_httponly_cookie",
-        },
-      });
+      required(
+        await api.POST("/api/v1/clients/devices", {
+          body: {
+            device_id: "web-workspace-primary",
+            platform: "web",
+            app_version: "2.0.0-rc1",
+            os_arch: "browser-wasm",
+            keystore_kind: "web_httponly_cookie",
+          },
+        }),
+      );
       return await syncWorkspaceCrossDevice(
         "web-workspace-primary",
-        draft.title.trim() ? [{ title: draft.title.trim(), kind: draft.kind }] : [],
+        draft.title.trim()
+          ? [{ title: draft.title.trim(), kind: draft.kind }]
+          : [],
         { theme: "system", locale: "zh-CN" },
         async () => required(await api.GET("/api/v1/clients/sync")),
         async (body) =>
           required(await api.POST("/api/v1/clients/sync", { body })),
       );
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["workspace", "client-sync"] }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["workspace", "client-sync"] }),
   });
   const uploadMutation = useMutation({
-    mutationFn: async (input: { name: string; mime: string; content: string }) => {
+    mutationFn: async (input: {
+      name: string;
+      mime: string;
+      content: string;
+    }) => {
       const bytes = new TextEncoder().encode(input.content);
       return await performVerifiedUpload(
         input.name,
@@ -887,10 +896,24 @@ function ArtifactCard({ artifact }: { artifact: Schema<"Artifact"> }) {
         async (id, ticket) =>
           required(
             await api.GET("/api/v1/artifacts/{id}/content", {
-              params: { path: { id }, query: { ticket } },
+              params: { path: { id } },
+              headers: { "X-Download-Ticket": ticket },
             }),
           ),
       );
+      const objectUrl = URL.createObjectURL(
+        new Blob([new Uint8Array(res.bytes)], { type: res.mimeType }),
+      );
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      const proposedName = /filename="([A-Za-z0-9._-]+)"/.exec(
+        res.disposition,
+      )?.[1];
+      link.download = proposedName ?? `${artifact.id}.bin`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       setDlState(`SHA-256 已核验 (${res.bytes.length} B)`);
     } catch (e) {
       setDlState(e instanceof Error ? e.message : "下载失败");
@@ -1010,55 +1033,47 @@ export function WorkspaceAssistants() {
     queryKey: ["workspace", "capabilities"],
     queryFn: async () => required(await api.GET("/api/v1/capabilities")),
   });
-  const [uploadedArtifact, setUploadedArtifact] =
-    useState<Schema<"Artifact"> | null>(null);
-  const syncQuery = useQuery({
-    queryKey: ["workspace", "client-sync"],
-    queryFn: async () => required(await api.GET("/api/v1/clients/sync")),
+  const qc = useQueryClient();
+  const [convInput, setConvInput] = useState("");
+  const providers = useQuery({
+    queryKey: ["workspace", "ai-providers"],
+    queryFn: async () => required(await api.GET("/api/v1/ai/providers")),
   });
-  const syncMutation = useMutation({
+  const routing = useQuery({
+    queryKey: ["workspace", "ai-routing"],
+    queryFn: async () => required(await api.GET("/api/v1/ai/routing-policy")),
+  });
+  const convs = useQuery({
+    queryKey: ["workspace", "conversations"],
+    queryFn: async () => required(await api.GET("/api/v1/conversations")),
+  });
+  const convMutation = useMutation({
     mutationFn: async () => {
-      await api.POST("/api/v1/clients/devices", {
-        body: {
-          device_id: "web-workspace-primary",
-          platform: "web",
-          app_version: "2.0.0-rc1",
-          os_arch: "browser-wasm",
-          keystore_kind: "web_httponly_cookie",
-        },
-      });
-      return await syncWorkspaceCrossDevice(
-        "web-workspace-primary",
-        draft.title.trim() ? [{ title: draft.title.trim(), kind: draft.kind }] : [],
-        { theme: "system", locale: "zh-CN" },
-        async () => required(await api.GET("/api/v1/clients/sync")),
-        async (body) =>
-          required(await api.POST("/api/v1/clients/sync", { body })),
+      if (!gate.allowed) throw Error("当前会话不能写入。");
+      const content = convInput.trim();
+      if (!content) throw Error("请输入对话内容。");
+      const conversation = required(
+        await api.POST("/api/v1/conversations", {
+          body: { title: content.slice(0, 200) },
+        }),
       );
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["workspace", "client-sync"] }),
-  });
-  const uploadMutation = useMutation({
-    mutationFn: async (input: { name: string; mime: string; content: string }) => {
-      const bytes = new TextEncoder().encode(input.content);
-      return await performVerifiedUpload(
-        input.name,
-        input.mime,
-        bytes,
-        async (body) =>
-          required(await api.POST("/api/v1/uploads/tickets", { body })),
-        async (ticketId, body) =>
+      return submitConversationMessage(
+        conversation.id,
+        content,
+        crypto.randomUUID(),
+        false,
+        async (id, body, key) =>
           required(
-            await api.PUT("/api/v1/uploads/{ticket_id}", {
-              params: { path: { ticket_id: ticketId } },
+            await api.POST("/api/v1/conversations/{id}/messages", {
+              params: { path: { id }, header: { "Idempotency-Key": key } },
               body,
             }),
           ),
       );
     },
-    onSuccess: (art) => {
-      setUploadedArtifact(art);
-      void qc.invalidateQueries({ queryKey: ["workspace", "artifacts"] });
+    onSuccess: () => {
+      setConvInput("");
+      void qc.invalidateQueries({ queryKey: ["workspace", "conversations"] });
     },
   });
   const agents =
@@ -1073,8 +1088,8 @@ export function WorkspaceAssistants() {
       <div className="ws-notice">
         <ShieldCheck size={18} />
         <span>
-          目录记录不代表模型已经在线。当前任务接口只开放本地流程模拟；尚不能指定真实
-          Agent、发起自由对话或上传文件。
+          目录记录不代表模型已经在线。对话可保存到当前控制平面；模型执行仍受
+          Dry-Run 和审批限制。
         </span>
       </div>
       <QueryState
@@ -1087,9 +1102,9 @@ export function WorkspaceAssistants() {
       />
       <section className="ws-panel" aria-label="AI 路由与工作坊会话">
         <div className="ws-section-title">
-          <h2>AI 模型路由与持久化会话（V2）</h2>
+          <h2>AI 模型路由与工作坊会话（V2）</h2>
           <span>
-            默认路由：{routing.data?.default_model_id ?? "model.deepseek-flash"} ·{" "}
+            默认路由：{routing.data?.default_model_id ?? "尚未配置"} ·{" "}
             已登记供应商：{providers.data?.items.length ?? 0}
           </span>
         </div>
@@ -1102,7 +1117,9 @@ export function WorkspaceAssistants() {
           />
           <button
             className="ws-primary"
-            disabled={!gate.allowed || !convInput.trim() || convMutation.isPending}
+            disabled={
+              !gate.allowed || !convInput.trim() || convMutation.isPending
+            }
             onClick={() => convMutation.mutate()}
           >
             发送并记录会话
@@ -1126,6 +1143,17 @@ export function WorkspaceAssistants() {
           </div>
         ) : null}
       </section>
+      <QueryState
+        error={
+          providers.error ?? routing.error ?? convs.error ?? convMutation.error
+        }
+        loading={providers.isPending || routing.isPending || convs.isPending}
+        retry={() => {
+          void providers.refetch();
+          void routing.refetch();
+          void convs.refetch();
+        }}
+      />
       <div className="ws-cards">
         {agents.map((a) => {
           const canSimulate =

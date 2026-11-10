@@ -11,6 +11,11 @@ sql_escape() { printf '%s' "$1" | sed "s/'/''/g"; }
 
 # 密码经 heredoc → psql stdin（进程参数/日志/环境展开文本中均不出现明文）
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
+-- Bootstrap installs trusted extension before losing login. Migrator need not
+-- receive database CREATE just to run 0001's CREATE EXTENSION IF NOT EXISTS.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE control_plane FROM PUBLIC;
 -- ── 第 1 步（R5-D1）：先完整创建两个角色 ──
 CREATE ROLE mwcp_migrator LOGIN PASSWORD '$(sql_escape "$MIG_PW")'
   NOSUPERUSER NOCREATEDB NOCREATEROLE;

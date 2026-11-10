@@ -49,6 +49,38 @@ async function decide(page: Page, reject = false) {
   await expect(page.getByRole("dialog")).not.toBeVisible();
 }
 export function workspaceSuite(live: boolean) {
+  test("V2 conversation, sync and verified upload/download remain interactive", async ({
+    page,
+  }) => {
+    await home(page);
+    await page.getByRole("button", { name: "同步当前草稿到多端" }).click();
+    await expect(page.getByText(/同步游标：sync-cursor-[1-9]/)).toBeVisible();
+    await page.getByRole("button", { name: "上传验证附件（SHA-256）" }).click();
+    await expect(page.getByText(/已登记附件：/)).toBeVisible();
+    await page.goto("/workbench/results");
+    const download = page.waitForEvent("download");
+    await page
+      .locator(".ws-artifact")
+      .filter({ hasText: "workspace-note.md" })
+      .getByRole("button", { name: "受控下载" })
+      .last()
+      .click();
+    const file = await download;
+    expect(file.suggestedFilename()).toBe("workspace-note.md");
+    expect(await file.failure()).toBeNull();
+    await expect(page.getByText(/SHA-256 已核验/)).toBeVisible();
+    await page.goto("/workbench/assistants");
+    await page.getByLabel("发起新对话标题").fill("V2 会话浏览器回归");
+    await page.getByRole("button", { name: "发送并记录会话" }).click();
+    await expect(
+      page
+        .locator(".ws-saved")
+        .getByRole("heading", { name: "V2 会话浏览器回归" }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".ws-saved").getByText(/消息数：1/),
+    ).toBeVisible();
+  });
   for (const width of [1600, 1280, 768, 390])
     test(`user workspace pages, navigation and detail at ${width}`, async ({
       page,

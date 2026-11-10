@@ -16,6 +16,7 @@ import asyncio
 import hashlib
 import json
 import os
+import hmac
 from pathlib import Path
 import time
 import uuid
@@ -62,7 +63,7 @@ from integrations.service import IntegrationsService
 from integrations.router import build_integrations_router
 
 _APP_START = time.time()
-_VERSION = os.environ.get("MWCP_VERSION", "1.1.1-local-integrated")
+_VERSION = os.environ.get("MWCP_VERSION", CONTRACT["info"]["version"])
 _OPENAPI_FILE = Path(__file__).resolve().parents[1] / "contracts" / "openapi.yaml"
 
 PUBLIC_PATHS = {
@@ -116,9 +117,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 if sess is None or _validator.revocations.is_revoked(sess.principal.jti):
                     return error_response(401, "unauthorized", request.state.trace_id)
                 if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
-                    csrf = request.headers.get("X-CSRF-Token", "")
-                    if not csrf or csrf != sess.csrf_token:
+                    csrf = request.headers.get("X-MW-CSRF", "") or request.headers.get("X-CSRF-Token", "")
+                    if not csrf or not csrf.isascii() or not hmac.compare_digest(csrf, sess.csrf_token):
                         return error_response(403, "csrf_validation_failed", request.state.trace_id)
+                    expected_origin = os.environ.get("MWCP_PUBLIC_ORIGIN", str(request.base_url).rstrip("/"))
+                    if request.headers.get("Origin") != expected_origin:
+                        return error_response(403, "origin_rejected", request.state.trace_id)
                 request.state.principal = sess.principal
             else:
                 return error_response(401, "unauthorized", request.state.trace_id)
@@ -251,6 +255,10 @@ def health_live():
 
 @app.get("/api/v1/health/ready")
 def health_ready():
+    dependencies = readiness_check(get_container())
+    dependencies["auth"] = "ok" if _validator else "misconfigured"
+    dependencies["workers"] = "mock"
+    # Production probes/identity remain a separate gate even with durable PG.
     return JSONResponse(
         status_code=503,
         content={
@@ -261,12 +269,7 @@ def health_ready():
             "trace_id": str(uuid.uuid4()),
             "status": "not_ready",
             "checked_at": Q._now(),
-            "dependency_status": {
-                "database": "not_connected",
-                "auth": "ok" if _validator else "misconfigured",
-                "probes": "not_configured",
-                "workers": "mock",
-            },
+            "dependency_status": dependencies,
         },
     )
 
@@ -927,3 +930,15 @@ def get_system_contract_meta(principal: Principal = Depends(get_principal)):
         },
         "checked_at": Q._now(),
     }
+
+
+# The router instances above are the single domain state used by both modes.
+import sys as _sys
+from service_container import bind_api as _bind_api
+from durable_state import DurableRequests as _DurableRequests
+_bind_api(_sys.modules[__name__])
+app.add_middleware(_DurableRequests)
+
+@app.on_event("startup")
+def _require_configured_repository():
+    get_container()  # postgres_pending must fail at startup, never serve memory.

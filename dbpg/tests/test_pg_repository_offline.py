@@ -239,7 +239,7 @@ ALL_MIG_SQL = "\n".join((MIG_DIR / f).read_text()
     ("task_leases", ["lease_token_hash", "generation", "expires_at", "released_at", "expired"]),
     ("approvals", ["payload_hash", "confirm_token", "expires_at", "consumed_at", "decided_by"]),
     ("outbox", ["claimed_at", "claim_expires_at", "attempt_count", "last_error",
-                "dispatched_at", "payload"]),
+                "dispatched_at", "payload", "claim_token", "next_retry_at"]),
     ("resources", ["generation", "write_rev", "lifecycle_state", "health",
                    "observed_at", "received_at", "ttl_seconds", "source"]),
     ("audit_events", ["actor_ref", "action", "resource_ref", "result", "trace_id"]),

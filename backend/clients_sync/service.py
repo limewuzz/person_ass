@@ -133,9 +133,9 @@ class ClientSyncService:
             "platforms": {
                 "web": {
                     "version": "2.0.0-rc1",
-                    "bundle_sha256": "55cbcfe6109b2a355161a179dfd29aca7dcf9b3bd51bfe6de6c8237013d5c97b",
-                    "signed": True,
-                    "status": "READY",
+                    "bundle_sha256": None,
+                    "signed": False,
+                    "status": "PENDING_VERIFIED_BUILD",
                 },
                 "android": {
                     "version": "2.0.0-draft",

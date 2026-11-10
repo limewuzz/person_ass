@@ -376,6 +376,7 @@ class PgOutboxRepository(_PgBase):
                 WHERE id IN (SELECT id FROM outbox
                               WHERE dispatched_at IS NULL
                                 AND attempt_count < %s
+                                AND (next_retry_at IS NULL OR next_retry_at <= now())
                                 AND (claimed_at IS NULL OR claim_expires_at < now())
                               ORDER BY id LIMIT %s FOR UPDATE SKIP LOCKED)
                 RETURNING id, aggregate, aggregate_id, kind, payload,
@@ -474,10 +475,16 @@ class PgAgentOSRepository(_PgBase):
             """INSERT INTO conversation_messages
                (id, conversation_id, sequence, role, content, spawned_task_id,
                 approval_id, idempotency_key, request_hash)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+               ON CONFLICT (conversation_id, idempotency_key) DO NOTHING RETURNING id""",
             (msg_id, conversation_id, sequence, role, content, spawned_task_id,
              approval_id, idempotency_key, request_hash))
-        return str(inserted[0]), False
+        if inserted is not None:
+            return str(inserted[0]), False
+        winner = self._one("SELECT id, request_hash FROM conversation_messages WHERE conversation_id=%s AND idempotency_key=%s", (conversation_id, idempotency_key))
+        if winner is None or winner[1] != request_hash:
+            raise ValueError("idempotency_conflict")
+        return str(winner[0]), True
 
     def upsert_plugin(self, *, plugin_id: str, name: str, version: str,
                       previous_version: str | None, signature_sha256: str,
@@ -534,6 +541,7 @@ class PgClientSyncRepository(_PgBase):
 
     def cas_update_sync_state(self, *, owner_sub: str, expected_revision: int,
                               new_cursor: str, drafts_json: str, prefs_json: str) -> bool:
+        self._exec("INSERT INTO client_sync_states(owner_sub, revision, cursor) VALUES (%s,0,'sync-cursor-0') ON CONFLICT (owner_sub) DO NOTHING", (owner_sub,))
         return self._exec(
             """UPDATE client_sync_states
                   SET revision = revision + 1,
@@ -646,16 +654,13 @@ class MigrationRunner:
         applied = self.applied_with_checksums()
         mismatches = []
         for version, stored_hash in applied.items():
-            # 尝试常见文件名模式
-            for pattern in [f"{version}.sql"]:
-                path = self._dir / pattern
-                if path.exists():
-                    current = self.file_checksum(path)
-                    if current != stored_hash:
-                        mismatches.append(
-                            f"{version}: stored={stored_hash[:16]}… "
-                            f"current={current[:16]}…")
-                    break
+            path = self._dir / f"{version}.sql"
+            if not path.is_file():
+                mismatches.append(f"{version}: migration file missing")
+                continue
+            current = self.file_checksum(path)
+            if current != stored_hash:
+                mismatches.append(f"{version}: migration checksum changed")
         return mismatches
 
     @staticmethod
@@ -753,7 +758,9 @@ def assemble_app(*, mode: str | None = None, conn=None):
     if m == "postgres":
         repos = repository_factory(mode="postgres", conn=conn)
         import app as backend_app
-        return backend_app.app, repos
+        from service_container import swap_to_postgres
+        state = swap_to_postgres(conn)
+        return backend_app.app, state.repos
     engine = taskengine.TaskEngine()
     store = registry.RegistryStore()
     registry.seed_audit_baseline(store)

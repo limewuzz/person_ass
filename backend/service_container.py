@@ -66,6 +66,8 @@ def get_container() -> AppState:
     """FastAPI 路由经此获取服务集——替代直接 import _store/_engine。"""
     if _state.mode == "uninitialized":
         _auto_init()
+    if _state.mode == "postgres_pending":
+        raise RuntimeError("Postgres runtime not configured (fail-closed)")
     return _state
 
 
@@ -76,9 +78,7 @@ def _auto_init() -> None:
         swap_to_memory()
     elif mode == "postgres":
         # PG 模式：必须由启动器显式调用 swap_to_postgres(conn)——这里 fail-closed
-        raise RuntimeError(
-            "MWCP_REPOSITORY=postgres requires explicit swap_to_postgres(conn) "
-            "with a real database connection (fail-closed; not auto-fallback)")
+        _state.mode = "postgres_pending"
     else:
         raise ValueError(f"MWCP_REPOSITORY must be memory|postgres, got {mode!r}")
 
@@ -138,23 +138,30 @@ def swap_to_postgres(conn, *, migrations_dir: str | None = None) -> AppState:
     # 验证关键表
     _verify_pg_schema(conn)
 
-    # 装配
-    _state = AppState()
+    expected = {p.stem: MigrationRunner.file_checksum(p)
+                for p in pathlib.Path(migrations_dir).glob("*.sql")}
+    actual = runner.applied_with_checksums()
+    if actual != expected:
+        conn.rollback()
+        raise RuntimeError("PG migration versions/checksums differ (fail-closed)")
+    conn.rollback()  # End verification transaction before serving requests.
+    import app as api
+    from durable_state import DomainCheckpoint, PgCheckpoint
+    bind_api(api)
     _state.mode = "postgres"
     _state.pg_conn = conn
     _state.repos = PgRepositories(conn)
-
-    # PG 模式下：域服务使用 PG 适配器
-    # TaskEngine / WorkerGateway / ApprovalService 内部逻辑不变——它们的
-    # 数据操作经 repos（PG 或内存）进行。当前阶段（Phase A1）：
-    # PG 模式使用独立的内存域服务，但持久化经 PG repos 同步。
-    # Gate B 后替换为完整 PG-backed 域服务。
-    _state.store = registry_mod.RegistryStore()
-    registry_mod.seed_audit_baseline(_state.store)
-    _state.engine = taskengine.TaskEngine()
-    _state.gateway = WorkerGateway(_state.engine)
-    _state.approvals = ApprovalService(_state.engine, clock=time.time)
-    _state.migration_version = applied[-1] if applied else None
+    _state.durable = PgCheckpoint(conn, DomainCheckpoint(api))
+    _state.migration_version = sorted(actual)[-1]
+    # Load committed state now; do not acknowledge startup with a broken codec.
+    try:
+        _state.durable.begin()
+        _state.durable.codec.recover_expired_leases()
+        _state.durable.commit()
+    except BaseException:
+        conn.rollback()
+        _state.mode = "postgres_pending"
+        raise
 
     return _state
 
@@ -197,6 +204,8 @@ def _verify_pg_schema(conn) -> None:
     REQUIRED_TABLES = [
         "principals", "resources", "tasks", "task_events", "task_attempts",
         "approvals", "audit_events", "outbox", "task_leases", "artifacts",
+        "runtime_state", "ai_providers", "conversations", "conversation_messages",
+        "plugins", "compute_runs", "client_devices", "client_sync_states", "upload_tickets",
     ]
     try:
         with conn.cursor() as cur:
@@ -210,6 +219,17 @@ def _verify_pg_schema(conn) -> None:
     if missing:
         raise RuntimeError(f"PG schema missing tables: {missing} — "
                            f"run migrations first (fail-closed)")
+
+
+def bind_api(api):
+    """Bind the actual router-owned services; never construct a shadow ledger."""
+    _state.engine = api._engine
+    _state.store = api._store
+    _state.gateway = api._gateway
+    _state.approvals = api._approvals
+    if _state.mode == "memory":
+        _state.repos = InMemoryRepositories(api._engine, api._store)
+    return _state
 
 
 # ════════ 启动时自动初始化（memory 默认） ════════

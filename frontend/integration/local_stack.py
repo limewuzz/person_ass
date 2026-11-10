@@ -161,6 +161,8 @@ async def proxy(rest: str, request: Request):
     }
     if key := request.headers.get("Idempotency-Key"):
         headers["Idempotency-Key"] = key
+    if ticket := request.headers.get("X-Download-Ticket"):
+        headers["X-Download-Ticket"] = ticket
     if last := request.headers.get("Last-Event-ID"):
         headers["Last-Event-ID"] = last
     try:
