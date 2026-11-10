@@ -40,9 +40,13 @@ import {
   draftKey,
   exportRecord,
   journalKey,
+  performVerifiedDownload,
+  performVerifiedUpload,
   readDraft,
   readSubmission,
+  submitConversationMessage,
   submitWork,
+  syncWorkspaceCrossDevice,
   taskStates,
   terminal,
   type Submission,
@@ -241,6 +245,57 @@ export function WorkspaceHome() {
     queryKey: ["workspace", "capabilities"],
     queryFn: async () => required(await api.GET("/api/v1/capabilities")),
   });
+  const [uploadedArtifact, setUploadedArtifact] =
+    useState<Schema<"Artifact"> | null>(null);
+  const syncQuery = useQuery({
+    queryKey: ["workspace", "client-sync"],
+    queryFn: async () => required(await api.GET("/api/v1/clients/sync")),
+  });
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      await api.POST("/api/v1/clients/devices", {
+        body: {
+          device_id: "web-workspace-primary",
+          platform: "web",
+          app_version: "2.0.0-rc1",
+          os_arch: "browser-wasm",
+          keystore_kind: "web_httponly_cookie",
+        },
+      });
+      return await syncWorkspaceCrossDevice(
+        "web-workspace-primary",
+        draft.title.trim() ? [{ title: draft.title.trim(), kind: draft.kind }] : [],
+        { theme: "system", locale: "zh-CN" },
+        async () => required(await api.GET("/api/v1/clients/sync")),
+        async (body) =>
+          required(await api.POST("/api/v1/clients/sync", { body })),
+      );
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["workspace", "client-sync"] }),
+  });
+  const uploadMutation = useMutation({
+    mutationFn: async (input: { name: string; mime: string; content: string }) => {
+      const bytes = new TextEncoder().encode(input.content);
+      return await performVerifiedUpload(
+        input.name,
+        input.mime,
+        bytes,
+        async (body) =>
+          required(await api.POST("/api/v1/uploads/tickets", { body })),
+        async (ticketId, body) =>
+          required(
+            await api.PUT("/api/v1/uploads/{ticket_id}", {
+              params: { path: { ticket_id: ticketId } },
+              body,
+            }),
+          ),
+      );
+    },
+    onSuccess: (art) => {
+      setUploadedArtifact(art);
+      void qc.invalidateQueries({ queryKey: ["workspace", "artifacts"] });
+    },
+  });
   const localEnabled = caps.data?.items.some(
     (c) => c.name === "local.simulate" && c.enabled && c.risk === "MEDIUM",
   );
@@ -438,6 +493,42 @@ export function WorkspaceHome() {
           </div>
         </section>
       )}
+      <section className="ws-panel" aria-label="多端状态同步与附件上传">
+        <div className="ws-section-title">
+          <h2>多端状态同步与附件上传（V2）</h2>
+          <span>
+            同步游标：{syncQuery.data?.cursor ?? "sync-cursor-0"}（版本{" "}
+            {syncQuery.data?.revision ?? 0}）
+          </span>
+        </div>
+        <div className="ws-actions">
+          <button
+            disabled={!writable || syncMutation.isPending}
+            onClick={() => syncMutation.mutate()}
+          >
+            <RefreshCw size={14} />
+            同步当前草稿到多端
+          </button>
+          <button
+            disabled={!writable || uploadMutation.isPending}
+            onClick={() =>
+              uploadMutation.mutate({
+                name: "workspace-note.md",
+                mime: "text/markdown",
+                content: `# ${draft.title || "MagicWorkshop Note"}\nCreated in V2 Workspace.`,
+              })
+            }
+          >
+            <Plus size={14} />
+            上传验证附件（SHA-256）
+          </button>
+          {uploadedArtifact && (
+            <span className="ws-tag">
+              已登记附件：{uploadedArtifact.id.slice(0, 8)}（SHA-256 已核验）
+            </span>
+          )}
+        </div>
+      </section>
       <div className="ws-home-grid">
         <section>
           <div className="ws-section-title">
@@ -777,6 +868,34 @@ export function WorkspaceHistory() {
 }
 
 function ArtifactCard({ artifact }: { artifact: Schema<"Artifact"> }) {
+  const [dlState, setDlState] = useState<string>("");
+  const canDownloadContent =
+    !!artifact.sha256 &&
+    !artifact.uri.startsWith("http://") &&
+    !artifact.uri.startsWith("https://");
+  const handleDownload = async () => {
+    setDlState("校验中…");
+    try {
+      const res = await performVerifiedDownload(
+        artifact.id,
+        async (id) =>
+          required(
+            await api.POST("/api/v1/artifacts/{id}/download-ticket", {
+              params: { path: { id } },
+            }),
+          ),
+        async (id, ticket) =>
+          required(
+            await api.GET("/api/v1/artifacts/{id}/content", {
+              params: { path: { id }, query: { ticket } },
+            }),
+          ),
+      );
+      setDlState(`SHA-256 已核验 (${res.bytes.length} B)`);
+    } catch (e) {
+      setDlState(e instanceof Error ? e.message : "下载失败");
+    }
+  };
   return (
     <article className="ws-artifact">
       <FileText size={23} />
@@ -788,8 +907,16 @@ function ArtifactCard({ artifact }: { artifact: Schema<"Artifact"> }) {
           SHA-256：{artifact.sha256 ?? "未提供"} · 大小：
           {artifact.byte_size ?? "未知"}
         </small>
+        {dlState && <small role="status"> · {dlState}</small>}
       </div>
-      <span className="ws-tag">元数据</span>
+      {canDownloadContent ? (
+        <button className="ws-secondary" onClick={() => void handleDownload()}>
+          <ArrowDownToLine size={14} />
+          受控下载
+        </button>
+      ) : (
+        <span className="ws-tag">元数据</span>
+      )}
     </article>
   );
 }
@@ -883,6 +1010,57 @@ export function WorkspaceAssistants() {
     queryKey: ["workspace", "capabilities"],
     queryFn: async () => required(await api.GET("/api/v1/capabilities")),
   });
+  const [uploadedArtifact, setUploadedArtifact] =
+    useState<Schema<"Artifact"> | null>(null);
+  const syncQuery = useQuery({
+    queryKey: ["workspace", "client-sync"],
+    queryFn: async () => required(await api.GET("/api/v1/clients/sync")),
+  });
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      await api.POST("/api/v1/clients/devices", {
+        body: {
+          device_id: "web-workspace-primary",
+          platform: "web",
+          app_version: "2.0.0-rc1",
+          os_arch: "browser-wasm",
+          keystore_kind: "web_httponly_cookie",
+        },
+      });
+      return await syncWorkspaceCrossDevice(
+        "web-workspace-primary",
+        draft.title.trim() ? [{ title: draft.title.trim(), kind: draft.kind }] : [],
+        { theme: "system", locale: "zh-CN" },
+        async () => required(await api.GET("/api/v1/clients/sync")),
+        async (body) =>
+          required(await api.POST("/api/v1/clients/sync", { body })),
+      );
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["workspace", "client-sync"] }),
+  });
+  const uploadMutation = useMutation({
+    mutationFn: async (input: { name: string; mime: string; content: string }) => {
+      const bytes = new TextEncoder().encode(input.content);
+      return await performVerifiedUpload(
+        input.name,
+        input.mime,
+        bytes,
+        async (body) =>
+          required(await api.POST("/api/v1/uploads/tickets", { body })),
+        async (ticketId, body) =>
+          required(
+            await api.PUT("/api/v1/uploads/{ticket_id}", {
+              params: { path: { ticket_id: ticketId } },
+              body,
+            }),
+          ),
+      );
+    },
+    onSuccess: (art) => {
+      setUploadedArtifact(art);
+      void qc.invalidateQueries({ queryKey: ["workspace", "artifacts"] });
+    },
+  });
   const agents =
     errorDenies(q.error) || errorDenies(caps.error) ? [] : (q.data ?? []);
   return (
@@ -907,6 +1085,47 @@ export function WorkspaceAssistants() {
           void caps.refetch();
         }}
       />
+      <section className="ws-panel" aria-label="AI 路由与工作坊会话">
+        <div className="ws-section-title">
+          <h2>AI 模型路由与持久化会话（V2）</h2>
+          <span>
+            默认路由：{routing.data?.default_model_id ?? "model.deepseek-flash"} ·{" "}
+            已登记供应商：{providers.data?.items.length ?? 0}
+          </span>
+        </div>
+        <div className="ws-toolbar">
+          <input
+            aria-label="发起新对话标题"
+            placeholder="输入对话主题或向助手提问…"
+            value={convInput}
+            onChange={(e) => setConvInput(e.target.value)}
+          />
+          <button
+            className="ws-primary"
+            disabled={!gate.allowed || !convInput.trim() || convMutation.isPending}
+            onClick={() => convMutation.mutate()}
+          >
+            发送并记录会话
+          </button>
+        </div>
+        {convs.data?.items.length ? (
+          <div className="ws-saved">
+            {convs.data.items.slice(0, 5).map((c) => (
+              <article key={c.id}>
+                <Sparkles size={16} />
+                <div>
+                  <h3>{c.title}</h3>
+                  <small>
+                    消息数：{c.message_count} · 更新于{" "}
+                    <DateLabel value={c.updated_at} />
+                  </small>
+                </div>
+                <span className="ws-tag">{c.agent_id ?? "默认助手"}</span>
+              </article>
+            ))}
+          </div>
+        ) : null}
+      </section>
       <div className="ws-cards">
         {agents.map((a) => {
           const canSimulate =

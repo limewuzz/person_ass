@@ -49,7 +49,7 @@ function err(status: number) {
   );
 }
 export const handlers = operations.map((op) =>
-  http[op.method as "get" | "post"](
+  http[op.method as "get" | "post" | "put" | "patch" | "delete"](
     (typeof location === "undefined" ? "http://localhost" : location.origin) +
       op.path.replace(/\{([^}]+)\}/g, ":$1"),
     async ({ request, params }) => {

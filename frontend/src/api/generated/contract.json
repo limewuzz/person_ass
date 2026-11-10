@@ -1,6 +1,9 @@
 {
-  "contract_sha256": "e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa",
+  "contract_sha256": "d94462c44cd7c331470fc79731da29a7539d78f770b52288fce590ae3f52504f",
+  "version": "2.0.0-unified-v2",
   "status": "LOCAL_CONTRACT_LOCKED",
-  "paths": 41,
-  "operations": 43
+  "paths": 79,
+  "operations": 95,
+  "v1_1_1_preserved_paths": 41,
+  "v1_1_1_preserved_operations": 43
 }

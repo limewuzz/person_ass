@@ -1,10 +1,12 @@
 {
-  "version": "1.1.1-local-integrated",
-  "sha256": "e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa",
-  "paths": 41,
-  "operations": 43,
+  "version": "2.0.0-unified-v2",
+  "sha256": "d94462c44cd7c331470fc79731da29a7539d78f770b52288fce590ae3f52504f",
+  "paths": 79,
+  "operations": 95,
+  "v1_1_1_preserved_paths": 41,
+  "v1_1_1_preserved_operations": 43,
   "openapi_file": "contracts/openapi.yaml",
-  "baseline_sha256": "18b42a97b3f975fcbe9a0326a1374d56fa547268e6fdefd18dc9cb529e8f7a25",
-  "status": "FROZEN_FOR_ISOLATED_LOCAL_INTEGRATION",
-  "change_log": "Add optional redacted Task/Approval context and explicit dependency 503 responses. All 41 paths/43 operations retained. Original GLM input archived. No production authorization."
+  "baseline_sha256": "e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa",
+  "status": "FROZEN_FOR_V2_UNIFIED_ALL_MODULES",
+  "change_log": "Expand 1.1.1 (41 paths / 43 ops) to full V2 7-workflow unified contract (79 paths / 95 ops) while preserving 100% of 1.1.1 routes and schemas."
 }

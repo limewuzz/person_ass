@@ -1,14 +1,12 @@
 openapi: 3.1.0
 info:
   title: MagicWorkshop Control Plane API
-  version: 1.1.1-local-integrated
-  description: '**Candidate design, not a running service.** US primary, Mac warm-standby
-    gateway. Cherry Studio frozen and out of scope. API operations marked x-phase;
-    P2 write operations MUST NOT be enabled in P1.
-
-    MagicWorkshop v1.1 local development baseline: retains v0.4 paths; extension routes
-    added for frontend. Candidate contract only, NOT an approval to deploy, connect
-    real services, or execute production probes.'
+  version: 2.0.0-unified-v2
+  description: '**MagicWorkshop V2 Unified Full-Module Contract (retains all 41 paths
+    / 43 operations from 1.1.1).** Covers all 7 parallel workflows: Platform Core,
+    AI Infrastructure, Agent OS, Compute Resources, Multi-Platform Clients, Data Integrations,
+    and Testing/Delivery Gate.'
+  Title: MagicWorkshop Control Plane API
 servers:
 - url: https://control.example.invalid
   description: Placeholder. Must be replaced only after approved TLS+auth deployment.
@@ -24,6 +22,11 @@ tags:
 - name: Workers
 - name: UI
 - name: Catalogs
+- name: AIHub
+- name: AgentOS
+- name: Compute
+- name: Clients
+- name: System
 security:
 - humanBearer: []
 paths:
@@ -266,6 +269,61 @@ paths:
         schema:
           type: string
           maxLength: 300
+    post:
+      tags:
+      - Registry
+      summary: Register a new controlled resource
+      operationId: post_api_v1_resources
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGenerationMeta'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRegisterRequest'
   /api/v1/services:
     get:
       tags:
@@ -370,6 +428,61 @@ paths:
         schema:
           type: string
           maxLength: 300
+    post:
+      tags:
+      - AgentOS
+      summary: Register or update an Agent definition in Agent Studio
+      operationId: post_api_v1_agents
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpsertRequest'
   /api/v1/capabilities:
     get:
       tags:
@@ -1010,6 +1123,124 @@ paths:
         schema:
           type: string
           format: uuid
+    patch:
+      tags:
+      - Registry
+      summary: Mutate resource authority or lifecycle with generation CAS
+      operationId: patch_api_v1_resources_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGenerationMeta'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceMutationRequest'
+    delete:
+      tags:
+      - Registry
+      summary: Soft-delete resource with generation bump
+      operationId: delete_api_v1_resources_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGenerationMeta'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
   /api/v1/agents/{id}:
     get:
       tags:
@@ -1068,6 +1299,68 @@ paths:
         schema:
           type: string
           format: uuid
+    patch:
+      tags:
+      - AgentOS
+      summary: Update an existing Agent definition
+      operationId: patch_api_v1_agents_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentPatchRequest'
   /api/v1/work-items/{id}:
     get:
       tags:
@@ -2397,6 +2690,61 @@ paths:
           minimum: 1
           maximum: 100
           default: 25
+    post:
+      tags:
+      - Compute
+      summary: Create a reproducible Compute Run with manifest
+      operationId: post_api_v1_compute_runs
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputeRunRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComputeRunCreateRequest'
   /api/v1/knowledge:
     get:
       tags:
@@ -2458,6 +2806,2612 @@ paths:
           minimum: 1
           maximum: 100
           default: 25
+  /api/v1/auth/session:
+    post:
+      tags:
+      - Registry
+      summary: Establish authenticated session and issue CSRF token
+      operationId: post_api_v1_auth_session
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreateRequest'
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - Registry
+      summary: Terminate current session and revoke session token
+      operationId: post_api_v1_auth_logout
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/auth/revoke:
+    post:
+      tags:
+      - Registry
+      summary: Explicitly revoke a JWT JTI
+      operationId: post_api_v1_auth_revoke
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRevokeRequest'
+  /api/v1/work-items/{id}/dispatch:
+    post:
+      tags:
+      - WorkItems
+      summary: Transactionally dispatch a WorkItem into a governed Task
+      operationId: post_api_v1_work_items_id_dispatch
+      x-phase: V2
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 12
+          maxLength: 256
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkItemDispatchRequest'
+  /api/v1/tasks/{id}/reconcile:
+    post:
+      tags:
+      - Tasks
+      summary: Resolve a task in NEEDS_RECONCILIATION state
+      operationId: post_api_v1_tasks_id_reconcile
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskReconcileRequest'
+  /api/v1/ai/providers:
+    get:
+      tags:
+      - AIHub
+      summary: List registered AI providers without exposing secret keys
+      operationId: get_api_v1_ai_providers
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIProviderList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - AIHub
+      summary: Register a schema-driven AI provider adapter
+      operationId: post_api_v1_ai_providers
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIProvider'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIProviderCreateRequest'
+  /api/v1/ai/providers/{id}:
+    patch:
+      tags:
+      - AIHub
+      summary: Update AI provider metadata or enabled state
+      operationId: patch_api_v1_ai_providers_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIProvider'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIProviderUpdateRequest'
+    delete:
+      tags:
+      - AIHub
+      summary: Remove AI provider registration
+      operationId: delete_api_v1_ai_providers_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/ai/providers/{id}/probe:
+    post:
+      tags:
+      - AIHub
+      summary: Run isolated capability discovery probe with safe degradation
+      operationId: post_api_v1_ai_providers_id_probe
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIProvider'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/models/{id}:
+    get:
+      tags:
+      - AIHub
+      summary: Get detailed model capability profile
+      operationId: get_api_v1_models_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelDetail'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/ai/routing-policy:
+    get:
+      tags:
+      - AIHub
+      summary: Get model routing and fallback policy
+      operationId: get_api_v1_ai_routing_policy
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIRoutingPolicy'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+      - AIHub
+      summary: Update model routing and fallback policy
+      operationId: put_api_v1_ai_routing_policy
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIRoutingPolicy'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIRoutingPolicyUpdate'
+  /api/v1/ai/completions:
+    post:
+      tags:
+      - AIHub
+      summary: Execute governed model completion via AI Hub router
+      operationId: post_api_v1_ai_completions
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AICompletionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AICompletionRequest'
+  /api/v1/conversations:
+    get:
+      tags:
+      - AgentOS
+      summary: List owner-scoped conversations
+      operationId: get_api_v1_conversations
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - AgentOS
+      summary: Create a new owner-scoped conversation
+      operationId: post_api_v1_conversations
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreateRequest'
+  /api/v1/conversations/{id}:
+    get:
+      tags:
+      - AgentOS
+      summary: Get conversation metadata
+      operationId: get_api_v1_conversations_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/conversations/{id}/messages:
+    get:
+      tags:
+      - AgentOS
+      summary: List messages in a conversation
+      operationId: get_api_v1_conversations_id_messages
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationMessageList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+    post:
+      tags:
+      - AgentOS
+      summary: Idempotently append message to conversation
+      operationId: post_api_v1_conversations_id_messages
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationMessage'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 12
+          maxLength: 256
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationMessageCreate'
+  /api/v1/conversations/{id}/stream:
+    get:
+      tags:
+      - AgentOS
+      summary: Stream conversation events via SSE (separate from audit SSE)
+      operationId: get_api_v1_conversations_id_stream
+      x-phase: V2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: SSE conversation stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/supervisor/plan:
+    post:
+      tags:
+      - AgentOS
+      summary: Generate and optionally dispatch a multi-agent execution plan
+      operationId: post_api_v1_supervisor_plan
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupervisorPlanResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupervisorPlanRequest'
+  /api/v1/plugins:
+    get:
+      tags:
+      - AgentOS
+      summary: List registered plugins and security state
+      operationId: get_api_v1_plugins
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - AgentOS
+      summary: Register a signed plugin manifest with least-privilege check
+      operationId: post_api_v1_plugins
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRegisterRequest'
+  /api/v1/plugins/{id}/enable:
+    post:
+      tags:
+      - AgentOS
+      summary: Enable a verified plugin
+      operationId: post_api_v1_plugins_id_enable
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/plugins/{id}/disable:
+    post:
+      tags:
+      - AgentOS
+      summary: Disable a plugin immediately
+      operationId: post_api_v1_plugins_id_disable
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/plugins/{id}/rollback:
+    post:
+      tags:
+      - AgentOS
+      summary: Rollback plugin to previous verified version
+      operationId: post_api_v1_plugins_id_rollback
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/nodes/register:
+    post:
+      tags:
+      - Compute
+      summary: Register a server node with certificate fingerprint and generation
+        tracking
+      operationId: post_api_v1_nodes_register
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeRegisterRequest'
+  /api/v1/nodes/{id}/revoke:
+    post:
+      tags:
+      - Compute
+      summary: Revoke a server node trust and mark offline
+      operationId: post_api_v1_nodes_id_revoke
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/devices/pair/init:
+    post:
+      tags:
+      - Compute
+      summary: Initiate worker or terminal device pairing
+      operationId: post_api_v1_devices_pair_init
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePairTicket'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePairInitRequest'
+  /api/v1/devices/pair/confirm:
+    post:
+      tags:
+      - Compute
+      summary: Confirm device pairing code and bind worker identity
+      operationId: post_api_v1_devices_pair_confirm
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePairTicket'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePairConfirmRequest'
+  /api/v1/workers/{worker_id}/tasks/{task_id}/progress:
+    post:
+      tags:
+      - Workers
+      summary: Report incremental task progress under active worker lease
+      operationId: post_api_v1_workers_worker_id_tasks_task_id_progress
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerProgressRequest'
+  /api/v1/compute/runs/{id}:
+    get:
+      tags:
+      - Compute
+      summary: Get compute run manifest and checkpoint status
+      operationId: get_api_v1_compute_runs_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputeRunRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/compute/runs/{id}/checkpoint:
+    post:
+      tags:
+      - Compute
+      summary: Record a verified Drive checkpoint for a compute run
+      operationId: post_api_v1_compute_runs_id_checkpoint
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputeRunRecord'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComputeCheckpointRequest'
+  /api/v1/clients/devices:
+    get:
+      tags:
+      - Clients
+      summary: List registered Android, macOS, Windows and Web client devices
+      operationId: get_api_v1_clients_devices
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientDeviceList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - Clients
+      summary: Register or heartbeat a client device with native keystore metadata
+      operationId: post_api_v1_clients_devices
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientDevice'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientDeviceRegisterRequest'
+  /api/v1/clients/devices/{id}/wipe:
+    post:
+      tags:
+      - Clients
+      summary: Trigger remote logout and local cache wipe on a client device
+      operationId: post_api_v1_clients_devices_id_wipe
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientDevice'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/clients/sync:
+    get:
+      tags:
+      - Clients
+      summary: Fetch cross-device synchronized state and revision cursor
+      operationId: get_api_v1_clients_sync
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientSyncState'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - Clients
+      summary: Commit cross-device state with optimistic revision CAS
+      operationId: post_api_v1_clients_sync
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientSyncState'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientSyncRequest'
+  /api/v1/clients/releases/latest:
+    get:
+      tags:
+      - Clients
+      summary: Get signed release manifest and SHA-256 digests for Android, macOS,
+        Windows, and Web
+      operationId: get_api_v1_clients_releases_latest
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientReleaseManifest'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/uploads/tickets:
+    post:
+      tags:
+      - Artifacts
+      summary: Create a size/MIME/SHA-256 bounded upload ticket
+      operationId: post_api_v1_uploads_tickets
+      x-phase: V2
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadTicket'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadTicketRequest'
+  /api/v1/uploads/{ticket_id}:
+    put:
+      tags:
+      - Artifacts
+      summary: Upload content and verify SHA-256 against issued ticket
+      operationId: put_api_v1_uploads_ticket_id
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadCompleteRequest'
+  /api/v1/artifacts/{id}/download-ticket:
+    post:
+      tags:
+      - Artifacts
+      summary: Issue short-lived signed download ticket for an authorized artifact
+      operationId: post_api_v1_artifacts_id_download_ticket
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactDownloadTicket'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/artifacts/{id}/content:
+    get:
+      tags:
+      - Artifacts
+      summary: Download verified artifact content with safe disposition
+      operationId: get_api_v1_artifacts_id_content
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactContentEnvelope'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/integrations/{id}/sync:
+    post:
+      tags:
+      - Integrations
+      summary: Trigger governed metadata sync with Notion, Drive or Git
+      operationId: post_api_v1_integrations_id_sync
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationSyncReceipt'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationSyncRequest'
+  /api/v1/knowledge/query:
+    post:
+      tags:
+      - Integrations
+      summary: Query authorized knowledge sources across Drive, Notion, and Git metadata
+      operationId: post_api_v1_knowledge_query
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeQueryResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeQueryRequest'
+  /api/v1/system/contract-meta:
+    get:
+      tags:
+      - System
+      summary: Get active contract digest and 7-workflow implementation status
+      operationId: get_api_v1_system_contract_meta
+      x-phase: V2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractMetaStatus'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict / CAS / idempotency error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Unavailable dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     humanBearer:
@@ -2723,6 +5677,14 @@ components:
         created_by:
           type: string
           format: uuid
+        instructions:
+          type:
+          - string
+          - 'null'
+        attachments:
+          type: array
+          items:
+            type: string
       required:
       - id
       - title
@@ -2752,6 +5714,15 @@ components:
           type:
           - string
           - 'null'
+        instructions:
+          type:
+          - string
+          - 'null'
+          maxLength: 4000
+        attachments:
+          type: array
+          items:
+            type: string
       required:
       - title
       - kind
@@ -3681,6 +6652,1440 @@ components:
           type: object
           additionalProperties:
             type: string
+    SessionCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        client_platform:
+          type: string
+          enum:
+          - web
+          - android
+          - macos
+          - windows
+          - cli
+        device_id:
+          type:
+          - string
+          - 'null'
+    SessionState:
+      type: object
+      required:
+      - session_id
+      - csrf_token
+      - expires_at
+      - principal
+      - cookie_flags
+      properties:
+        session_id:
+          type: string
+          minLength: 1
+        csrf_token:
+          type: string
+          minLength: 16
+        expires_at:
+          type: string
+          format: date-time
+        principal:
+          $ref: '#/components/schemas/Me'
+        cookie_flags:
+          type: object
+          required:
+          - http_only
+          - secure
+          - same_site
+          properties:
+            http_only:
+              type: boolean
+            secure:
+              type: boolean
+            same_site:
+              type: string
+              enum:
+              - Strict
+              - Lax
+    TokenRevokeRequest:
+      type: object
+      required:
+      - jti
+      additionalProperties: false
+      properties:
+        jti:
+          type: string
+          minLength: 1
+        reason:
+          type:
+          - string
+          - 'null'
+          maxLength: 300
+    ResourceRegisterRequest:
+      type: object
+      required:
+      - id
+      - kind
+      - owner_system
+      - display_name
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 120
+        kind:
+          type: string
+          enum:
+          - node
+          - service
+          - agent
+          - model
+          - project
+          - integration
+          - artifact
+          - workflow
+        owner_system:
+          type: string
+          minLength: 1
+          maxLength: 120
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        node_id:
+          type:
+          - string
+          - 'null'
+    ResourceMutationRequest:
+      type: object
+      required:
+      - expected_generation
+      - action
+      additionalProperties: false
+      properties:
+        expected_generation:
+          type: integer
+          minimum: 1
+        action:
+          type: string
+          enum:
+          - transfer_owner
+          - move_node
+          - change_kind
+          - disable
+          - enable
+          - recreate
+        new_owner:
+          type:
+          - string
+          - 'null'
+        new_node_id:
+          type:
+          - string
+          - 'null'
+        new_kind:
+          type:
+          - string
+          - 'null'
+        display_name:
+          type:
+          - string
+          - 'null'
+    WorkItemDispatchRequest:
+      type: object
+      required:
+      - capability
+      - resource_id
+      - dry_run
+      additionalProperties: false
+      properties:
+        capability:
+          type: string
+          minLength: 1
+        resource_id:
+          type: string
+          minLength: 1
+        arguments:
+          type: object
+        dry_run:
+          type: boolean
+        origin_channel:
+          type: string
+          enum:
+          - web
+          - android
+          - cli
+          - rakazo
+          - system
+          - other
+    TaskReconcileRequest:
+      type: object
+      required:
+      - resolution
+      - reason
+      additionalProperties: false
+      properties:
+        resolution:
+          type: string
+          enum:
+          - QUEUED
+          - SUCCEEDED
+          - FAILED
+          - CANCELED
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+    ModelCapabilityProfile:
+      type: object
+      required:
+      - supports_text
+      - supports_tools
+      - supports_vision
+      - supports_structured_output
+      - context_window
+      - rate_limit_rpm
+      - pricing_tier
+      properties:
+        supports_text:
+          type: boolean
+        supports_tools:
+          type: boolean
+        supports_vision:
+          type: boolean
+        supports_structured_output:
+          type: boolean
+        context_window:
+          type: integer
+          minimum: 1024
+        rate_limit_rpm:
+          type: integer
+          minimum: 1
+        pricing_tier:
+          type: string
+          enum:
+          - free
+          - standard
+          - premium
+          - custom
+    AIProviderCreateRequest:
+      type: object
+      required:
+      - id
+      - display_name
+      - adapter_kind
+      - endpoint_url
+      - credential_ref
+      - models
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        adapter_kind:
+          type: string
+          enum:
+          - openai_compatible
+          - gemini_native
+          - mistral_native
+        endpoint_url:
+          type: string
+          minLength: 8
+        credential_ref:
+          type: string
+          minLength: 1
+        api_key_secret:
+          type:
+          - string
+          - 'null'
+        models:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - display_name
+            - capabilities
+            properties:
+              id:
+                type: string
+                minLength: 1
+              display_name:
+                type: string
+                minLength: 1
+              capabilities:
+                $ref: '#/components/schemas/ModelCapabilityProfile'
+    AIProviderUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        display_name:
+          type:
+          - string
+          - 'null'
+        endpoint_url:
+          type:
+          - string
+          - 'null'
+        enabled:
+          type:
+          - boolean
+          - 'null'
+    AIProvider:
+      type: object
+      required:
+      - id
+      - display_name
+      - adapter_kind
+      - endpoint_url
+      - credential_ref
+      - has_secret_configured
+      - status
+      - models
+      - source_meta
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        adapter_kind:
+          type: string
+          enum:
+          - openai_compatible
+          - gemini_native
+          - mistral_native
+        endpoint_url:
+          type: string
+        credential_ref:
+          type: string
+        has_secret_configured:
+          type: boolean
+        status:
+          type: string
+          enum:
+          - AVAILABLE
+          - DEGRADED
+          - UNAVAILABLE
+          - UNKNOWN
+        models:
+          type: array
+          items:
+            type: object
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    AIProviderList:
+      type: object
+      required:
+      - items
+      - next_cursor
+      - source_meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIProvider'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    ModelDetail:
+      type: object
+      required:
+      - id
+      - title
+      - provider_id
+      - adapter_kind
+      - capabilities
+      - enabled
+      - source_meta
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        provider_id:
+          type: string
+        adapter_kind:
+          type: string
+        capabilities:
+          $ref: '#/components/schemas/ModelCapabilityProfile'
+        enabled:
+          type: boolean
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    AIRoutingPolicy:
+      type: object
+      required:
+      - default_model_id
+      - fallback_model_id
+      - task_routes
+      - updated_at
+      - source_meta
+      properties:
+        default_model_id:
+          type: string
+        fallback_model_id:
+          type:
+          - string
+          - 'null'
+        task_routes:
+          type: object
+          additionalProperties:
+            type: string
+        updated_at:
+          type: string
+          format: date-time
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    AIRoutingPolicyUpdate:
+      type: object
+      required:
+      - default_model_id
+      additionalProperties: false
+      properties:
+        default_model_id:
+          type: string
+          minLength: 1
+        fallback_model_id:
+          type:
+          - string
+          - 'null'
+        task_routes:
+          type: object
+          additionalProperties:
+            type: string
+    AICompletionRequest:
+      type: object
+      required:
+      - prompt
+      - dry_run
+      additionalProperties: false
+      properties:
+        model_id:
+          type:
+          - string
+          - 'null'
+        task_kind:
+          type:
+          - string
+          - 'null'
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        require_tools:
+          type: boolean
+        require_vision:
+          type: boolean
+        dry_run:
+          type: boolean
+    AICompletionResponse:
+      type: object
+      required:
+      - completion_id
+      - routed_model_id
+      - provider_id
+      - content
+      - dry_run
+      - source_meta
+      properties:
+        completion_id:
+          type: string
+        routed_model_id:
+          type: string
+        provider_id:
+          type: string
+        content:
+          type: string
+        dry_run:
+          type: boolean
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    AgentUpsertRequest:
+      type: object
+      required:
+      - id
+      - display_name
+      - owner_system
+      - capabilities
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 120
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        owner_system:
+          type: string
+          minLength: 1
+          maxLength: 120
+        runtime_node_id:
+          type:
+          - string
+          - 'null'
+        capabilities:
+          type: array
+          items:
+            type: string
+        default_model_id:
+          type:
+          - string
+          - 'null'
+        system_prompt:
+          type:
+          - string
+          - 'null'
+          maxLength: 4000
+    AgentPatchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        display_name:
+          type:
+          - string
+          - 'null'
+        capabilities:
+          type: array
+          items:
+            type: string
+        default_model_id:
+          type:
+          - string
+          - 'null'
+        system_prompt:
+          type:
+          - string
+          - 'null'
+          maxLength: 4000
+    ConversationCreateRequest:
+      type: object
+      required:
+      - title
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        agent_id:
+          type:
+          - string
+          - 'null'
+        work_item_id:
+          type:
+          - string
+          - 'null'
+    Conversation:
+      type: object
+      required:
+      - id
+      - title
+      - owner_sub
+      - agent_id
+      - work_item_id
+      - message_count
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        owner_sub:
+          type: string
+        agent_id:
+          type:
+          - string
+          - 'null'
+        work_item_id:
+          type:
+          - string
+          - 'null'
+        message_count:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ConversationList:
+      type: object
+      required:
+      - items
+      - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+    ConversationMessageCreate:
+      type: object
+      required:
+      - content
+      additionalProperties: false
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          - system
+        spawn_capability:
+          type:
+          - string
+          - 'null'
+        spawn_resource_id:
+          type:
+          - string
+          - 'null'
+    ConversationMessage:
+      type: object
+      required:
+      - id
+      - conversation_id
+      - sequence
+      - role
+      - content
+      - created_at
+      - replayed
+      properties:
+        id:
+          type: string
+        conversation_id:
+          type: string
+        sequence:
+          type: integer
+          minimum: 1
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          - system
+        content:
+          type: string
+        spawned_task_id:
+          type:
+          - string
+          - 'null'
+        approval_id:
+          type:
+          - string
+          - 'null'
+        created_at:
+          type: string
+          format: date-time
+        replayed:
+          type: boolean
+    ConversationMessageList:
+      type: object
+      required:
+      - items
+      - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+    SupervisorPlanRequest:
+      type: object
+      required:
+      - goal
+      - dry_run
+      additionalProperties: false
+      properties:
+        goal:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        preferred_agents:
+          type: array
+          items:
+            type: string
+        execute_immediately:
+          type: boolean
+        dry_run:
+          type: boolean
+    SupervisorPlanResponse:
+      type: object
+      required:
+      - plan_id
+      - work_item_id
+      - steps
+      - created_task_ids
+      - requires_approval
+      properties:
+        plan_id:
+          type: string
+        work_item_id:
+          type: string
+        steps:
+          type: array
+          items:
+            type: object
+            required:
+            - step_index
+            - agent_id
+            - capability
+            - resource_id
+            - risk
+            properties:
+              step_index:
+                type: integer
+              agent_id:
+                type: string
+              capability:
+                type: string
+              resource_id:
+                type: string
+              risk:
+                type: string
+        created_task_ids:
+          type: array
+          items:
+            type: string
+        requires_approval:
+          type: boolean
+    PluginRegisterRequest:
+      type: object
+      required:
+      - id
+      - name
+      - version
+      - signature_sha256
+      - requested_scopes
+      - source_repo
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        version:
+          type: string
+          minLength: 1
+          maxLength: 50
+        signature_sha256:
+          type: string
+          minLength: 64
+          maxLength: 64
+        requested_scopes:
+          type: array
+          items:
+            type: string
+        source_repo:
+          type: string
+          minLength: 1
+    PluginRecord:
+      type: object
+      required:
+      - id
+      - name
+      - version
+      - previous_version
+      - signature_sha256
+      - requested_scopes
+      - enabled
+      - source_repo
+      - updated_at
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        previous_version:
+          type:
+          - string
+          - 'null'
+        signature_sha256:
+          type: string
+        requested_scopes:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        source_repo:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+    PluginList:
+      type: object
+      required:
+      - items
+      - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginRecord'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+    NodeRegisterRequest:
+      type: object
+      required:
+      - id
+      - name
+      - role
+      - owner_system
+      - cert_fingerprint_sha256
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        role:
+          type: string
+          enum:
+          - PRIMARY
+          - STANDBY_GATEWAY
+          - RELAY
+          - EXISTING_BUSINESS
+          - WORKER
+        owner_system:
+          type: string
+          minLength: 1
+        cert_fingerprint_sha256:
+          type: string
+          minLength: 64
+          maxLength: 64
+        expected_generation:
+          type:
+          - integer
+          - 'null'
+    DevicePairInitRequest:
+      type: object
+      required:
+      - device_name
+      - platform
+      - requested_capabilities
+      additionalProperties: false
+      properties:
+        device_name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        platform:
+          type: string
+          enum:
+          - android
+          - macos
+          - windows
+          - linux_worker
+        requested_capabilities:
+          type: array
+          items:
+            type: string
+        node_id:
+          type:
+          - string
+          - 'null'
+    DevicePairTicket:
+      type: object
+      required:
+      - pairing_id
+      - pairing_code
+      - state
+      - expires_at
+      - platform
+      properties:
+        pairing_id:
+          type: string
+        pairing_code:
+          type: string
+        state:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - EXPIRED
+        expires_at:
+          type: string
+          format: date-time
+        platform:
+          type: string
+        issued_worker_id:
+          type:
+          - string
+          - 'null'
+    DevicePairConfirmRequest:
+      type: object
+      required:
+      - pairing_id
+      - pairing_code
+      additionalProperties: false
+      properties:
+        pairing_id:
+          type: string
+          minLength: 1
+        pairing_code:
+          type: string
+          minLength: 6
+    WorkerProgressRequest:
+      type: object
+      required:
+      - generation
+      - lease_token
+      - progress_percent
+      - summary
+      additionalProperties: false
+      properties:
+        generation:
+          type: integer
+          minimum: 1
+        lease_token:
+          type: string
+          minLength: 8
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 500
+    ComputeRunCreateRequest:
+      type: object
+      required:
+      - title
+      - runtime_kind
+      - git_commit
+      - dataset_sha256
+      - dry_run
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        runtime_kind:
+          type: string
+          enum:
+          - local_worker
+          - colab_ephemeral
+          - remote_node
+        git_commit:
+          type: string
+          minLength: 7
+          maxLength: 64
+        dataset_sha256:
+          type: string
+          minLength: 64
+          maxLength: 64
+        hyperparameters:
+          type: object
+        dry_run:
+          type: boolean
+    ComputeCheckpointRequest:
+      type: object
+      required:
+      - step
+      - artifact_sha256
+      - byte_size
+      additionalProperties: false
+      properties:
+        step:
+          type: integer
+          minimum: 1
+        artifact_sha256:
+          type: string
+          minLength: 64
+          maxLength: 64
+        byte_size:
+          type: integer
+          minimum: 1
+        metrics:
+          type: object
+    ComputeRunRecord:
+      type: object
+      required:
+      - id
+      - title
+      - runtime_kind
+      - git_commit
+      - dataset_sha256
+      - execution_id
+      - state
+      - checkpoints
+      - source_meta
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        runtime_kind:
+          type: string
+        git_commit:
+          type: string
+        dataset_sha256:
+          type: string
+        execution_id:
+          type: string
+        state:
+          type: string
+          enum:
+          - PREPARED
+          - RUNNING
+          - CHECKPOINTED
+          - COMPLETED
+          - FAILED
+        checkpoints:
+          type: array
+          items:
+            type: object
+        last_checkpoint_artifact_id:
+          type:
+          - string
+          - 'null'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    ClientDeviceRegisterRequest:
+      type: object
+      required:
+      - device_id
+      - platform
+      - app_version
+      - os_arch
+      - keystore_kind
+      additionalProperties: false
+      properties:
+        device_id:
+          type: string
+          minLength: 1
+          maxLength: 120
+        platform:
+          type: string
+          enum:
+          - web
+          - android
+          - macos
+          - windows
+        app_version:
+          type: string
+          minLength: 1
+          maxLength: 50
+        os_arch:
+          type: string
+          minLength: 1
+          maxLength: 80
+        keystore_kind:
+          type: string
+          enum:
+          - android_keystore
+          - macos_keychain
+          - windows_credential_manager
+          - web_httponly_cookie
+    ClientDevice:
+      type: object
+      required:
+      - device_id
+      - owner_sub
+      - platform
+      - app_version
+      - os_arch
+      - keystore_kind
+      - wipe_pending
+      - revoked
+      - updated_at
+      properties:
+        device_id:
+          type: string
+        owner_sub:
+          type: string
+        platform:
+          type: string
+        app_version:
+          type: string
+        os_arch:
+          type: string
+        keystore_kind:
+          type: string
+        wipe_pending:
+          type: boolean
+        revoked:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+    ClientDeviceList:
+      type: object
+      required:
+      - items
+      - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientDevice'
+        next_cursor:
+          type:
+          - string
+          - 'null'
+    ClientSyncRequest:
+      type: object
+      required:
+      - device_id
+      - expected_revision
+      - draft_work_items
+      - ui_preferences
+      additionalProperties: false
+      properties:
+        device_id:
+          type: string
+          minLength: 1
+        expected_revision:
+          type: integer
+          minimum: 0
+        draft_work_items:
+          type: array
+          items:
+            type: object
+        ui_preferences:
+          type: object
+    ClientSyncState:
+      type: object
+      required:
+      - owner_sub
+      - revision
+      - cursor
+      - draft_work_items
+      - ui_preferences
+      - updated_at
+      properties:
+        owner_sub:
+          type: string
+        revision:
+          type: integer
+          minimum: 0
+        cursor:
+          type: string
+        draft_work_items:
+          type: array
+          items:
+            type: object
+        ui_preferences:
+          type: object
+        updated_at:
+          type: string
+          format: date-time
+    ClientReleaseManifest:
+      type: object
+      required:
+      - contract_version
+      - min_compatible_contract
+      - platforms
+      - source_meta
+      properties:
+        contract_version:
+          type: string
+        min_compatible_contract:
+          type: string
+        platforms:
+          type: object
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    UploadTicketRequest:
+      type: object
+      required:
+      - file_name
+      - mime_type
+      - byte_size
+      - sha256
+      additionalProperties: false
+      properties:
+        file_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        mime_type:
+          type: string
+          minLength: 3
+          maxLength: 120
+        byte_size:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+        sha256:
+          type: string
+          minLength: 64
+          maxLength: 64
+        task_id:
+          type:
+          - string
+          - 'null'
+    UploadTicket:
+      type: object
+      required:
+      - ticket_id
+      - upload_url
+      - expires_at
+      - max_bytes
+      - expected_sha256
+      - state
+      properties:
+        ticket_id:
+          type: string
+        upload_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        max_bytes:
+          type: integer
+        expected_sha256:
+          type: string
+        state:
+          type: string
+          enum:
+          - ISSUED
+          - COMPLETED
+          - EXPIRED
+        artifact_id:
+          type:
+          - string
+          - 'null'
+    UploadCompleteRequest:
+      type: object
+      required:
+      - content_base64
+      additionalProperties: false
+      properties:
+        content_base64:
+          type: string
+          minLength: 1
+    ArtifactDownloadTicket:
+      type: object
+      required:
+      - ticket_id
+      - artifact_id
+      - download_url
+      - expires_at
+      - sha256
+      - byte_size
+      - disposition
+      properties:
+        ticket_id:
+          type: string
+        artifact_id:
+          type: string
+        download_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        sha256:
+          type: string
+        byte_size:
+          type: integer
+        disposition:
+          type: string
+    ArtifactContentEnvelope:
+      type: object
+      required:
+      - artifact_id
+      - sha256
+      - byte_size
+      - mime_type
+      - disposition
+      - content_base64
+      properties:
+        artifact_id:
+          type: string
+        sha256:
+          type: string
+        byte_size:
+          type: integer
+        mime_type:
+          type: string
+        disposition:
+          type: string
+        content_base64:
+          type: string
+    IntegrationSyncRequest:
+      type: object
+      required:
+      - dry_run
+      additionalProperties: false
+      properties:
+        dry_run:
+          type: boolean
+        target_ref:
+          type:
+          - string
+          - 'null'
+        summary_note:
+          type:
+          - string
+          - 'null'
+          maxLength: 1000
+    IntegrationSyncReceipt:
+      type: object
+      required:
+      - integration_id
+      - sync_id
+      - status
+      - authority_preserved
+      - synced_at
+      - source_meta
+      properties:
+        integration_id:
+          type: string
+        sync_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - SIMULATED_OK
+          - UNAVAILABLE
+        authority_preserved:
+          type: boolean
+        synced_at:
+          type: string
+          format: date-time
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    KnowledgeQueryRequest:
+      type: object
+      required:
+      - query
+      additionalProperties: false
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+        sources:
+          type: array
+          items:
+            type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+    KnowledgeQueryResponse:
+      type: object
+      required:
+      - query
+      - items
+      - source_meta
+      properties:
+        query:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - title
+            - source_system
+            - snippet
+            - source_meta
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              source_system:
+                type: string
+              snippet:
+                type: string
+              uri:
+                type:
+                - string
+                - 'null'
+              source_meta:
+                $ref: '#/components/schemas/DataSourceMeta'
+        source_meta:
+          $ref: '#/components/schemas/DataSourceMeta'
+    ContractMetaStatus:
+      type: object
+      required:
+      - contract_version
+      - openapi_sha256
+      - total_paths
+      - total_operations
+      - baseline_v1_paths
+      - baseline_v1_operations
+      - workflows_ready
+      - checked_at
+      properties:
+        contract_version:
+          type: string
+        openapi_sha256:
+          type: string
+        total_paths:
+          type: integer
+        total_operations:
+          type: integer
+        baseline_v1_paths:
+          type: integer
+        baseline_v1_operations:
+          type: integer
+        workflows_ready:
+          type: object
+          required:
+          - platform_core
+          - ai_infrastructure
+          - agent_os
+          - compute_resources
+          - multi_platform_clients
+          - data_integrations
+          - testing_and_delivery
+          properties:
+            platform_core:
+              type: boolean
+            ai_infrastructure:
+              type: boolean
+            agent_os:
+              type: boolean
+            compute_resources:
+              type: boolean
+            multi_platform_clients:
+              type: boolean
+            data_integrations:
+              type: boolean
+            testing_and_delivery:
+              type: boolean
+        checked_at:
+          type: string
+          format: date-time
 x-release-status: LOCAL_DESIGN_CONTRACT_ONLY
 x-preserved-v0.4:
   paths: 31

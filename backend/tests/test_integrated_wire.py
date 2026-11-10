@@ -109,7 +109,7 @@ def test_all_43_operations_validate_against_shared_frozen_contract(context):
         return r
 
     for path, ops in CONTRACT["paths"].items():
-        if "get" in ops and "{" not in path and path != "/api/v1/events":
+        if "get" in ops and "{" not in path and path != "/api/v1/events" and ops["get"].get("x-phase") != "V2":
             get(path)
     get("/api/v1/nodes/us-server", "/api/v1/nodes/{id}")
     get("/api/v1/resources/svc.mwcp.portal", "/api/v1/resources/{id}")
@@ -196,8 +196,8 @@ def test_all_43_operations_validate_against_shared_frozen_contract(context):
     expected = {
         (method, path)
         for path, ops in CONTRACT["paths"].items()
-        for method in ops
-        if method in {"get", "post"}
+        for method, op_spec in ops.items()
+        if method in {"get", "post"} and isinstance(op_spec, dict) and op_spec.get("x-phase") != "V2"
     }
     assert covered == expected and len(covered) == 43
 

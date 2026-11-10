@@ -426,6 +426,137 @@ class PgOutboxRepository(_PgBase):
             (self.MAX_ATTEMPTS,))
 
 
+
+
+class PgAIHubRepository(_PgBase):
+    def upsert_provider(self, *, provider_id: str, display_name: str, adapter_kind: str,
+                        endpoint_url: str, credential_ref: str, status: str,
+                        enabled: bool, models_json: str) -> None:
+        self._exec(
+            """INSERT INTO ai_providers (id, display_name, adapter_kind, endpoint_url,
+                                          credential_ref, status, enabled, models_json)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+               ON CONFLICT (id) DO UPDATE SET
+                   display_name=EXCLUDED.display_name,
+                   endpoint_url=EXCLUDED.endpoint_url,
+                   status=EXCLUDED.status,
+                   enabled=EXCLUDED.enabled,
+                   models_json=EXCLUDED.models_json,
+                   updated_at=now()""",
+            (provider_id, display_name, adapter_kind, endpoint_url, credential_ref,
+             status, enabled, models_json))
+
+    def load_providers(self) -> list:
+        return self._all("SELECT * FROM ai_providers ORDER BY id")
+
+
+class PgAgentOSRepository(_PgBase):
+    def insert_conversation(self, *, conv_id: str, title: str, owner_sub: str,
+                            agent_id: str | None, work_item_id: str | None) -> str:
+        return str(self._one(
+            """INSERT INTO conversations (id, title, owner_sub, agent_id, work_item_id)
+               VALUES (%s,%s,%s,%s,%s) RETURNING id""",
+            (conv_id, title, owner_sub, agent_id, work_item_id))[0])
+
+    def append_message_idempotent(self, *, msg_id: str, conversation_id: str,
+                                  sequence: int, role: str, content: str,
+                                  spawned_task_id: str | None, approval_id: str | None,
+                                  idempotency_key: str, request_hash: str) -> tuple[str, bool]:
+        row = self._one(
+            """SELECT id, request_hash FROM conversation_messages
+                WHERE conversation_id=%s AND idempotency_key=%s""",
+            (conversation_id, idempotency_key))
+        if row is not None:
+            if row[1] != request_hash:
+                raise ValueError("idempotency_conflict")
+            return str(row[0]), True
+        inserted = self._one(
+            """INSERT INTO conversation_messages
+               (id, conversation_id, sequence, role, content, spawned_task_id,
+                approval_id, idempotency_key, request_hash)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+            (msg_id, conversation_id, sequence, role, content, spawned_task_id,
+             approval_id, idempotency_key, request_hash))
+        return str(inserted[0]), False
+
+    def upsert_plugin(self, *, plugin_id: str, name: str, version: str,
+                      previous_version: str | None, signature_sha256: str,
+                      requested_scopes_json: str, enabled: bool, source_repo: str) -> None:
+        self._exec(
+            """INSERT INTO plugins (id, name, version, previous_version, signature_sha256,
+                                    requested_scopes, enabled, source_repo)
+               VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+               ON CONFLICT (id) DO UPDATE SET
+                   version=EXCLUDED.version,
+                   previous_version=EXCLUDED.previous_version,
+                   signature_sha256=EXCLUDED.signature_sha256,
+                   enabled=EXCLUDED.enabled,
+                   updated_at=now()""",
+            (plugin_id, name, version, previous_version, signature_sha256,
+             requested_scopes_json, enabled, source_repo))
+
+
+class PgWorkerHubRepository(_PgBase):
+    def insert_compute_run(self, *, run_id: str, title: str, runtime_kind: str,
+                           git_commit: str, dataset_sha256: str, execution_id: str) -> str:
+        return str(self._one(
+            """INSERT INTO compute_runs (id, title, runtime_kind, git_commit,
+                                         dataset_sha256, execution_id)
+               VALUES (%s,%s,%s,%s,%s,%s) RETURNING id""",
+            (run_id, title, runtime_kind, git_commit, dataset_sha256, execution_id))[0])
+
+    def update_checkpoint(self, *, run_id: str, checkpoints_json: str,
+                          artifact_id: str) -> bool:
+        return self._exec(
+            """UPDATE compute_runs
+                  SET checkpoints_json=%s::jsonb,
+                      last_checkpoint_artifact_id=%s,
+                      state='CHECKPOINTED',
+                      updated_at=now()
+                WHERE id=%s""",
+            (checkpoints_json, artifact_id, run_id)) == 1
+
+
+class PgClientSyncRepository(_PgBase):
+    def upsert_device(self, *, device_id: str, owner_sub: str, platform: str,
+                      app_version: str, os_arch: str, keystore_kind: str) -> None:
+        self._exec(
+            """INSERT INTO client_devices (device_id, owner_sub, platform, app_version,
+                                           os_arch, keystore_kind, wipe_pending, revoked)
+               VALUES (%s,%s,%s,%s,%s,%s,false,false)
+               ON CONFLICT (device_id) DO UPDATE SET
+                   app_version=EXCLUDED.app_version,
+                   os_arch=EXCLUDED.os_arch,
+                   wipe_pending=false,
+                   revoked=false,
+                   updated_at=now()""",
+            (device_id, owner_sub, platform, app_version, os_arch, keystore_kind))
+
+    def cas_update_sync_state(self, *, owner_sub: str, expected_revision: int,
+                              new_cursor: str, drafts_json: str, prefs_json: str) -> bool:
+        return self._exec(
+            """UPDATE client_sync_states
+                  SET revision = revision + 1,
+                      cursor = %s,
+                      draft_work_items = %s::jsonb,
+                      ui_preferences = %s::jsonb,
+                      updated_at = now()
+                WHERE owner_sub = %s AND revision = %s""",
+            (new_cursor, drafts_json, prefs_json, owner_sub, expected_revision)) == 1
+
+
+class PgIntegrationsRepository(_PgBase):
+    def insert_upload_ticket(self, *, ticket_id: str, owner_sub: str, file_name: str,
+                             mime_type: str, byte_size: int, expected_sha256: str,
+                             task_id: str | None, expires_at: float) -> str:
+        return str(self._one(
+            """INSERT INTO upload_tickets (ticket_id, owner_sub, file_name, mime_type,
+                                           byte_size, expected_sha256, task_id, expires_at)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,to_timestamp(%s)) RETURNING ticket_id""",
+            (ticket_id, owner_sub, file_name, mime_type, byte_size,
+             expected_sha256, task_id, expires_at))[0])
+
+
 class PgRepositories:
     """聚合 PG 七域仓储。`conn` 属性供 transaction() 使用。"""
 
@@ -438,6 +569,11 @@ class PgRepositories:
         self.artifacts = PgArtifactRepository(conn)
         self.audit = PgAuditRepository(conn)
         self.outbox = PgOutboxRepository(conn)
+        self.ai_hub = PgAIHubRepository(conn)
+        self.agent_os = PgAgentOSRepository(conn)
+        self.worker_hub = PgWorkerHubRepository(conn)
+        self.client_sync = PgClientSyncRepository(conn)
+        self.integrations = PgIntegrationsRepository(conn)
 
 
 # ══════════════════════ 迁移与恢复 ══════════════════════

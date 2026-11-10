@@ -185,3 +185,23 @@ export function subscribeEvents(
   };
   return () => stream.close();
 }
+
+// V2 Conversation SSE stream (separate from audit SSE /api/v1/events)
+export function subscribeConversationStream(
+  conversationId: string,
+  onMessage: (eventId: string, data: string) => void,
+  onFallback: () => void,
+) {
+  const stream = new EventSource(
+    `${API_ORIGIN}/api/v1/conversations/${encodeURIComponent(conversationId)}/stream`,
+    { withCredentials: true },
+  );
+  stream.addEventListener("conversation.message", (e) => {
+    const me = e as MessageEvent;
+    onMessage(me.lastEventId, String(me.data ?? ""));
+  });
+  stream.onerror = () => {
+    onFallback();
+  };
+  return () => stream.close();
+}

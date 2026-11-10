@@ -178,3 +178,144 @@ export function exportRecord(value: unknown, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+
+// ══════════ V2 Workspace Workflows: Conversations, AI Routing, Uploads/Downloads & Multi-Device Sync ══════════
+
+export async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+export function base64ToBytes(b64: string): Uint8Array {
+  const binary = atob(b64);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    out[i] = binary.charCodeAt(i);
+  }
+  return out;
+}
+
+export async function submitConversationMessage(
+  conversationId: string,
+  content: string,
+  idempotencyKey: string,
+  spawnTask: boolean,
+  writeMessage: (
+    convId: string,
+    body: Schema<"ConversationMessageCreate">,
+    key: string,
+  ) => Promise<Schema<"ConversationMessage">>,
+): Promise<Schema<"ConversationMessage">> {
+  const trimmed = content.trim();
+  if (!trimmed) throw Error("请输入对话内容。");
+  if (!idempotencyKey || idempotencyKey.length < 12)
+    throw Error("缺少有效的消息幂等键。");
+  return await writeMessage(
+    conversationId,
+    {
+      content: trimmed,
+      role: "user",
+      ...(spawnTask
+        ? {
+            spawn_capability: "local.simulate",
+            spawn_resource_id: "local-ledger",
+          }
+        : {}),
+    },
+    idempotencyKey,
+  );
+}
+
+export async function performVerifiedUpload(
+  fileName: string,
+  mimeType: string,
+  bytes: Uint8Array,
+  createTicket: (
+    body: Schema<"UploadTicketRequest">,
+  ) => Promise<Schema<"UploadTicket">>,
+  putUpload: (
+    ticketId: string,
+    body: Schema<"UploadCompleteRequest">,
+  ) => Promise<Schema<"Artifact">>,
+  taskId?: string,
+): Promise<Schema<"Artifact">> {
+  if (!bytes.length) throw Error("不能上传空文件。");
+  if (bytes.length > 10 * 1024 * 1024)
+    throw Error("文件超过 10 MiB 限制。");
+  if (fileName.includes("/") || fileName.includes("\\") || fileName.includes(".."))
+    throw Error("文件名包含非法路径字符。");
+  const digest = await sha256Hex(bytes);
+  const ticket = await createTicket({
+    file_name: fileName,
+    mime_type: mimeType,
+    byte_size: bytes.length,
+    sha256: digest,
+    ...(taskId ? { task_id: taskId } : {}),
+  });
+  const artifact = await putUpload(ticket.ticket_id, {
+    content_base64: bytesToBase64(bytes),
+  });
+  if (artifact.sha256 && artifact.sha256 !== digest) {
+    throw Error("上传后服务端返回的 SHA-256 与本地文件不一致。");
+  }
+  return artifact;
+}
+
+export async function performVerifiedDownload(
+  artifactId: string,
+  createDownloadTicket: (
+    id: string,
+  ) => Promise<Schema<"ArtifactDownloadTicket">>,
+  fetchContent: (
+    id: string,
+    ticketId: string,
+  ) => Promise<Schema<"ArtifactContentEnvelope">>,
+): Promise<{
+  bytes: Uint8Array;
+  sha256: string;
+  mimeType: string;
+  disposition: string;
+}> {
+  const ticket = await createDownloadTicket(artifactId);
+  const envelope = await fetchContent(artifactId, ticket.ticket_id);
+  const bytes = base64ToBytes(envelope.content_base64);
+  const actualSha = await sha256Hex(bytes);
+  if (actualSha !== envelope.sha256 || actualSha !== ticket.sha256) {
+    throw Error("下载内容 SHA-256 校验失败，已拒绝保存文件。");
+  }
+  return {
+    bytes,
+    sha256: actualSha,
+    mimeType: envelope.mime_type,
+    disposition: envelope.disposition,
+  };
+}
+
+export async function syncWorkspaceCrossDevice(
+  deviceId: string,
+  draftWorkItems: Record<string, unknown>[],
+  uiPreferences: Record<string, unknown>,
+  readSync: () => Promise<Schema<"ClientSyncState">>,
+  writeSync: (
+    body: Schema<"ClientSyncRequest">,
+  ) => Promise<Schema<"ClientSyncState">>,
+): Promise<Schema<"ClientSyncState">> {
+  const current = await readSync();
+  return await writeSync({
+    device_id: deviceId,
+    expected_revision: current.revision,
+    draft_work_items: draftWorkItems,
+    ui_preferences: uiPreferences,
+  });
+}

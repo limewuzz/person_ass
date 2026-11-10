@@ -139,3 +139,156 @@ describe("joining paginated related records", () => {
     await expect(collectPages(read)).rejects.toThrow("forbidden");
   });
 });
+
+import {
+  performVerifiedDownload,
+  performVerifiedUpload,
+  submitConversationMessage,
+  syncWorkspaceCrossDevice,
+  bytesToBase64,
+  sha256Hex,
+} from "../src/workspace/model";
+
+describe("V2 workspace workflows: conversations, uploads/downloads, and multi-device sync", () => {
+  it("submits conversation messages with idempotency key and optional task spawn", async () => {
+    const writeMsg = vi.fn(async (cid, body, key) => ({
+      id: "msg-1",
+      conversation_id: cid,
+      sequence: 1,
+      role: body.role ?? "user",
+      content: body.content,
+      spawned_task_id: body.spawn_capability ? accepted.task_id : null,
+      approval_id: body.spawn_capability ? "apr-1" : null,
+      created_at: "2026-11-10T00:00:00Z",
+      replayed: false,
+    }));
+    const res = await submitConversationMessage(
+      "conv-1",
+      "请执行本地模拟验证",
+      "idem-conv-msg-0001",
+      true,
+      writeMsg,
+    );
+    expect(res.spawned_task_id).toBe(accepted.task_id);
+    expect(writeMsg).toHaveBeenCalledWith(
+      "conv-1",
+      {
+        content: "请执行本地模拟验证",
+        role: "user",
+        spawn_capability: "local.simulate",
+        spawn_resource_id: "local-ledger",
+      },
+      "idem-conv-msg-0001",
+    );
+  });
+
+  it("verifies SHA-256 digest on both upload and download and rejects tampered content", async () => {
+    const raw = new TextEncoder().encode("# V2 Artifact Content");
+    const expectedSha = await sha256Hex(raw);
+    const createTicket = vi.fn(async (body) => ({
+      ticket_id: "tk-1",
+      upload_url: "/api/v1/uploads/tk-1",
+      expires_at: "2026-11-10T01:00:00Z",
+      max_bytes: body.byte_size,
+      expected_sha256: body.sha256,
+      state: "ISSUED" as const,
+      artifact_id: null,
+    }));
+    const putUpload = vi.fn(async () => ({
+      id: "art-1",
+      task_id: accepted.task_id,
+      storage_system: "LOCAL_UPLOAD_VAULT",
+      uri: "memory://uploads/art-1/note.md",
+      sha256: expectedSha,
+      byte_size: raw.length,
+    }));
+    const uploaded = await performVerifiedUpload(
+      "note.md",
+      "text/markdown",
+      raw,
+      createTicket,
+      putUpload,
+    );
+    expect(uploaded.sha256).toBe(expectedSha);
+
+    const dl = await performVerifiedDownload(
+      "art-1",
+      async () => ({
+        ticket_id: "dl-1",
+        artifact_id: "art-1",
+        download_url: "/api/v1/artifacts/art-1/content?ticket=dl-1",
+        expires_at: "2026-11-10T01:00:00Z",
+        sha256: expectedSha,
+        byte_size: raw.length,
+        disposition: 'attachment; filename="note.md"',
+      }),
+      async () => ({
+        artifact_id: "art-1",
+        sha256: expectedSha,
+        byte_size: raw.length,
+        mime_type: "text/markdown",
+        disposition: 'attachment; filename="note.md"',
+        content_base64: bytesToBase64(raw),
+      }),
+    );
+    expect(dl.sha256).toBe(expectedSha);
+    expect(new TextDecoder().decode(dl.bytes)).toBe("# V2 Artifact Content");
+
+    // Tampered download payload must be rejected
+    await expect(
+      performVerifiedDownload(
+        "art-1",
+        async () => ({
+          ticket_id: "dl-2",
+          artifact_id: "art-1",
+          download_url: "/api/v1/artifacts/art-1/content?ticket=dl-2",
+          expires_at: "2026-11-10T01:00:00Z",
+          sha256: expectedSha,
+          byte_size: raw.length,
+          disposition: 'attachment; filename="note.md"',
+        }),
+        async () => ({
+          artifact_id: "art-1",
+          sha256: expectedSha,
+          byte_size: raw.length,
+          mime_type: "text/markdown",
+          disposition: 'attachment; filename="note.md"',
+          content_base64: bytesToBase64(new TextEncoder().encode("tampered")),
+        }),
+      ),
+    ).rejects.toThrow("SHA-256");
+  });
+
+  it("synchronizes cross-device workspace state using optimistic revision CAS", async () => {
+    const readSync = vi.fn(async () => ({
+      owner_sub: "u1",
+      revision: 3,
+      cursor: "sync-cursor-3",
+      draft_work_items: [],
+      ui_preferences: { theme: "system" },
+      updated_at: "2026-11-10T00:00:00Z",
+    }));
+    const writeSync = vi.fn(async (body) => ({
+      owner_sub: "u1",
+      revision: body.expected_revision + 1,
+      cursor: `sync-cursor-${body.expected_revision + 1}`,
+      draft_work_items: body.draft_work_items,
+      ui_preferences: body.ui_preferences,
+      updated_at: "2026-11-10T00:01:00Z",
+    }));
+    const synced = await syncWorkspaceCrossDevice(
+      "web-workspace-primary",
+      [{ title: "Synced draft" }],
+      { theme: "dark" },
+      readSync,
+      writeSync,
+    );
+    expect(synced.revision).toBe(4);
+    expect(writeSync).toHaveBeenCalledWith({
+      device_id: "web-workspace-primary",
+      expected_revision: 3,
+      draft_work_items: [{ title: "Synced draft" }],
+      ui_preferences: { theme: "dark" },
+    });
+  });
+});

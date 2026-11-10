@@ -15,7 +15,7 @@ expected = {
     (m.upper(), p)
     for p, ops in CONTRACT["paths"].items()
     for m in ops
-    if m in {"get", "post"}
+    if m in {"get", "post", "put", "patch", "delete"}
 }
 from fastapi.openapi.utils import get_openapi
 
@@ -27,7 +27,7 @@ actual = {
     for path, ops in runtime["paths"].items()
     if path.startswith("/api/")
     for method in ops
-    if method in {"get", "post"}
+    if method in {"get", "post", "put", "patch", "delete"}
 }
 result = {
     "paths": len(CONTRACT["paths"]),

@@ -76,6 +76,8 @@ class WorkItemRec:
     created_by: str = ""
     source_system: str | None = None
     source_external_id: str | None = None
+    instructions: str | None = None
+    attachments: list[str] | None = None
     created_at: str = field(default_factory=_now_iso)
 
 
@@ -193,6 +195,8 @@ class TaskEngine:
         created_by: str,
         source_system: str | None = None,
         source_external_id: str | None = None,
+        instructions: str | None = None,
+        attachments: list[str] | None = None,
     ) -> WorkItemRec:
         if not (1 <= len(title) <= 200):
             raise TaskEngineError("bad_title", "title length 1..200")
@@ -212,6 +216,8 @@ class TaskEngine:
                 created_by=created_by,
                 source_system=source_system,
                 source_external_id=source_external_id,
+                instructions=instructions,
+                attachments=list(attachments) if attachments is not None else None,
             )
             self.work_items[rec.id] = rec
             if source_system and source_external_id:
@@ -220,7 +226,7 @@ class TaskEngine:
             return rec
 
     def work_item_out(self, r: WorkItemRec) -> dict:
-        return {
+        out = {
             "id": r.id,
             "title": r.title,
             "kind": r.kind,
@@ -229,6 +235,11 @@ class TaskEngine:
             "created_by": r.created_by,
             "source_system": r.source_system,
         }
+        if r.instructions is not None:
+            out["instructions"] = r.instructions
+        if r.attachments is not None:
+            out["attachments"] = list(r.attachments)
+        return out
 
     # ---------- Tasks ----------
     def create_task(

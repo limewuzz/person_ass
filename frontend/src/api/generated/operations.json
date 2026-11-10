@@ -3,6 +3,7 @@
     "path": "/api/v1/health/live",
     "method": "get",
     "operationId": "get_api_v1_health_live",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
@@ -14,6 +15,7 @@
     "path": "/api/v1/health/ready",
     "method": "get",
     "operationId": "get_api_v1_health_ready",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
@@ -25,6 +27,7 @@
     "path": "/api/v1/me",
     "method": "get",
     "operationId": "get_api_v1_me",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Me"
@@ -36,6 +39,7 @@
     "path": "/api/v1/nodes",
     "method": "get",
     "operationId": "get_api_v1_nodes",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/NodeList"
@@ -47,6 +51,7 @@
     "path": "/api/v1/resources",
     "method": "get",
     "operationId": "get_api_v1_resources",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ResourceList"
@@ -55,9 +60,24 @@
     "request": null
   },
   {
+    "path": "/api/v1/resources",
+    "method": "post",
+    "operationId": "post_api_v1_resources",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/ResourceGenerationMeta"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ResourceRegisterRequest"
+    }
+  },
+  {
     "path": "/api/v1/services",
     "method": "get",
     "operationId": "get_api_v1_services",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ResourceList"
@@ -69,6 +89,7 @@
     "path": "/api/v1/agents",
     "method": "get",
     "operationId": "get_api_v1_agents",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AgentList"
@@ -77,9 +98,24 @@
     "request": null
   },
   {
+    "path": "/api/v1/agents",
+    "method": "post",
+    "operationId": "post_api_v1_agents",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/Agent"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/AgentUpsertRequest"
+    }
+  },
+  {
     "path": "/api/v1/capabilities",
     "method": "get",
     "operationId": "get_api_v1_capabilities",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/CapabilityList"
@@ -91,6 +127,7 @@
     "path": "/api/v1/work-items",
     "method": "get",
     "operationId": "get_api_v1_work_items",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/WorkItemList"
@@ -102,6 +139,7 @@
     "path": "/api/v1/work-items",
     "method": "post",
     "operationId": "post_api_v1_work_items",
+    "x_phase": "P1",
     "responses": {
       "201": {
         "$ref": "#/components/schemas/WorkItem"
@@ -115,6 +153,7 @@
     "path": "/api/v1/tasks",
     "method": "get",
     "operationId": "get_api_v1_tasks",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/TaskList"
@@ -126,6 +165,7 @@
     "path": "/api/v1/tasks",
     "method": "post",
     "operationId": "post_api_v1_tasks",
+    "x_phase": "P2",
     "responses": {
       "202": {
         "$ref": "#/components/schemas/TaskAccepted"
@@ -139,6 +179,7 @@
     "path": "/api/v1/approvals",
     "method": "get",
     "operationId": "get_api_v1_approvals",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ApprovalList"
@@ -150,6 +191,7 @@
     "path": "/api/v1/observations",
     "method": "get",
     "operationId": "get_api_v1_observations",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ObservationList"
@@ -161,6 +203,7 @@
     "path": "/api/v1/audit",
     "method": "get",
     "operationId": "get_api_v1_audit",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AuditEventList"
@@ -172,6 +215,7 @@
     "path": "/api/v1/artifacts",
     "method": "get",
     "operationId": "get_api_v1_artifacts",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ArtifactList"
@@ -183,6 +227,7 @@
     "path": "/api/v1/integrations",
     "method": "get",
     "operationId": "get_api_v1_integrations",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/IntegrationList"
@@ -194,6 +239,7 @@
     "path": "/api/v1/nodes/{id}",
     "method": "get",
     "operationId": "get_api_v1_nodes_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Node"
@@ -205,6 +251,7 @@
     "path": "/api/v1/resources/{id}",
     "method": "get",
     "operationId": "get_api_v1_resources_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Resource"
@@ -213,9 +260,36 @@
     "request": null
   },
   {
+    "path": "/api/v1/resources/{id}",
+    "method": "patch",
+    "operationId": "patch_api_v1_resources_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ResourceGenerationMeta"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ResourceMutationRequest"
+    }
+  },
+  {
+    "path": "/api/v1/resources/{id}",
+    "method": "delete",
+    "operationId": "delete_api_v1_resources_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ResourceGenerationMeta"
+      }
+    },
+    "request": null
+  },
+  {
     "path": "/api/v1/agents/{id}",
     "method": "get",
     "operationId": "get_api_v1_agents_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Agent"
@@ -224,9 +298,24 @@
     "request": null
   },
   {
+    "path": "/api/v1/agents/{id}",
+    "method": "patch",
+    "operationId": "patch_api_v1_agents_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Agent"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/AgentPatchRequest"
+    }
+  },
+  {
     "path": "/api/v1/work-items/{id}",
     "method": "get",
     "operationId": "get_api_v1_work_items_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/WorkItem"
@@ -238,6 +327,7 @@
     "path": "/api/v1/tasks/{id}",
     "method": "get",
     "operationId": "get_api_v1_tasks_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Task"
@@ -249,6 +339,7 @@
     "path": "/api/v1/approvals/{id}",
     "method": "get",
     "operationId": "get_api_v1_approvals_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Approval"
@@ -260,6 +351,7 @@
     "path": "/api/v1/artifacts/{id}",
     "method": "get",
     "operationId": "get_api_v1_artifacts_id",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Artifact"
@@ -271,6 +363,7 @@
     "path": "/api/v1/tasks/{id}/events",
     "method": "get",
     "operationId": "get_api_v1_tasks_id_events",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/TaskEventList"
@@ -282,6 +375,7 @@
     "path": "/api/v1/tasks/{id}/cancel",
     "method": "post",
     "operationId": "post_api_v1_tasks_id_cancel",
+    "x_phase": "P2",
     "responses": {
       "202": {
         "$ref": "#/components/schemas/Task"
@@ -293,6 +387,7 @@
     "path": "/api/v1/approvals/{id}/approve",
     "method": "post",
     "operationId": "post_api_v1_approvals_id_approve",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Approval"
@@ -304,6 +399,7 @@
     "path": "/api/v1/approvals/{id}/reject",
     "method": "post",
     "operationId": "post_api_v1_approvals_id_reject",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Approval"
@@ -315,6 +411,7 @@
     "path": "/api/v1/events",
     "method": "get",
     "operationId": "get_api_v1_events",
+    "x_phase": "P1",
     "responses": {
       "200": {}
     },
@@ -324,6 +421,7 @@
     "path": "/api/v1/workers/{worker_id}/heartbeat",
     "method": "post",
     "operationId": "post_api_v1_workers_worker_id_heartbeat",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
@@ -337,6 +435,7 @@
     "path": "/api/v1/workers/{worker_id}/claim",
     "method": "post",
     "operationId": "post_api_v1_workers_worker_id_claim",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/WorkerClaimResponse"
@@ -350,6 +449,7 @@
     "path": "/api/v1/workers/{worker_id}/tasks/{task_id}/started",
     "method": "post",
     "operationId": "post_api_v1_workers_worker_id_tasks_task_id_started",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
@@ -363,6 +463,7 @@
     "path": "/api/v1/workers/{worker_id}/tasks/{task_id}/finish",
     "method": "post",
     "operationId": "post_api_v1_workers_worker_id_tasks_task_id_finish",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
@@ -376,6 +477,7 @@
     "path": "/api/v1/ui/bootstrap",
     "method": "get",
     "operationId": "get_api_v1_ui_bootstrap",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/UIBootstrap"
@@ -387,6 +489,7 @@
     "path": "/api/v1/dashboard/summary",
     "method": "get",
     "operationId": "get_api_v1_dashboard_summary",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DashboardSummary"
@@ -398,6 +501,7 @@
     "path": "/api/v1/events/history",
     "method": "get",
     "operationId": "get_api_v1_events_history",
+    "x_phase": "P1",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AuditHistoryList"
@@ -409,6 +513,7 @@
     "path": "/api/v1/tasks/{id}/attempts",
     "method": "get",
     "operationId": "get_api_v1_tasks_id_attempts",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/TaskAttemptList"
@@ -420,6 +525,7 @@
     "path": "/api/v1/workflows",
     "method": "get",
     "operationId": "get_api_v1_workflows",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
@@ -431,6 +537,7 @@
     "path": "/api/v1/network/links",
     "method": "get",
     "operationId": "get_api_v1_network_links",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
@@ -442,6 +549,7 @@
     "path": "/api/v1/models",
     "method": "get",
     "operationId": "get_api_v1_models",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
@@ -453,6 +561,7 @@
     "path": "/api/v1/projects",
     "method": "get",
     "operationId": "get_api_v1_projects",
+    "x_phase": "P2",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
@@ -464,6 +573,7 @@
     "path": "/api/v1/compute/runs",
     "method": "get",
     "operationId": "get_api_v1_compute_runs",
+    "x_phase": "P3",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
@@ -472,12 +582,623 @@
     "request": null
   },
   {
+    "path": "/api/v1/compute/runs",
+    "method": "post",
+    "operationId": "post_api_v1_compute_runs",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/ComputeRunRecord"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ComputeRunCreateRequest"
+    }
+  },
+  {
     "path": "/api/v1/knowledge",
     "method": "get",
     "operationId": "get_api_v1_knowledge",
+    "x_phase": "P3",
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/auth/session",
+    "method": "post",
+    "operationId": "post_api_v1_auth_session",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/SessionState"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/SessionCreateRequest"
+    }
+  },
+  {
+    "path": "/api/v1/auth/logout",
+    "method": "post",
+    "operationId": "post_api_v1_auth_logout",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/auth/revoke",
+    "method": "post",
+    "operationId": "post_api_v1_auth_revoke",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/TokenRevokeRequest"
+    }
+  },
+  {
+    "path": "/api/v1/work-items/{id}/dispatch",
+    "method": "post",
+    "operationId": "post_api_v1_work_items_id_dispatch",
+    "x_phase": "V2",
+    "responses": {
+      "202": {
+        "$ref": "#/components/schemas/TaskAccepted"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkItemDispatchRequest"
+    }
+  },
+  {
+    "path": "/api/v1/tasks/{id}/reconcile",
+    "method": "post",
+    "operationId": "post_api_v1_tasks_id_reconcile",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Task"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/TaskReconcileRequest"
+    }
+  },
+  {
+    "path": "/api/v1/ai/providers",
+    "method": "get",
+    "operationId": "get_api_v1_ai_providers",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AIProviderList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/ai/providers",
+    "method": "post",
+    "operationId": "post_api_v1_ai_providers",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/AIProvider"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/AIProviderCreateRequest"
+    }
+  },
+  {
+    "path": "/api/v1/ai/providers/{id}",
+    "method": "patch",
+    "operationId": "patch_api_v1_ai_providers_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AIProvider"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/AIProviderUpdateRequest"
+    }
+  },
+  {
+    "path": "/api/v1/ai/providers/{id}",
+    "method": "delete",
+    "operationId": "delete_api_v1_ai_providers_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/ai/providers/{id}/probe",
+    "method": "post",
+    "operationId": "post_api_v1_ai_providers_id_probe",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AIProvider"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/models/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_models_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ModelDetail"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/ai/routing-policy",
+    "method": "get",
+    "operationId": "get_api_v1_ai_routing_policy",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AIRoutingPolicy"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/ai/routing-policy",
+    "method": "put",
+    "operationId": "put_api_v1_ai_routing_policy",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AIRoutingPolicy"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/AIRoutingPolicyUpdate"
+    }
+  },
+  {
+    "path": "/api/v1/ai/completions",
+    "method": "post",
+    "operationId": "post_api_v1_ai_completions",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/AICompletionResponse"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/AICompletionRequest"
+    }
+  },
+  {
+    "path": "/api/v1/conversations",
+    "method": "get",
+    "operationId": "get_api_v1_conversations",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ConversationList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/conversations",
+    "method": "post",
+    "operationId": "post_api_v1_conversations",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/Conversation"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ConversationCreateRequest"
+    }
+  },
+  {
+    "path": "/api/v1/conversations/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_conversations_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Conversation"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/conversations/{id}/messages",
+    "method": "get",
+    "operationId": "get_api_v1_conversations_id_messages",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ConversationMessageList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/conversations/{id}/messages",
+    "method": "post",
+    "operationId": "post_api_v1_conversations_id_messages",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/ConversationMessage"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ConversationMessageCreate"
+    }
+  },
+  {
+    "path": "/api/v1/conversations/{id}/stream",
+    "method": "get",
+    "operationId": "get_api_v1_conversations_id_stream",
+    "x_phase": "V2",
+    "responses": {
+      "200": {}
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/supervisor/plan",
+    "method": "post",
+    "operationId": "post_api_v1_supervisor_plan",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/SupervisorPlanResponse"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/SupervisorPlanRequest"
+    }
+  },
+  {
+    "path": "/api/v1/plugins",
+    "method": "get",
+    "operationId": "get_api_v1_plugins",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/PluginList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/plugins",
+    "method": "post",
+    "operationId": "post_api_v1_plugins",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/PluginRecord"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/PluginRegisterRequest"
+    }
+  },
+  {
+    "path": "/api/v1/plugins/{id}/enable",
+    "method": "post",
+    "operationId": "post_api_v1_plugins_id_enable",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/PluginRecord"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/plugins/{id}/disable",
+    "method": "post",
+    "operationId": "post_api_v1_plugins_id_disable",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/PluginRecord"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/plugins/{id}/rollback",
+    "method": "post",
+    "operationId": "post_api_v1_plugins_id_rollback",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/PluginRecord"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/nodes/register",
+    "method": "post",
+    "operationId": "post_api_v1_nodes_register",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/Node"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/NodeRegisterRequest"
+    }
+  },
+  {
+    "path": "/api/v1/nodes/{id}/revoke",
+    "method": "post",
+    "operationId": "post_api_v1_nodes_id_revoke",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Node"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/devices/pair/init",
+    "method": "post",
+    "operationId": "post_api_v1_devices_pair_init",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/DevicePairTicket"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/DevicePairInitRequest"
+    }
+  },
+  {
+    "path": "/api/v1/devices/pair/confirm",
+    "method": "post",
+    "operationId": "post_api_v1_devices_pair_confirm",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/DevicePairTicket"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/DevicePairConfirmRequest"
+    }
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/tasks/{task_id}/progress",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_tasks_task_id_progress",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Status"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/WorkerProgressRequest"
+    }
+  },
+  {
+    "path": "/api/v1/compute/runs/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_compute_runs_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ComputeRunRecord"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/compute/runs/{id}/checkpoint",
+    "method": "post",
+    "operationId": "post_api_v1_compute_runs_id_checkpoint",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ComputeRunRecord"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ComputeCheckpointRequest"
+    }
+  },
+  {
+    "path": "/api/v1/clients/devices",
+    "method": "get",
+    "operationId": "get_api_v1_clients_devices",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ClientDeviceList"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/clients/devices",
+    "method": "post",
+    "operationId": "post_api_v1_clients_devices",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/ClientDevice"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ClientDeviceRegisterRequest"
+    }
+  },
+  {
+    "path": "/api/v1/clients/devices/{id}/wipe",
+    "method": "post",
+    "operationId": "post_api_v1_clients_devices_id_wipe",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ClientDevice"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/clients/sync",
+    "method": "get",
+    "operationId": "get_api_v1_clients_sync",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ClientSyncState"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/clients/sync",
+    "method": "post",
+    "operationId": "post_api_v1_clients_sync",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ClientSyncState"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/ClientSyncRequest"
+    }
+  },
+  {
+    "path": "/api/v1/clients/releases/latest",
+    "method": "get",
+    "operationId": "get_api_v1_clients_releases_latest",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ClientReleaseManifest"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/uploads/tickets",
+    "method": "post",
+    "operationId": "post_api_v1_uploads_tickets",
+    "x_phase": "V2",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/UploadTicket"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/UploadTicketRequest"
+    }
+  },
+  {
+    "path": "/api/v1/uploads/{ticket_id}",
+    "method": "put",
+    "operationId": "put_api_v1_uploads_ticket_id",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/Artifact"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/UploadCompleteRequest"
+    }
+  },
+  {
+    "path": "/api/v1/artifacts/{id}/download-ticket",
+    "method": "post",
+    "operationId": "post_api_v1_artifacts_id_download_ticket",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ArtifactDownloadTicket"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/artifacts/{id}/content",
+    "method": "get",
+    "operationId": "get_api_v1_artifacts_id_content",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ArtifactContentEnvelope"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/integrations/{id}/sync",
+    "method": "post",
+    "operationId": "post_api_v1_integrations_id_sync",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/IntegrationSyncReceipt"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/IntegrationSyncRequest"
+    }
+  },
+  {
+    "path": "/api/v1/knowledge/query",
+    "method": "post",
+    "operationId": "post_api_v1_knowledge_query",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/KnowledgeQueryResponse"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/KnowledgeQueryRequest"
+    }
+  },
+  {
+    "path": "/api/v1/system/contract-meta",
+    "method": "get",
+    "operationId": "get_api_v1_system_contract_meta",
+    "x_phase": "V2",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/ContractMetaStatus"
       }
     },
     "request": null

@@ -17,7 +17,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-import jwt
+try:
+    import jwt
+except ImportError:
+    import jwt_stdlib as jwt
 
 MOCK_ISSUER = "https://mock-issuer.mwcp.local"
 AUDIENCE = "mwcp-api"

@@ -121,13 +121,13 @@ async def session(request: Request):
     return r
 
 
-@app.api_route("/api/{rest:path}", methods=["GET", "POST"])
+@app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def proxy(rest: str, request: Request):
     path = "/api/" + rest
     session = SESSIONS.get(request.cookies.get("mw_local_session", ""))
     if not session or session["expires"] < time.monotonic():
         return error(401, "local_session_required")
-    if request.method == "POST":
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         if request.headers.get("origin") != WEB_ORIGIN or not hmac.compare_digest(
             request.headers.get("x-mw-csrf", ""), session["csrf"]
         ):
@@ -140,7 +140,7 @@ async def proxy(rest: str, request: Request):
     if "cherry" in path.lower():
         return error(403, "frozen_catalog_entry")
     body = None
-    if request.method == "POST":
+    if request.method in {"POST", "PUT", "PATCH"}:
         body = await request.body()
         schema = (
             op.get("requestBody", {})
@@ -167,7 +167,7 @@ async def proxy(rest: str, request: Request):
         async with httpx.AsyncClient(
             base_url=RAW_ORIGIN, trust_env=False, timeout=10
         ) as client:
-            if path == "/api/v1/events":
+            if path == "/api/v1/events" or path.endswith("/stream"):
                 # Stream bytes unchanged; same-origin cookie auth stays at BFF, raw bearer stays server-side.
                 async def stream():
                     try:
