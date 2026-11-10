@@ -125,6 +125,7 @@ def test_real_loopback_mac_relay_cli_and_signed_trigger(tmp_path):
 
     root = Path(__file__).parents[1]
     probe = socket.socket()
+    probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     probe.bind(("127.0.0.1", 8137))
     probe.close()
     secret = secrets.token_hex(32)
