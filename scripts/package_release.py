@@ -11,7 +11,7 @@ assert report_path.is_file(),'Run node scripts/mw.mjs test first'
 report=json.loads(report_path.read_text());assert report['status']=='PASSED_UNIFIED_LOCAL_RC' and set(report['heads'].values())=={head},'Evidence must pass on this exact commit'
 assert json.loads((root/'frontend/dist/build-meta.json').read_text())['head']==head
 out=root/'release'/head[:12];out.mkdir(parents=True,exist_ok=True)
-identity={'repository':'https://github.com/limewuzz/person_ass','target_branch':'v0.1_personal','commit':head,'tree':tree,'contract_version':lock['version'],'contract_sha256':sha,'paths':lock['paths'],'operations':lock['operations'],'local_rc':'PASSED_UNIFIED_LOCAL_RC','deployment':'DEPLOYMENT_BLOCKED','deployed':False,'pg_runtime':'NOT_RUN'}
+identity={'repository':'https://github.com/limewuzz/person_ass','target_branch':'v2.0.1','commit':head,'tree':tree,'contract_version':lock['version'],'contract_sha256':sha,'paths':lock['paths'],'operations':lock['operations'],'local_rc':'PASSED_UNIFIED_LOCAL_RC','deployment':'DEPLOYMENT_BLOCKED','deployed':False,'pg_runtime':'NOT_RUN'}
 (out/'RELEASE-IDENTITY.json').write_text(json.dumps(identity,indent=2)+'\n')
 subprocess.run(['git','archive','--format=zip','--prefix=MagicWorkshop/','--output='+str(out/'MagicWorkshop-source.zip'),head],cwd=root,check=True)
 with zipfile.ZipFile(out/'MagicWorkshop-static-candidate.zip','w',zipfile.ZIP_DEFLATED) as z:
