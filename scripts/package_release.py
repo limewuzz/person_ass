@@ -23,7 +23,7 @@ with zipfile.ZipFile(out/'MagicWorkshop-validation.zip','w',zipfile.ZIP_DEFLATED
  ev=root/'frontend/evidence'
  for p in sorted((ev/'release').glob('*')):
   if p.is_file():z.write(p,'release/'+p.name)
- for n in ['unit-junit.xml','e2e-junit.xml','live-integration/junit.xml','live-integration/http-exchanges.json','screenshots/home-1600.png','screenshots/tasks-390.png','live-integration/screenshots/real-task-success.png']:
+ for n in ['unit-junit.xml','e2e-junit.xml','live-integration/junit.xml','live-integration/http-exchanges.json','session/junit.xml','screenshots/home-1600.png','screenshots/tasks-390.png','live-integration/screenshots/real-task-success.png']:
   p=ev/n
   if p.is_file():z.write(p,n)
  inventory=[]

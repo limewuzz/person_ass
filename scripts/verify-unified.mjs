@@ -252,6 +252,7 @@ try {
   );
   await stopStack();
   await run("prefixed-deployment", process.execPath, ["scripts/check-prefixed.mjs"]);
+  await run("https-session-candidate",process.execPath,["scripts/check-session.mjs"]);
   await run("unified-lifecycle", py, ["scripts/lifecycle_smoke.py"], backend);
   if (git(backend, "status", "--porcelain"))
     throw Error("Verification mutated source");

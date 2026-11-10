@@ -1,6 +1,11 @@
 import { setConnected } from "../app/connection";
 import createClient from "openapi-fetch";
 import type { paths, components } from "./generated/schema";
+import {
+  apiConfig,
+  assertLocalBase as localBase,
+  type ApiMode,
+} from "./config";
 export type Schema<K extends keyof components["schemas"]> =
   components["schemas"][K];
 export class ApiError extends Error {
@@ -10,36 +15,63 @@ export class ApiError extends Error {
     public code?: string,
   ) {
     super(
-      code === "upstream_contract_mismatch"
-        ? "接口响应与锁定契约不一致，已暂停读取"
-        : ((
-            {
-              400: "请求参数不符合本地接口要求",
-              401: "身份已失效，请重新验证",
-              403: "没有查看或操作权限",
-              404: "未找到可见记录",
-              409: "状态冲突，请刷新后重试",
-              503: "新 API 暂不可用",
-            } as Record<number, string>
-          )[status] ?? "请求失败，请稍后重试"),
+      code === "session_read_only"
+        ? "当前发布为只读模式，执行入口尚未开放"
+        : code === "csrf_required"
+          ? "会话校验已失效，请重新登录"
+          : code === "upstream_contract_mismatch"
+            ? "接口响应与锁定契约不一致，已暂停读取"
+            : ((
+                {
+                  400: "请求参数不符合本地接口要求",
+                  401: "身份已失效，请重新验证",
+                  403: "没有查看或操作权限",
+                  404: "未找到可见记录",
+                  409: "状态冲突，请刷新后重试",
+                  503: "新 API 暂不可用",
+                } as Record<number, string>
+              )[status] ?? "请求失败，请稍后重试"),
     );
   }
 }
-export const API_MODE =
-  import.meta.env.VITE_API_MODE === "loopback" ? "loopback" : "mock";
-export const API_ORIGIN =
-  import.meta.env.VITE_LOCAL_API_ORIGIN ?? location.origin;
+const config = apiConfig(
+  {
+    mode: import.meta.env.VITE_API_MODE,
+    localOrigin: import.meta.env.VITE_LOCAL_API_ORIGIN,
+    publicOrigin: import.meta.env.VITE_PUBLIC_ORIGIN,
+    sessionWrites: import.meta.env.VITE_SESSION_WRITES,
+  },
+  location.origin,
+);
+export const API_MODE = (import.meta.env.VITE_API_MODE ?? "mock") as ApiMode,
+  API_ORIGIN = config.origin,
+  API_WRITES_ALLOWED = config.canWrite;
 export function assertLocalBase(base: string) {
-  const u = new URL(base, location.origin);
+  return localBase(base, location.origin);
+}
+export async function establishWebSession() {
+  // Verify the existing server-side cookie session. Never mint a local actor,
+  // send a fixed bearer or register the mock service worker in session mode.
+  const r = await fetch(`${API_ORIGIN}/api/v1/me`, {
+    credentials: "same-origin",
+    cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!r.ok) throw new ApiError(r.status);
+  const me: unknown = await r.json();
   if (
-    !["http:", "https:"].includes(u.protocol) ||
-    u.username ||
-    u.password ||
-    ["3100", "8765", "8123"].includes(u.port) ||
-    (u.hostname !== "127.0.0.1" && u.hostname !== "localhost")
+    !me ||
+    typeof me !== "object" ||
+    !("id" in me) ||
+    typeof me.id !== "string" ||
+    !me.id ||
+    !("role" in me) ||
+    typeof me.role !== "string" ||
+    !("allowed_scopes" in me) ||
+    !Array.isArray(me.allowed_scopes)
   )
-    throw new Error("Only new loopback API allowed");
-  return u.origin;
+    throw new ApiError(503);
 }
 let localCsrf = "";
 export async function establishLocalSession() {
@@ -59,9 +91,29 @@ export async function establishLocalSession() {
   localCsrf = body.csrf;
 }
 export const api = createClient<paths>({
-  baseUrl: assertLocalBase(API_ORIGIN),
+  baseUrl: API_ORIGIN,
   credentials: "same-origin",
   fetch: async (request) => {
+    if (API_MODE === "session") {
+      if (
+        new URL(request.url).origin !== API_ORIGIN ||
+        new URL(request.url).pathname.includes("/workers/")
+      )
+        throw new ApiError(403);
+      if (request.method !== "GET") {
+        if (!API_WRITES_ALLOWED)
+          throw new ApiError(403, undefined, "session_read_only");
+        let csrf: string | null = null;
+        try {
+          csrf = localStorage.getItem("mwcp_csrf");
+        } catch {
+          /* refuse if storage is unavailable */
+        }
+        if (!csrf || csrf.length > 256 || !/^[A-Za-z0-9_-]+$/.test(csrf))
+          throw new ApiError(403, undefined, "csrf_required");
+        request.headers.set("X-MW-CSRF", csrf);
+      }
+    }
     if (API_MODE === "loopback" && request.method !== "GET")
       request.headers.set("X-MW-CSRF", localCsrf);
     const controller = new AbortController();
@@ -121,10 +173,9 @@ export function subscribeEvents(
   onEvent: (id: string) => void,
   onFallback: () => void,
 ) {
-  const stream = new EventSource(
-    `${assertLocalBase(API_ORIGIN)}/api/v1/events`,
-    { withCredentials: true },
-  );
+  const stream = new EventSource(`${API_ORIGIN}/api/v1/events`, {
+    withCredentials: true,
+  });
   stream.onmessage = (e) => onEvent(e.lastEventId);
   stream.addEventListener("audit", (e) =>
     onEvent((e as MessageEvent).lastEventId),

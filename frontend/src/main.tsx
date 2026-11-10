@@ -6,7 +6,12 @@ import { Dashboard, CatalogPage, DetailPage } from "./features/pages";
 import { pages } from "./app/catalog";
 import { StatePanel } from "./components/ui";
 import "./styles/tokens.css";
-import { API_MODE, establishLocalSession } from "./api/client";
+import {
+  API_MODE,
+  ApiError,
+  establishLocalSession,
+  establishWebSession,
+} from "./api/client";
 import {
   WorkspaceLayout,
   WorkspaceHome,
@@ -21,7 +26,7 @@ const queryClient = new QueryClient({
   },
 });
 async function start() {
-  // Release is mock-only until GLM lock + same-origin authenticated BFF integration verified.
+  // Session deployments use the existing authenticated server and never mint a local actor.
   if (API_MODE === "mock") {
     const { worker } = await import("./mocks/browser");
     await worker.start({
@@ -38,6 +43,24 @@ async function start() {
       createRoot(document.getElementById("root")!).render(
         <StatePanel kind="OFFLINE" retry={() => location.reload()}>
           LOCAL INTEGRATION · 本地会话未建立，请检查新 BFF 后刷新。
+        </StatePanel>,
+      );
+      return;
+    }
+  }
+  if (API_MODE === "session") {
+    try {
+      await establishWebSession();
+    } catch (error) {
+      createRoot(document.getElementById("root")!).render(
+        <StatePanel
+          kind={error instanceof ApiError ? String(error.status) : "OFFLINE"}
+          retry={() => location.reload()}
+        >
+          未能验证当前登录会话，工作台没有加载。
+          <a className="button" href="/">
+            返回登录
+          </a>
         </StatePanel>,
       );
       return;
