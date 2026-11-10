@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r backend/requirements-postgres.lock
 COPY backend/ ./backend/
 COPY dbpg/ ./dbpg/
 COPY contracts/ ./contracts/
+COPY scripts/ ./scripts/
 RUN chmod +x backend/entrypoint.sh && useradd --system --uid 10001 --no-create-home mwcp
 USER mwcp
 ENV PYTHONPATH=/opt/magicworkshop/backend:/opt/magicworkshop

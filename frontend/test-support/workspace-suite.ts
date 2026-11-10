@@ -57,7 +57,7 @@ export function workspaceSuite(live: boolean) {
     await expect(page.getByText(/同步游标：sync-cursor-[1-9]/)).toBeVisible();
     await page.getByRole("button", { name: "上传验证附件（SHA-256）" }).click();
     await expect(page.getByText(/已登记附件：/)).toBeVisible();
-    await page.goto("/workbench/results");
+    await page.getByRole("link", { name: "结果库", exact: true }).click();
     const download = page.waitForEvent("download");
     await page
       .locator(".ws-artifact")
@@ -69,7 +69,7 @@ export function workspaceSuite(live: boolean) {
     expect(file.suggestedFilename()).toBe("workspace-note.md");
     expect(await file.failure()).toBeNull();
     await expect(page.getByText(/SHA-256 已核验/)).toBeVisible();
-    await page.goto("/workbench/assistants");
+    await page.getByRole("link", { name: "助手", exact: true }).click();
     await page.getByLabel("发起新对话标题").fill("V2 会话浏览器回归");
     await page.getByRole("button", { name: "发送并记录会话" }).click();
     await expect(
