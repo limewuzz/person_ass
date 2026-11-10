@@ -32,7 +32,14 @@ try {
         continue;
       }
       const r = await fetch("http://127.0.0.1:5174/app/build-meta.json");
-      if (r.ok && (await r.json()).web_base === "/app/") {
+      const bff = await fetch("http://127.0.0.1:8128/api/v1/me");
+      const raw = await fetch("http://127.0.0.1:8127/api/v1/health/live");
+      if (
+        r.ok &&
+        (await r.json()).web_base === "/app/" &&
+        bff.status === 401 &&
+        raw.status === 200
+      ) {
         ready = true;
         break;
       }

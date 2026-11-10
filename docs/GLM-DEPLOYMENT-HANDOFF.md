@@ -4,9 +4,9 @@
 
 ## 版本与交付身份
 
-仓库：https://github.com/limewuzz/person_ass 。修复分支：`fix/v2-gate-b-readiness`，PR 目标：`v0.1_personal`；不修改 main，不强推。最终 commit/tree、契约 SHA、测试结果在交付包的 `RELEASE-IDENTITY.json`、`MANIFEST.json` 与 `integrated-release.json` 中由干净 Git HEAD 自动生成。
+仓库：https://github.com/limewuzz/person_ass 。修复分支：`fix/v2.0.1-integrated`，PR 目标：`v2.0.1`；不修改 main，不强推。最终 commit/tree、契约 SHA、测试结果在交付包的 `RELEASE-IDENTITY.json`、`MANIFEST.json` 与 `integrated-release.json` 中由干净 Git HEAD 自动生成。
 
-源自已验证 Drive V2 包（230 文件，tree `24ac3b87b5b4f2c51ea4e859f5d349fc4e1ea2e3`），导入提交 `1c3fc76` 的父提交是正式已合并 `ae654d4`。V2 原交接宣称 ccd867c2ee40，本轮只独立证明原包 tree，不伪造远端不存在的原提交历史。旧 GLM 16 份历史文档字节、全部原路径及 V1/Prism 历史资源由检查脚本保留。
+源自已验证 Drive V2 包（230 文件，tree `24ac3b87b5b4f2c51ea4e859f5d349fc4e1ea2e3`），导入提交 `1c3fc76` 的父提交是正式已合并 `ae654d4`。V2 原交接宣称 ccd867c2ee40，本轮只独立证明原包 tree，不伪造远端不存在的原提交历史。旧 GLM 16 份历史文档字节（旧契约核查脚本在docs/archive保留，活动入口按V2核查）、全部原路径及 V1/Prism 历史资源由检查脚本保留。
 
 活动契约：`contracts/openapi.yaml`，2.0.0-unified-v2，**79 paths / 95 operations**，SHA `d94462c44cd7c331470fc79731da29a7539d78f770b52288fce590ae3f52504f`。本轮不改其字节。1.1.1 原 41/43 操作和 schema 属性兼容保留；历史 contracts/baseline 不作为当前契约。
 
