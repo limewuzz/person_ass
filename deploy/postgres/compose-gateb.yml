@@ -44,6 +44,22 @@ services:
     cpus: 0.5
     depends_on:
       mwcp-gateb-pg: {condition: service_healthy}
+  mwcp-gateb-migrate:
+    profiles: [tools]
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile.api
+    user: '999:999'
+    entrypoint: [python, /opt/magicworkshop/scripts/gateb_migrate.py]
+    command: [apply, --authorized-isolated-gate-b, --password-file, /run/secrets/mwcp_pg_migrator_password]
+    environment:
+      MWCP_GATE_B_AUTHORIZED: ${MWCP_GATE_B_AUTHORIZED:?separate authorization required}
+    secrets: [mwcp_pg_migrator_password]
+    networks: [gateb-internal]
+    mem_limit: 128m
+    cpus: 0.5
+    depends_on:
+      mwcp-gateb-pg: {condition: service_healthy}
 networks:
   gateb-internal:
     internal: true

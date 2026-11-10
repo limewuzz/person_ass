@@ -444,7 +444,7 @@ export function WorkspaceHome() {
               : "仅保存记录 · 不自动执行"}
           </span>
           <span>
-            <CircleHelp size={13} /> 文件上传与真实模型对话尚未接入
+            <CircleHelp size={13} /> 本地附件可校验上传 · 真实模型执行未开放
           </span>
         </div>
       </section>
@@ -977,7 +977,7 @@ export function WorkspaceResults() {
       <div className="ws-notice">
         <CircleHelp size={18} />
         <span>
-          当前接口提供产物位置与校验信息，不提供文件内容。这里不会自动打开、预取或下载外部文件；任务记录可在详情中导出。
+          本地附件支持校验后下载；外部文件地址仅展示，不会自动打开、预取或代理。任务记录可在详情中导出。
         </span>
       </div>
       <div className="ws-toolbar">

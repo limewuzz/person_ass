@@ -43,9 +43,8 @@ secret 生成器只使用本地安全随机值，直写 O_EXCL/0600 文件，不
 
 ```bash
 docker compose -p mwcp-gateb -f deploy/postgres/compose-gateb.yml up -d mwcp-gateb-pg
-# 在独立工具容器内（DNS mwcp-gateb-pg，授权环境开关仅留容器内）：
-python scripts/gateb_migrate.py apply --authorized-isolated-gate-b \
-  --password-file /run/secrets/mwcp_pg_migrator_password
+# 独立工具容器（UID999，只挂载migrator秘密；无宿主端口）：
+docker compose -p mwcp-gateb -f deploy/postgres/compose-gateb.yml run --build --rm mwcp-gateb-migrate
 # 迁移通过之后才启动候选 API：
 docker compose -p mwcp-gateb -f deploy/postgres/compose-gateb.yml --profile api up -d mwcp-gateb-api
 ```
