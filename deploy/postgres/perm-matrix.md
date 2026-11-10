@@ -9,4 +9,4 @@
 默认权限链：migrator 建表时自动向 app 下发 DML（00-init-roles.sh ALTER DEFAULT PRIVILEGES）。
 反例清单见 perm-negative-tests.sql（执行于授权隔离环境后回填实际错误码——当前 NOT RUN）。
 readiness 定义（R4 A2 修正）：容器 healthcheck=pg_isready（进程级）；**应用 ready = mwcp_app
-连接成功 + SELECT 1 + alembic_version 匹配**，由 API /health/ready 的 database 依赖实现（P1-03）。
+连接成功 + SELECT 1 + schema_migrations 版本匹配**（项目自带 MigrationRunner，非 Alembic），由 API /health/ready 的 database 依赖实现（P1-03）。

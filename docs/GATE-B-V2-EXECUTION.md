@@ -1,6 +1,6 @@
 # V2 Gate B：整改后执行交接
 
-**PG_RUNTIME=NOT_RUN / DEPLOYED=NO / DEPLOYMENT_BLOCKED。** 本文取代旧 `GATE-B-EXECUTION-PLAN.md` 的操作部分；旧文件保留为历史记录。Gemini Canvas 清单正文未取得，本文件以受校验的 V2 源码和本轮修复为准。
+**PG_RUNTIME=NOT_RUN / DEPLOYED=NO / DEPLOYMENT_BLOCKED。** 本文取代旧 `GATE-B-EXECUTION-PLAN.md` 的操作部分；旧文件已归档至 `docs/archive/GATE-B-EXECUTION-PLAN.md` 作为历史记录。Gemini Canvas 清单正文未取得，本文件以受校验的 V2 源码和本轮修复为准。
 
 ## 版本与隔离
 

@@ -1,9 +1,9 @@
 name: Unified local RC
 on:
   pull_request:
-    branches: [v0.1_personal]
+    branches: [v0.1_personal, v2.0.0]
   push:
-    branches: [v0.1_personal, 'integration/**', 'feature/**', 'fix/**', 'v2.0_unified']
+    branches: [v0.1_personal, 'integration/**', 'feature/**', 'fix/**', 'v2.0_unified', v2.0.0, 'debug/**']
   workflow_dispatch:
 permissions:
   contents: read
