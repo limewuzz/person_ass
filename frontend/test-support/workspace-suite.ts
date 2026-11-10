@@ -80,6 +80,24 @@ export function workspaceSuite(live: boolean) {
     await expect(
       page.locator(".ws-saved").getByText(/消息数：1/),
     ).toBeVisible();
+    if (live) {
+      await page.route("**/api/v1/conversations", (route) =>
+        route.fulfill({
+          status: 401,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { code: "unauthorized", message: "Session expired" },
+            trace_id: "00000000-0000-4000-8000-000000000001",
+          }),
+        }),
+      );
+      await page.getByRole("button", { name: "刷新", exact: true }).click();
+      await expect(
+        page
+          .locator(".ws-saved")
+          .getByRole("heading", { name: "V2 会话浏览器回归" }),
+      ).toHaveCount(0);
+    }
   });
   for (const width of [1600, 1280, 768, 390])
     test(`user workspace pages, navigation and detail at ${width}`, async ({

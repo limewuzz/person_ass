@@ -1076,8 +1076,17 @@ export function WorkspaceAssistants() {
       void qc.invalidateQueries({ queryKey: ["workspace", "conversations"] });
     },
   });
-  const agents =
-    errorDenies(q.error) || errorDenies(caps.error) ? [] : (q.data ?? []);
+  const denied = [
+    q.error,
+    caps.error,
+    providers.error,
+    routing.error,
+    convs.error,
+  ].some(errorDenies);
+  const agents = denied ? [] : (q.data ?? []);
+  const visibleConversations = denied ? [] : (convs.data?.items ?? []);
+  const visibleRouting = denied ? undefined : routing.data;
+  const visibleProviders = denied ? undefined : providers.data;
   return (
     <>
       <Title
@@ -1104,8 +1113,8 @@ export function WorkspaceAssistants() {
         <div className="ws-section-title">
           <h2>AI 模型路由与工作坊会话（V2）</h2>
           <span>
-            默认路由：{routing.data?.default_model_id ?? "尚未配置"} ·{" "}
-            已登记供应商：{providers.data?.items.length ?? 0}
+            默认路由：{visibleRouting?.default_model_id ?? "尚未配置"} ·{" "}
+            已登记供应商：{visibleProviders?.items.length ?? 0}
           </span>
         </div>
         <div className="ws-toolbar">
@@ -1118,16 +1127,19 @@ export function WorkspaceAssistants() {
           <button
             className="ws-primary"
             disabled={
-              !gate.allowed || !convInput.trim() || convMutation.isPending
+              !gate.allowed ||
+              denied ||
+              !convInput.trim() ||
+              convMutation.isPending
             }
             onClick={() => convMutation.mutate()}
           >
             发送并记录会话
           </button>
         </div>
-        {convs.data?.items.length ? (
+        {visibleConversations.length ? (
           <div className="ws-saved">
-            {convs.data.items.slice(0, 5).map((c) => (
+            {visibleConversations.slice(0, 5).map((c) => (
               <article key={c.id}>
                 <Sparkles size={16} />
                 <div>
