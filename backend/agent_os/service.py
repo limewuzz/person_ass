@@ -57,7 +57,7 @@ class PluginRec:
 
 
 class AgentOSService:
-    """Manages Agent Studio, owner-scoped Conversations, Supervisor plans, and signed Plugins (V2-EXT-006)."""
+    """Manages Agent Studio, owner-scoped Conversations, Supervisor plans, and digest-registered Plugins (V2-EXT-006)."""
 
     def __init__(self, *, store, engine, approvals) -> None:
         self._lock = threading.RLock()
@@ -383,7 +383,7 @@ class AgentOSService:
                 previous_signature_sha256=prev_sig,
             )
             self.plugins[pid] = rec
-            self.engine.audit(actor, "agent_os.plugin.register", pid, f"v={rec.version}")
+            self.engine.audit(actor, "agent_os.plugin.register", pid, f"v={rec.version}; digest recorded, cryptographic verification pending")
             return self.plugin_out(rec)
 
     def set_plugin_enabled(self, pid: str, enabled: bool, *, actor: str) -> dict:

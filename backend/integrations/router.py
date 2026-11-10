@@ -1,7 +1,7 @@
 """Data Integrations V2 FastAPI Router (Workflow 6)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from auth import Principal
@@ -69,13 +69,14 @@ def build_integrations_router(integrations_svc: IntegrationsService) -> APIRoute
     @router.get("/api/v1/artifacts/{id}/content")
     def get_artifact_content(
         id: str,
+        request: Request,
         ticket: str | None = None,
         principal: Principal = Depends(get_principal),
     ):
         _require_scope(principal, "tasks:read")
         try:
             return integrations_svc.get_artifact_content(
-                id, ticket_id=ticket, principal=principal
+                id, ticket_id=request.headers.get("X-Download-Ticket") or ticket, principal=principal
             )
         except KeyError:
             raise HTTPException(status_code=404, detail={"error": "not_found"})

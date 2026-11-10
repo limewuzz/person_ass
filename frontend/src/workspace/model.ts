@@ -179,11 +179,10 @@ export function exportRecord(value: unknown, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-
 // ══════════ V2 Workspace Workflows: Conversations, AI Routing, Uploads/Downloads & Multi-Device Sync ══════════
 
 export async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const digest = await crypto.subtle.digest("SHA-256", new Uint8Array(bytes));
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -251,9 +250,12 @@ export async function performVerifiedUpload(
   taskId?: string,
 ): Promise<Schema<"Artifact">> {
   if (!bytes.length) throw Error("不能上传空文件。");
-  if (bytes.length > 10 * 1024 * 1024)
-    throw Error("文件超过 10 MiB 限制。");
-  if (fileName.includes("/") || fileName.includes("\\") || fileName.includes(".."))
+  if (bytes.length > 10 * 1024 * 1024) throw Error("文件超过 10 MiB 限制。");
+  if (
+    fileName.includes("/") ||
+    fileName.includes("\\") ||
+    fileName.includes("..")
+  )
     throw Error("文件名包含非法路径字符。");
   const digest = await sha256Hex(bytes);
   const ticket = await createTicket({

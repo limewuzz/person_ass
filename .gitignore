@@ -70,3 +70,5 @@ release/
 *.tsbuildinfo
 !docs/GLM-DEPLOYMENT-HANDOFF.md
 !deploy/local.env.example
+
+!scripts/gateb_secrets.py

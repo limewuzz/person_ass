@@ -195,6 +195,7 @@ else if (command === "contract") {
     "frontend/src/mocks/schemas.json",
   ]);
   run(py, ["tools/route_coverage.py"]);
+  run(py, ["tools/contract_check.py"]);
 } else if (["build", "build-session"].includes(command)) {
   const session = command === "build-session";
   const origin = process.env.MW_PUBLIC_ORIGIN;

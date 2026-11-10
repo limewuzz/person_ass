@@ -10,6 +10,11 @@ done
 export MWCP_SECRETS_DIR
 export MWCP_AUTH_SECRETS_FILE="$SECRETS_DIR/mwcp_auth_secrets"
 export MWCP_PG_APP_PASSWORD_FILE="$SECRETS_DIR/mwcp_pg_app_password"
-exec python -m uvicorn app:app \
+if [ "${MWCP_REPOSITORY:-memory}" = "postgres" ]; then
+  set -- pg_runtime:create_app --factory
+else
+  set -- app:app
+fi
+exec python -m uvicorn "$@" \
   --host "${MWCP_LISTEN_HOST:-0.0.0.0}" --port "${MWCP_LISTEN_PORT:-8123}" \
   --no-access-log  # 访问日志走结构化脱敏审计

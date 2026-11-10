@@ -1,154 +1,90 @@
-# MagicWorkshop → GLM deployment-engineering handoff
+# MagicWorkshop V2 → GLM 部署工程交接
 
-**Status: UNIFIED LOCAL RC; DEPLOYMENT_BLOCKED; DEPLOYED=NO.** This document transfers the integrated project and verification tools. It does not authorize or certify production or PostgreSQL runtime. GLM must obtain the user's separate Gate B authorization before isolated PG tests and separate authorization for production changes.
+状态：本地源码整改与验收；**DEPLOYMENT_BLOCKED / DEPLOYED=NO / PG_RUNTIME=NOT_RUN**。不授权生产变更。
 
-## Current user-workspace increment
+## 版本与交付身份
 
-The current increment is based on GLM Phase A commit `920c7343548a8520feb4b6ab1dfa0f42760ab42b`, branch `feature/user-workbench`, and targets `v0.1_personal`. It adds a user-facing root, retains the original 22 templates (Motion now `/architecture`), corrects the query limit and hardens the loopback issuer. See [current release and reproduction](USER-WORKSPACE-RELEASE.md) and [backend-owner contract request](WORKSPACE-CONTRACT-REQUEST.md). Current exact test counts and commit/tree are recorded in the generated release identity/verification, superseding historical integration counts below. This change has not been deployed and does not certify the separate public deployment. GLM Phase A PG implementation is preserved; its runtime and production wiring are not validated here.
+仓库：https://github.com/limewuzz/person_ass 。修复分支：`fix/v2-gate-b-readiness`，PR 目标：`v0.1_personal`；不修改 main，不强推。最终 commit/tree、契约 SHA、测试结果在交付包的 `RELEASE-IDENTITY.json`、`MANIFEST.json` 与 `integrated-release.json` 中由干净 Git HEAD 自动生成。
 
-## 1. Repository, release identity and contract
+源自已验证 Drive V2 包（230 文件，tree `24ac3b87b5b4f2c51ea4e859f5d349fc4e1ea2e3`），导入提交 `1c3fc76` 的父提交是正式已合并 `ae654d4`。V2 原交接宣称 ccd867c2ee40，本轮只独立证明原包 tree，不伪造远端不存在的原提交历史。旧 GLM 16 份历史文档字节、全部原路径及 V1/Prism 历史资源由检查脚本保留。
 
-Repository: https://github.com/limewuzz/person_ass . Target: `v0.1_personal`; integration branch: `integration/unified-magicworkshop`. Base: `5509483bb079763b6f8c0e2b4046d776452c7fd2` (merged PR #1). The unrelated `main` at `658e3f9193e4707e94547082841dc943c10db4d9` is not merged or modified.
+活动契约：`contracts/openapi.yaml`，2.0.0-unified-v2，**79 paths / 95 operations**，SHA `d94462c44cd7c331470fc79731da29a7539d78f770b52288fce590ae3f52504f`。本轮不改其字节。1.1.1 原 41/43 操作和 schema 属性兼容保留；历史 contracts/baseline 不作为当前契约。
 
-The **exact final commit and tree** are recorded in `RELEASE-IDENTITY.json` inside the generated handoff directory, together with repository/target branch. They are generated from the actual clean Git HEAD, avoiding a self-referential hash in this source document. Read `git rev-parse HEAD HEAD^{tree}` after checkout and compare with that file. The final PR, CI run and post-merge identity are linked in the delivery record/Notion milestone.
+## 目录与拓扑
 
-Sole active definition: `contracts/openapi.yaml`, version `1.1.1-local-integrated`, **41 paths / 43 operations**, SHA-256 **e4194aa3d00dd1dca300010d7dc85e94b3d9da0a07a25c3fc977b092677cd1fa**. `contracts/CONTRACT-LOCK.json` and generated SDK match. `contracts/baseline` is historical evidence only. No interface semantics changed in unification.
-
-## 2. Directory and service topology
-
-```
-frontend/                 React19 + TypeScript + Vite; accepted 22 templates
-  integration/            local session BFF + synthetic worker + static host
-  src/api/generated/      types/manifests generated from root contracts
-  e2e/                    8 Mock browser cases
-  integration/browser/    7 actual loopback browser cases
-backend/                  FastAPI, auth, Registry, Tasks/Approvals/Worker
-contracts/                authoritative OpenAPI/lock, schemas, fixtures
- dbpg/                    static migration/repository proposals (NOT RUN)
-deploy/postgres/          historical role/Compose proposals (NOT RUN)
-tests/                    backend contract tests
-scripts/                  unified lifecycle, verification, scan and package
-scripts/tests/            process ownership guard regressions
-tools/                    route census and explicit fixture exporter
-docs/                     original GLM history/security records + this handoff
+```text
+frontend/                 React/Vite 页面、SDK、MSW、BFF及浏览器测试
+backend/                  FastAPI、Registry/Task/Approval/Worker、七个 V2 工作流
+  durable_state.py        有界 JSON codec、PG 请求事务/行锁/CAS/失败恢复
+  pg_runtime.py           隔离 Gate B 专用 PG ASGI factory
+contracts/                唯一 OpenAPI、锁、schema、历史证据
+ dbpg/migrations/         0001–0005 前向迁移（真实 PG 尚未执行）
+ dbpg/rollback/           对应逆向 SQL，仅可销毁的实验 DB
+ dbpg/repository.py       规范化仓储接口；非当前 API runtime 的第二权威
+ deploy/postgres/         新 Gate B compose、初始化与权限脚本；旧 proposal 保留
+scripts/                  统一命令、秘密扫描、打包、备份加密及显式 Gate B 工具
+docs/                     历史记录、当前修复说明、部署手册
 ```
 
-Local dev: browser `127.0.0.1:5174` → Vite proxy → BFF `127.0.0.1:8128` → API `127.0.0.1:8127`. Local static candidate: browser `:5174` → minimal static host/proxy → same BFF/API. API+BFF and the local synthetic worker share one Python process. Browser never receives the API's bearer JWT. Worker claims only the new `local.simulate/local-ledger` tasks. External model gateways, old schedulers and cloud services are not connected.
+本地开发：浏览器→127.0.0.1:5174 静态/Vite→127.0.0.1:8128 同源 BFF→127.0.0.1:8127 FastAPI。合成 Worker 仅处理新本地账本的 local.simulate，不调用真实 Worker。纯 MSW 演示端口5173。端口已占用即停止新启动，不杀旧进程。
 
-## 3. Runtime and reproducible setup
+Gate B：internal 网络内独立 PG + API，PG无宿主端口，API只发布127.0.0.1:8129；约定角色 mwcp_migrator/mwcp_app，库 control_plane。见 [V2 Gate B 执行手册](GATE-B-V2-EXECUTION.md)。生产反向代理/TLS/真实身份不在本轮操作范围。
 
-Verified target is Linux x86_64; local host Debian13, CI Ubuntu24.04, Python3.12, Node24/npm11. Node and Python dependency versions are locked in `frontend/package-lock.json` and `backend/requirements.lock`. Frontend framework is unchanged. The necessary security updates are documented in DEPENDENCY-REVIEW.md. Chromium dependencies are development/test dependencies, not production control-plane residents.
+## 运行依赖与统一命令
+
+Python3.12；Node24；Linux/macOS 开发；浏览器测试需 Chromium。`backend/requirements.lock` 为本地锁；隔离 PG 镜像用 `backend/requirements-postgres.lock`（psycopg3.3.8）。备份工具另需 OpenSSL；授权 Gate B 需 Docker Compose v2、PG16客户端、pgbench。无 Redis/Loki/Prometheus/Kubernetes。
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r backend/requirements.lock
 npm ci --prefix frontend
-cd frontend
-npx playwright install chromium
-cd ..
+(cd frontend && npx playwright install chromium)
 node scripts/mw.mjs contract
-node scripts/mw.mjs test
-```
-
-Use `MW_PYTHON=/absolute/path/to/venv/bin/python` when outside `.venv`. CI additionally installs browser system libraries on its disposable runner. No Docker/PG/service credentials are used. `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` avoids unrelated installed pytest plugins; tests do not require plugins. Finite static secret scanning and dependency audits run separately. The old private offline supplement targets the old dependency lock; use this repository's current lock, not that old cache, for the updated Vitest/PyJWT versions.
-
-## 4. Frontend build and static serving
-
-```sh
-node scripts/mw.mjs build
-node scripts/mw.mjs start --static
+node scripts/mw.mjs start
 node scripts/mw.mjs stop
-```
-
-Build output is `frontend/dist/` in **loopback API mode**, without MSW success fallback. `build-meta.json` binds it to the current HEAD and contract. Root test runs the 7 loopback E2E against these built assets; 8 separate Mock E2E remain in development/MSW mode. SPA paths fall back to index.html, assets and V1/Prism history retain original paths. Static responses apply Content-Type/nosniff. In production GLM should serve these assets using an approved lightweight TLS/static/proxy arrangement after identity/origin review; the included Node static host is a loopback candidate, not a production web/TLS service. Model inference, headless browsers and heavy workers stay off the US controller.
-
-## 5. API/BFF commands and local lifecycle
-
-Full developer start: `node scripts/mw.mjs start`; stop: `node scripts/mw.mjs stop`. Start backgrounds a supervisor; only its process group may be stopped. State records PID, Linux process-start ticks, repository and a nonce. Stop refuses reused/foreign PIDs. Port occupancy is checked before new service launch; nothing existing is killed. Startup readiness is accepted only after the launcher's ownership proof, not merely an HTTP200 on an existing port.
-
-Foreground API/BFF (synthetic identity only): `.venv/bin/python frontend/integration/local_stack.py --backend backend`. It binds API8127/BFF8128; start a static host or Vite5174 separately with the same Origin to use it. The full launcher is preferred because it reserves/checks all ports first. A standalone raw API can be run for future approved adapter work with `.venv/bin/python -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8127 --no-access-log`; this requires appropriate synthetic auth setup and does not create a BFF or synthetic worker. The accepted local demo generates its issuer material in memory and ignores inherited production auth files.
-
-**Do not use legacy `backend/Dockerfile.api` or `backend/entrypoint.sh` as ready deployment recipes.** They are preserved historical proposals with old module-copy/contract-layout and secret requirements. They have not been built or run here; GLM must replace/review them as part of the later deployment gate. Compose `.proposal` files also remain unexecuted proposals.
-
-## 6. Environment and identity boundaries
-
-`deploy/local.env.example` contains placeholders only. Local startup uses `MW_PYTHON`, optional `MW_INTEGRATION_REPORT`, and internal ephemeral test configuration. Never copy existing credentials into it. The local launcher sets test probe mode and a local issuer internally; external real-probe allowlists stay empty.
-
-The local cookie is HttpOnly/SameSite=Strict, server-side JWT is renewed, POST validates exact Origin and memory CSRF, and browser Worker URLs are denied. The cookie is not a production Secure/TLS session; WEB_ORIGIN is the local5174 origin. Production OIDC, HTTPS, session lifecycle/revocation, durable JTI and authorization configuration must be designed and verified before changing origins or binding publicly. Never put bearer tokens into URL/localStorage. Local demo flags cannot grant production rights. An exposed PAT is considered unusable; user revocation remains an owner action, and this integration never uses that PAT.
-
-## 7. Communication, health and logs
-
-All new listeners use127.0.0.1 only: 5173 standalone MSW; 5174 full UI/static; 8128 BFF; 8127 API. No legacy ports are probed. Browser fetches only the new same-origin API; actual-loopback E2E checks absence of remote browser requests and service workers.
-
-`GET /api/v1/health/live` returns200 with honest timestamp. `GET /api/v1/health/ready` returns **503/not_ready**, including database not_connected and unavailable dependencies. A local RC test explicitly expects that503. Do not make readiness200 to pass deployment checks while PG/production identity is missing.
-
-Local supervisor log: `.runtime/local.log`; ownership state: `.runtime/local.json`; both ignored. API/BFF disable access logs and do not print tokens. Tests: `frontend/evidence/release/` and separate Mock/live JUnit/report locations. HTTP evidence contains method, contract path, status and schema result, no headers or credentials. Vite watch ignores evidence, Playwright reports, test-results and runtime directories. In later approved operations choose bounded structured logs with rotation and redaction; no Loki/Prometheus stack is assumed.
-
-## 8. Database state, migration order, roles and backups
-
-`dbpg/repository.py` contains protocol/blueprint methods raising **NotImplementedError("PG_RUNTIME NOT RUN")**. Current TaskEngine/Registry/session/JTI state is in process memory. **There is no PostgreSQL runtime connection, persistent task repository or tested restart recovery.** Local restart intentionally loses the ledger.
-
-Static materials: `dbpg/migrations/0001_init.sql` (schema, constraints, resource generation, outbox) and `deploy/postgres/` (role/init/permission proposals). After separate Gate B approval, GLM must implement a real repository and transaction boundaries, verify its schema matches actual task/approval/lease semantics, and review the proposals before any execution. Proposed sequence: isolated disposable cluster/volume and loopback isolation → approved secret files/least-privilege role setup → migration as migration role → app role negative-permission checks → repository integration → CAS/uniqueness/approval consumption/outbox/generation concurrency → crash/restart persistence → encrypted backup/restore into a fresh volume. No migration is auto-applied by this project.
-
-Do not reuse production users, schemas, credentials or volumes. App role must not be superuser or own migration powers; worker/browser roles must not bypass the API. Define backup ownership, encryption key storage, retention, restore verification and migration rollback/forward procedures before production. A tar of source or the current memory ledger is not a database backup.
-
-## 9. Candidate start/stop/upgrade/rollback SOP
-
-For local RC: verify Git HEAD and contract against RELEASE-IDENTITY; install exact locks; run contract/full tests; build; start; check live200/ready503 and marked LOCAL MOCK; stop only this supervisor. Use `node scripts/mw.mjs package` from the exact clean tested commit to produce source/static/evidence ZIPs, handoff, identity and SHA256SUMS. Restore source into a fresh directory, install locks and repeat tests. Rebuilds are source/test reproducibility checks, not byte-for-byte identical toolchain promises.
-
-For later approved deployment: GLM should prepare versioned immutable release directories, explicit approved service definitions, least-privilege users and loopback bindings, run readiness/synthetic acceptance before switching a proxy, record the previous release and database migration state, and upgrade without modifying old business. These are **candidate procedures only**. Rollback requires both compatible application and database schema/restore plan; do not downgrade code against incompatible migrated storage. Any real switch/restart/network change needs the deployment approval. Local code rollback can check out a previous release in a new worktree; it cannot recover lost in-memory task state.
-
-## 10. Permissions, network and resource planning
-
-Single user, one write controller, Mac stays read-only standby/local Worker; no automatic promotion on US disconnect. Offline UI uses cached read-only data and reconciles after recovery. Server enforces approval policy, idempotency, lease/generation CAS and late-result rejection, independently of UI flags. Registry authority writes and probe commit share the single-process lock; this is not proof of a multi-process PG linearization protocol.
-
-Planning target: US server6 cores/about11GiB RAM; new lightweight control plane about1.5GiB, initially reserve about2GiB. This is not a measured deployment capacity result. Record real API/BFF/PG/static/proxy RSS/PSS, CPU, disk/IO, peak concurrency, restart and OOM behavior in Gate B, including old-business headroom. Prefer static frontend and a bounded database pool; do not add Redis/Loki/Prometheus/Kubernetes by default. Inference/browser automation/heavy workers belong elsewhere. Local test RSS excludes real PG, existing US workloads and deployment proxy.
-
-No access or changes to Cherry Studio (including its code/API/models/config/sessions/auth), Rakazo,8765, existing DB/proxy/cron, US business, Tencent or UCloud legacy business, real probes/workers, credential rotation or production network. Cherry may only retain already-approved static links; no iframe/proxy/prefetch.
-
-## 11. Blocking deployment gates
-
-| Gate | Current state / required GLM evidence |
-|---|---|
-| PG repository + migration runtime | **BLOCKED**: implement adapter, isolated migration/role tests |
-| Transaction/CAS/persistence | **BLOCKED**: task idempotency, approval-once, leases, generation, outbox under concurrent PG transactions |
-| Restart/backup/restore | **BLOCKED**: crash/restart, fresh-volume encrypted restore and recovery objectives |
-| Production identity/TLS | **BLOCKED**: OIDC/JTI/session/CSRF/Origin/Secure cookie and TLS/reverse-proxy review |
-| Real Worker/probes | **BLOCKED**: explicit capability policy, target allowlist, DNS pinning/SSRF and connection/concurrency budgets |
-| US capacity and legacy isolation | **BLOCKED**: approved sandbox measurements,1.5–2GiB budget and old-service isolation |
-| Credential incident | **OPEN**: owner revokes exposed PAT; rotation is not executed here |
-| Production deployment | **NOT RUN** until explicit deployment approval and gates pass |
-
-## 12. GLM verification commands and acceptance table
-
-```sh
-git status --porcelain
-git rev-parse HEAD HEAD^{tree}
-node scripts/mw.mjs contract
-node scripts/mw.mjs security
 node scripts/mw.mjs test
 node scripts/mw.mjs build
-node scripts/mw.mjs start --static
-node scripts/mw.mjs stop
 node scripts/mw.mjs package
-# Optional separate audit interpreter after installing pip-audit==2.10.1:
-MW_AUDIT_PYTHON=/absolute/path/to/audit-venv/bin/python node scripts/mw.mjs dependencies
 ```
 
-| Local acceptance | Expected evidence |
-|---|---|
-| Backend inherited baseline | 167/167 normal and reverse, zero unexpected skips |
-| BFF | 5/5; HttpOnly/SameSite/Origin/CSRF/schema/Worker denial |
-| Supervisor guard | 3/3; foreign PID/start-time mismatch and stale state |
-| Frontend | 17 unit/contract, typecheck/lint/build |
-| Browsers | 8 Mock +7 real-loopback/static;22 templates at1600/1280/768/390 |
-| Scenarios | success/failure/reject/expired approval; lease expiry/late finish;100-way idempotency;disconnect/read-only/recovery/reconciliation |
-| Contract | 41/43, exact frozen SHA; root-only active OAS; regenerated SDK diff empty |
-| History and safety | no old GLM doc deletion, V1/Prism hashes unchanged, finite scan and dependency audits, no real network/PG/deployment |
-| Source identity | clean HEAD/tree bound to JUnit/CI/package manifest; ordinary PR merge into v0.1_personal |
+完整 test 要求干净 Git，包含正反序后端、PG离线、BFF、类型/lint/Vitest/build、Mock/回环浏览器、/app前缀及HTTPS session候选测试。报告仅证明相应本地范围，不能代替PG运行或生产证据。
 
-CI artifacts retain current-commit logs/JUnit and necessary redacted screenshots. Full screenshot inventories are included in the handoff validation ZIP; test reports remain ignored. GitHub CI and final PR links are recorded in the release delivery, not inferred from local success.
+前端优先静态产物，常驻API/BFF按实际身份方案选择。HTTPS现有cookie站点候选构建：
 
-## 13. Transfer decision
+```sh
+MW_PUBLIC_ORIGIN=https://REPLACE_WITH_APPROVED_HOST node scripts/mw.mjs build-session
+```
 
-Codex delivers unified source, repeatable local tests, CI and a deployment preparation package. GLM receives a **DEPLOYMENT_BLOCKED** system with an accepted local simulation loop. Gate B and production operations belong to GLM only after the user's separate authorization. No pending production gate is silently marked completed by this handoff.
+默认只读；未经服务端验证不得设 MW_SESSION_WRITES=enabled。前端session写使用X-MW-CSRF（新后端兼容旧X-CSRF-Token），从可读CSRF Cookie取值；身份Cookie仍HttpOnly/Secure/SameSite Strict；服务端核对Origin。不能把本地临时身份升级成OIDC。
+
+## PG、迁移、恢复与备份
+
+[当前 Gate B 手册](GATE-B-V2-EXECUTION.md) 为唯一当前操作方案，覆盖0001–0005、逆序销毁、角色权限、E1–E16和新脚本。当前 API 持久权威为有64MiB上限、codec=1的PG runtime_state检查点。API请求按行锁和revisionCAS串行、事务提交后才响应；Provider密钥、JWT签名密钥、浏览器session不进入检查点，重启session失效。规范化表仓储不得与检查点混作两套权威。
+
+`schema_migrations`版本及checksum必须完全匹配，否则PG API拒绝启动；应用不自动迁移。0005新增Outbox缺列和运行态检查点，不改写旧迁移。应用角色无DDL/建角色/建库权限，版本表只读；bootstrap预装pgcrypto后NOLOGIN。秘密按实际消费者UID以0600文件注入，不能通过chmod644解决读取问题。
+
+备份采用pg_dump一致快照及独立AES-256-CBC/PBKDF2+HMAC认证封装；验签后解密，拒绝覆盖，篡改不产生恢复输出。角色重建、全新卷恢复、重启恢复、密钥保管/异机留存都必须真实验证，源码ZIP不是数据库备份。
+
+## 健康、日志与环境变量
+
+`/api/v1/health/live`200表示进程可用；`/api/v1/health/ready`在生产依赖未满足时503，包含实际database/probes/auth/workers状态。不能以PG的pg_isready替代API readiness，更不能为过关硬改200。
+
+本地日志`.runtime/local.log`，进程身份`.runtime/local.json`；报告`frontend/evidence/release/`等，均被Git/Vite watch排除。生产应使用有界脱敏结构日志及轮转，不打印认证头、Cookie、密码、key或完整DSN。
+
+占位环境模板：`deploy/local.env.example`、`deploy/gateb.env.example`。只填写路径/端口/身份模式，秘密内容不进.env或仓库。HTTPS外部Origin须精确配置MWCP_PUBLIC_ORIGIN；隔离PG通过MWCP_DB_HOST=mwcp-gateb-pg及文件秘密配置。不要复用聊天中暴露的凭据。
+
+## 候选启动、升级、回滚
+
+1. 先冻结源码commit/tree和构建manifest，在新的版本目录/镜像构建、验签及测试；不覆盖当前业务目录。
+2. Gate B获批后在新网络/卷迁移，API匿名拒绝和真实持久化/恢复/权限/备份/资源全通过后记录结果。
+3. 生产另获批准后，由GLM确定真实身份、TLS、BFF/静态服务及宿主隔离，验证健康后才切流；本轮无切流命令。
+4. 升级前做可恢复备份，确认schema前后兼容；部署新版本并保留旧不可变产物。失败停止切换并恢复先前版本，不能把旧代码直接指向不兼容schema。
+5. 数据回滚必须按已验证恢复方案；破坏性down仅供可销毁实验数据库，不是生产回滚。清理只针对核对过身份的mwcp-gateb资源，不执行docker prune或模糊匹配kill/rm。
+
+## GLM接手验收与生产阻断
+
+核对manifest→重建SDK/前端→完整本地test→查看V2整改记录→另获授权→逐项执行E1–E16并回传原始脱敏证据。每项记录时间、commit、目标身份、退出码、schema/CAS断言、内存/CPU/磁盘峰值和未执行项。
+
+仍阻断生产：真实PG/API事务与CAS及故障恢复、备份恢复、生产session/OIDC/TLS、可信插件签名和真实Worker/探针策略、美国宿主容量与旧业务隔离。6核/11GiB机器、新主控1.5GiB目标/初期2GiB预留均是规划，不是实测结论。模型推理和重型执行不放主控。
+
+Cherry Studio只保留静态外链；不iframe/代理/预取；Rakazo/8765/生产DB/反代/定时任务、美国旧业务、腾讯/UCloud现有业务、真实Worker/探针和凭据轮换本轮均未操作。

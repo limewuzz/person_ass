@@ -1,0 +1,62 @@
+# Only after separate authorization. No fixed global names, no shared volumes,
+# no postgres host port, no connection to existing business networks.
+name: mwcp-gateb
+services:
+  mwcp-gateb-pg:
+    image: postgres:16@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5
+    environment:
+      POSTGRES_USER: mwcp_bootstrap
+      POSTGRES_DB: control_plane
+      POSTGRES_PASSWORD_FILE: /run/secrets/mwcp_pg_bootstrap_password
+    secrets: [mwcp_pg_bootstrap_password, mwcp_pg_migrator_password, mwcp_pg_app_password]
+    volumes:
+      - gateb-pgdata:/var/lib/postgresql/data
+      - ./init/00-init-roles.sh:/docker-entrypoint-initdb.d/00-init-roles.sh:ro
+    networks: [gateb-internal]
+    command: [postgres, -c, shared_buffers=128MB, -c, max_connections=20, -c, work_mem=2MB]
+    shm_size: 256m
+    mem_limit: 640m
+    cpus: 1.0
+    stop_grace_period: 90s
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U mwcp_app -d control_plane]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  mwcp-gateb-api:
+    profiles: [api]
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile.api
+    environment:
+      MWCP_REPOSITORY: postgres
+      MWCP_GATE_B_AUTHORIZED: ${MWCP_GATE_B_AUTHORIZED:?separate authorization required}
+      MWCP_DB_HOST: mwcp-gateb-pg
+      MWCP_LISTEN_PORT: '8127'
+      MWCP_SECRETS_DIR: /run/secrets
+    secrets:
+      - source: mwcp_api_app_password
+        target: mwcp_pg_app_password
+      - mwcp_auth_secrets
+    ports: ['127.0.0.1:8129:8127']
+    networks: [gateb-internal]
+    mem_limit: 512m
+    cpus: 0.5
+    depends_on:
+      mwcp-gateb-pg: {condition: service_healthy}
+networks:
+  gateb-internal:
+    internal: true
+volumes:
+  gateb-pgdata: {}
+secrets:
+  mwcp_pg_bootstrap_password:
+    file: ${MWCP_GATEB_SECRETS:?set approved private directory}/db/mwcp_pg_bootstrap_password
+  mwcp_pg_migrator_password:
+    file: ${MWCP_GATEB_SECRETS:?set approved private directory}/db/mwcp_pg_migrator_password
+  mwcp_pg_app_password:
+    file: ${MWCP_GATEB_SECRETS:?set approved private directory}/db/mwcp_pg_app_password
+  mwcp_api_app_password:
+    file: ${MWCP_GATEB_SECRETS:?set approved private directory}/api/mwcp_pg_app_password
+  mwcp_auth_secrets:
+    file: ${MWCP_GATEB_SECRETS:?set approved private directory}/api/mwcp_auth_secrets

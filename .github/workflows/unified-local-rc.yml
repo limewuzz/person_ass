@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [v0.1_personal]
   push:
-    branches: [v0.1_personal, 'integration/**', 'feature/**']
+    branches: [v0.1_personal, 'integration/**', 'feature/**', 'fix/**', 'v2.0_unified']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: python -m pip install -r backend/requirements.lock
+      - run: python -m pip install -r backend/requirements-postgres.lock
       - run: npm ci --prefix frontend --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
@@ -72,7 +72,7 @@ jobs:
       - run: npm audit --audit-level=high --json > npm-audit.json
         working-directory: frontend
       - run: python -m pip install pip-audit==2.10.1
-      - run: python -m pip_audit -r backend/requirements.lock --strict -f json -o python-audit.json
+      - run: python -m pip_audit -r backend/requirements-postgres.lock --strict -f json -o python-audit.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

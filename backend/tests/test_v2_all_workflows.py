@@ -440,7 +440,7 @@ def test_all_52_v2_operations_validate_against_frozen_openapi_schema(client):
     assert all(meta_r["workflows_ready"].values())
 
     call("post", "/api/v1/auth/revoke", json_body={"jti": "jti-to-revoke-v2", "reason": "security drill"}, expected_status=200)
-    call("post", "/api/v1/auth/logout", headers={"Cookie": f"mw_session={sess_r.json()['session_id']}", "X-CSRF-Token": csrf}, expected_status=200)
+    call("post", "/api/v1/auth/logout", headers={"Cookie": f"mw_session={sess_r.json()['session_id']}", "X-CSRF-Token": csrf, "Origin": "http://testserver"}, expected_status=200)
 
     expected_v2 = {
         (m.lower(), p)
@@ -476,7 +476,7 @@ def test_v2_cookie_session_enforces_csrf_and_blocks_worker_endpoints(client):
     with_csrf = client.post(
         "/api/v1/work-items",
         json={"title": "CSRF test ok", "kind": "task"},
-        headers={**cookie_hdr, "X-CSRF-Token": csrf},
+        headers={**cookie_hdr, "X-CSRF-Token": csrf, "Origin": "http://testserver"},
     )
     assert with_csrf.status_code == 201
 
@@ -484,7 +484,7 @@ def test_v2_cookie_session_enforces_csrf_and_blocks_worker_endpoints(client):
     w_res = client.post(
         "/api/v1/workers/cookie-user/claim",
         json={"limit": 1},
-        headers={**cookie_hdr, "X-CSRF-Token": csrf},
+        headers={**cookie_hdr, "X-CSRF-Token": csrf, "Origin": "http://testserver"},
     )
     assert w_res.status_code == 403 and w_res.json()["error"]["code"] == "worker_cookie_forbidden"
 
@@ -742,4 +742,5 @@ def test_v2_dbpg_repositories_and_0004_migration_offline():
         task_id=None,
         expires_at=time.time() + 600,
     )
-    assert len(calls) == 6
+    assert len(calls) == 7
+    assert any("insert into client_sync_states" in sql for sql, _ in calls)

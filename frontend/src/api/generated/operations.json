@@ -7,6 +7,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -19,6 +34,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/ReadinessStatus"
       }
     },
     "request": null
@@ -31,6 +61,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Me"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -43,6 +88,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/NodeList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -55,6 +115,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ResourceList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -67,6 +142,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/ResourceGenerationMeta"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -81,6 +174,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ResourceList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -93,6 +201,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AgentList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -105,6 +228,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/Agent"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -119,6 +260,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/CapabilityList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -131,6 +287,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/WorkItemList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -143,6 +314,21 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/WorkItem"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -157,6 +343,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/TaskList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -169,6 +370,21 @@
     "responses": {
       "202": {
         "$ref": "#/components/schemas/TaskAccepted"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -183,6 +399,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ApprovalList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -195,6 +426,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ObservationList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -207,6 +453,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AuditEventList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -219,6 +480,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ArtifactList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -231,6 +507,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/IntegrationList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -243,6 +534,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Node"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -255,6 +564,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Resource"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -267,6 +594,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ResourceGenerationMeta"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -281,6 +626,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ResourceGenerationMeta"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -293,6 +656,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Agent"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -305,6 +686,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Agent"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -319,6 +718,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/WorkItem"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -331,6 +748,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Task"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -343,6 +778,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Approval"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -355,6 +808,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Artifact"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -367,6 +838,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/TaskEventList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -379,6 +868,24 @@
     "responses": {
       "202": {
         "$ref": "#/components/schemas/Task"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -391,6 +898,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Approval"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -403,6 +928,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Approval"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -413,7 +956,22 @@
     "operationId": "get_api_v1_events",
     "x_phase": "P1",
     "responses": {
-      "200": {}
+      "200": {},
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
     },
     "request": null
   },
@@ -425,6 +983,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -439,6 +1015,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/WorkerClaimResponse"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -453,6 +1047,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -467,6 +1079,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -481,6 +1111,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/UIBootstrap"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -493,6 +1138,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DashboardSummary"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -505,6 +1165,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AuditHistoryList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -517,6 +1192,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/TaskAttemptList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -529,6 +1219,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -541,6 +1246,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -553,6 +1273,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -565,6 +1300,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -577,6 +1327,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -589,6 +1354,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/ComputeRunRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -603,6 +1386,21 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DisplayRecordList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -615,6 +1413,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/SessionState"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -629,6 +1445,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -641,6 +1475,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -655,6 +1507,24 @@
     "responses": {
       "202": {
         "$ref": "#/components/schemas/TaskAccepted"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -669,6 +1539,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Task"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -683,6 +1571,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AIProviderList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -695,6 +1601,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/AIProvider"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -709,6 +1633,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AIProvider"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -723,6 +1665,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -735,6 +1695,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AIProvider"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -747,6 +1725,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ModelDetail"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -759,6 +1755,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AIRoutingPolicy"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -771,6 +1785,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AIRoutingPolicy"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -785,6 +1817,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/AICompletionResponse"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -799,6 +1849,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ConversationList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -811,6 +1879,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/Conversation"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -825,6 +1911,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Conversation"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -837,6 +1941,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ConversationMessageList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -849,6 +1971,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/ConversationMessage"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -861,7 +2001,25 @@
     "operationId": "get_api_v1_conversations_id_stream",
     "x_phase": "V2",
     "responses": {
-      "200": {}
+      "200": {},
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
     },
     "request": null
   },
@@ -873,6 +2031,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/SupervisorPlanResponse"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -887,6 +2063,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/PluginList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -899,6 +2093,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/PluginRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -913,6 +2125,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/PluginRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -925,6 +2155,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/PluginRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -937,6 +2185,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/PluginRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -949,6 +2215,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/Node"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -963,6 +2247,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Node"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -975,6 +2277,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/DevicePairTicket"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -989,6 +2309,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/DevicePairTicket"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1003,6 +2341,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Status"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1017,6 +2373,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ComputeRunRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1029,6 +2403,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ComputeRunRecord"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1043,6 +2435,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ClientDeviceList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1055,6 +2465,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/ClientDevice"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1069,6 +2497,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ClientDevice"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1081,6 +2527,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ClientSyncState"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1093,6 +2557,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ClientSyncState"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1107,6 +2589,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ClientReleaseManifest"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1119,6 +2619,24 @@
     "responses": {
       "201": {
         "$ref": "#/components/schemas/UploadTicket"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1133,6 +2651,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/Artifact"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1147,6 +2683,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ArtifactDownloadTicket"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1159,6 +2713,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ArtifactContentEnvelope"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null
@@ -1171,6 +2743,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/IntegrationSyncReceipt"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1185,6 +2775,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/KnowledgeQueryResponse"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": {
@@ -1199,6 +2807,24 @@
     "responses": {
       "200": {
         "$ref": "#/components/schemas/ContractMetaStatus"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
       }
     },
     "request": null

@@ -151,7 +151,7 @@ import {
 
 describe("V2 workspace workflows: conversations, uploads/downloads, and multi-device sync", () => {
   it("submits conversation messages with idempotency key and optional task spawn", async () => {
-    const writeMsg = vi.fn(async (cid, body, key) => ({
+    const writeMsg = vi.fn(async (cid, body) => ({
       id: "msg-1",
       conversation_id: cid,
       sequence: 1,

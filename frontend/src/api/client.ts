@@ -105,7 +105,11 @@ export const api = createClient<paths>({
           throw new ApiError(403, undefined, "session_read_only");
         let csrf: string | null = null;
         try {
-          csrf = localStorage.getItem("mwcp_csrf");
+          csrf =
+            document.cookie
+              .split("; ")
+              .find((c) => c.startsWith("mwcp_csrf="))
+              ?.slice("mwcp_csrf=".length) ?? localStorage.getItem("mwcp_csrf");
         } catch {
           /* refuse if storage is unavailable */
         }
