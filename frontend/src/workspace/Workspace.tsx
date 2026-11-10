@@ -1093,7 +1093,20 @@ export function WorkspaceAssistants() {
         eyebrow="YOUR ASSISTANTS"
         title="认识工作坊的助手"
         description="先看清能力与状态，再决定把什么交给它。"
-      />
+      >
+        <button
+          onClick={() => {
+            void q.refetch();
+            void caps.refetch();
+            void providers.refetch();
+            void routing.refetch();
+            void convs.refetch();
+          }}
+        >
+          <RefreshCw size={15} />
+          刷新
+        </button>
+      </Title>
       <div className="ws-notice">
         <ShieldCheck size={18} />
         <span>

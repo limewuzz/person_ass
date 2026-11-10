@@ -214,10 +214,11 @@ class DurableRequests:
                 await self.app(scope, receive, capture)
                 status = next(m['status'] for m in messages if m['type'] == 'http.response.start')
                 if status >= 500:
-                    if scope['path'] != '/api/v1/health/ready':
-                        raise RuntimeError('Request failed before durable commit')
                     await anyio.to_thread.run_sync(durable.conn.rollback)
                     durable.codec.load(before)
+                    if status != 503:
+                        from contract_wire import error_response
+                        return await error_response(503, 'request_unavailable')(scope, receive, send)
                 else:
                     await anyio.to_thread.run_sync(durable.commit)
             except Exception:
