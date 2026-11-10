@@ -183,3 +183,13 @@ def test_cookie_csrf_works_with_frontend_header_and_rejects_foreign_origin():
     assert c.post('/api/v1/work-items',json=request,headers=good).status_code == 201
     assert c.post('/api/v1/work-items',json=request,headers={**good,'Origin':'https://foreign.invalid'}).status_code == 403
     assert c.post('/api/v1/work-items',json=request,headers={'X-MW-CSRF':'wrong','Origin':'https://testserver'}).status_code == 403
+
+
+def test_domain_unavailable_keeps_its_error_and_does_not_claim_database_failure(durable, monkeypatch):
+    db, codec, c, header = durable
+    before = db.commits
+    monkeypatch.setattr(api, '_validator', None)
+    response = c.get('/api/v1/tasks', headers=header)
+    assert response.status_code == 503
+    assert response.json()['error']['code'] == 'auth_misconfigured'
+    assert db.commits == before
