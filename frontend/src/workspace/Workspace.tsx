@@ -20,7 +20,13 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { api, ApiError, required, type Schema } from "../api/client";
+import {
+  api,
+  ApiError,
+  API_WRITES_ALLOWED,
+  required,
+  type Schema,
+} from "../api/client";
 import { useConnection } from "../app/connection";
 import {
   ConfirmationDialog,
@@ -81,6 +87,7 @@ function useWriteGate() {
     boot,
     connected,
     allowed:
+      API_WRITES_ALLOWED &&
       connected &&
       !boot.error &&
       boot.data?.app_mode === "LOCAL_MOCK" &&
@@ -185,9 +192,11 @@ export function WorkspaceLayout() {
         <ShieldCheck size={14} />
         {!connected
           ? "连接已中断 · 缓存只读，恢复后请刷新"
-          : boot.data?.app_mode === "LOCAL_MOCK"
-            ? "本地演示空间 · 操作仅在模拟账本中进行"
-            : "当前执行入口未开放 · 可查看已授权记录"}
+          : !API_WRITES_ALLOWED
+            ? "只读发布 · 已授权记录可查看，执行入口尚未开放"
+            : boot.data?.app_mode === "LOCAL_MOCK"
+              ? "本地演示空间 · 操作仅在模拟账本中进行"
+              : "当前执行入口未开放 · 可查看已授权记录"}
         <span className="ws-source">
           {boot.error
             ? "UNAVAILABLE"
@@ -384,7 +393,9 @@ export function WorkspaceHome() {
         <div className="ws-notice" role="status">
           {!gate.connected
             ? "离线期间可查看缓存，发起和授权暂不可用。"
-            : "当前未获得本地任务能力，或身份/能力数据不可用；发起入口已锁定。"}
+            : !API_WRITES_ALLOWED
+              ? "当前发布为只读模式，可浏览历史与结果；任务执行尚未开放。"
+              : "当前未获得本地任务能力，或身份/能力数据不可用；发起入口已锁定。"}
           <button
             onClick={() => {
               void gate.boot.refetch();

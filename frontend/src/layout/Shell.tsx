@@ -42,7 +42,7 @@ const Icons = {
 import { useQueryClient } from "@tanstack/react-query";
 import { pages } from "../app/catalog";
 import { useBootstrap } from "../features/pages";
-import { API_MODE } from "../api/client";
+import { API_MODE, API_WRITES_ALLOWED } from "../api/client";
 import { control, type Scenario } from "../mocks/handlers";
 export function Shell() {
   const connected = useConnection();
@@ -144,7 +144,9 @@ export function Shell() {
               ? "STALE · 模拟观测过期，健康与新鲜度独立展示"
               : API_MODE === "mock"
                 ? "纯本地演示 · 未连接生产"
-                : "GLM LOOPBACK 联调 · LOCAL MOCK 数据；无生产连接"}
+                : API_MODE === "session"
+                  ? `同源登录会话 · ${API_WRITES_ALLOWED ? "操作范围以服务端授权为准" : "当前发布只读"}`
+                  : "GLM LOOPBACK 联调 · LOCAL MOCK 数据；无生产连接"}
         </div>
         <main id="main" tabIndex={-1} className="page">
           <Outlet />

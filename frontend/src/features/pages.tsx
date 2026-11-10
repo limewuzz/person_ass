@@ -10,6 +10,7 @@ import {
   subscribeEvents,
   ApiError,
   API_MODE,
+  API_WRITES_ALLOWED,
   type Schema,
 } from "../api/client";
 import { pages, readCatalog, type PageKey } from "../app/catalog";
@@ -370,6 +371,7 @@ export function CatalogPage({
         {pageKey === "tasks" && (
           <FeatureGate
             allowed={
+              API_WRITES_ALLOWED &&
               connected &&
               !boot.error &&
               boot.data?.app_mode === "LOCAL_MOCK" &&
@@ -449,6 +451,7 @@ export function CatalogPage({
                   (t) => t.id === (r.data as Schema<"Approval">).task_id,
                 )}
                 onDecide={
+                  API_WRITES_ALLOWED &&
                   connected &&
                   !boot.error &&
                   boot.data?.app_mode === "LOCAL_MOCK" &&
@@ -830,6 +833,7 @@ export function DetailPage({ kind }: { kind: keyof typeof detailTabs }) {
       >
         <HealthBadge value={task?.state ?? "UNKNOWN"} />
         {task &&
+          API_WRITES_ALLOWED &&
           connected &&
           !boot.error &&
           boot.data?.app_mode === "LOCAL_MOCK" &&

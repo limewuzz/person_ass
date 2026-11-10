@@ -34,12 +34,17 @@ const run = (cmd, args, cwd = root, env = {}) => {
 // （lstart→epoch 秒），与 pid+nonce 共同构成所有权判据；停止仍拒绝复用/外来 pid。
 const ticks = (pid) => {
   if (existsSync(`/proc/${pid}/stat`))
-    return readFileSync(`/proc/${pid}/stat`, "utf8").split(") ")[1].split(" ")[19];
+    return readFileSync(`/proc/${pid}/stat`, "utf8")
+      .split(") ")[1]
+      .split(" ")[19];
   const ps = spawnSync("ps", ["-o", "lstart=,epoch=", "-p", String(pid)], {
     encoding: "utf8",
   });
   if (ps.status !== 0 || !ps.stdout.trim()) return "unknown";
-  const [, epoch] = ps.stdout.trim().split(/\s+(?=\d{5,})/).reverse();
+  const [, epoch] = ps.stdout
+    .trim()
+    .split(/\s+(?=\d{5,})/)
+    .reverse();
   return epoch?.trim() ?? "unknown";
 };
 if (command === "supervise") {
@@ -157,8 +162,9 @@ if (command === "supervise") {
   // macOS 无 /proc/cmdline：用 ps 命令行等价判定（语义一致：找 supervise+nonce）
   const cmdline = existsSync(`/proc/${s.pid}/cmdline`)
     ? readFileSync(`/proc/${s.pid}/cmdline`, "utf8")
-    : (spawnSync("ps", ["-o", "command=", "-p", String(s.pid)], { encoding: "utf8" })
-        .stdout ?? "");
+    : (spawnSync("ps", ["-o", "command=", "-p", String(s.pid)], {
+        encoding: "utf8",
+      }).stdout ?? "");
   if (
     s.root !== root ||
     ticks(s.pid) !== s.start_ticks ||
@@ -189,8 +195,40 @@ else if (command === "contract") {
     "frontend/src/mocks/schemas.json",
   ]);
   run(py, ["tools/route_coverage.py"]);
-} else if (command === "build") {
-  run("npm", ["run", "build"], front, { VITE_API_MODE: "loopback" });
+} else if (["build", "build-session"].includes(command)) {
+  const session = command === "build-session";
+  const origin = process.env.MW_PUBLIC_ORIGIN;
+  if (
+    session &&
+    (!origin ||
+      new URL(origin).protocol !== "https:" ||
+      new URL(origin).origin !== origin)
+  )
+    throw Error(
+      "build-session requires MW_PUBLIC_ORIGIN as an exact HTTPS origin",
+    );
+  if (session && process.env.VITE_LOCAL_API_ORIGIN)
+    throw Error(
+      "Remove VITE_LOCAL_API_ORIGIN before building the public session candidate",
+    );
+  if (
+    session &&
+    ![undefined, "disabled", "enabled"].includes(process.env.MW_SESSION_WRITES)
+  )
+    throw Error(
+      "MW_SESSION_WRITES must be disabled or explicitly enabled after server validation",
+    );
+  const webBase = process.env.MW_WEB_BASE ?? (session ? "/app/" : "/");
+  run("npm", ["run", "build"], front, {
+    VITE_API_MODE: session ? "session" : "loopback",
+    MW_WEB_BASE: webBase,
+    ...(session
+      ? {
+          VITE_PUBLIC_ORIGIN: origin,
+          VITE_SESSION_WRITES: process.env.MW_SESSION_WRITES ?? "disabled",
+        }
+      : {}),
+  });
   writeFileSync(
     join(front, "dist/build-meta.json"),
     JSON.stringify(
@@ -199,8 +237,10 @@ else if (command === "contract") {
           cwd: root,
           encoding: "utf8",
         }).trim(),
-        mode: "loopback",
-        web_base: process.env.MW_WEB_BASE ?? "/",
+        mode: session ? "session" : "loopback",
+        public_origin: session ? origin : null,
+        read_only: session && process.env.MW_SESSION_WRITES !== "enabled",
+        web_base: webBase,
         contract_sha256: JSON.parse(
           readFileSync(join(root, "contracts/CONTRACT-LOCK.json")),
         ).sha256,
@@ -224,5 +264,5 @@ else if (command === "dependencies") {
   ]);
 } else
   console.log(
-    "node scripts/mw.mjs start [--static] | stop | test | contract | build | package | security | dependencies",
+    "node scripts/mw.mjs start [--static] | stop | test | contract | build | build-session | package | security | dependencies",
   );

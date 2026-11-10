@@ -46,6 +46,7 @@ jobs:
             frontend/evidence/*junit.xml
             frontend/evidence/live-integration/junit.xml
             frontend/evidence/prefix/junit.xml
+            frontend/evidence/session/junit.xml
             frontend/evidence/workspace/
             frontend/evidence/prefix/*.png
             frontend/evidence/screenshots/home-1600.png
