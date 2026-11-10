@@ -8,6 +8,7 @@ from auth import Principal
 from contract_wire import error_response
 from deps import get_principal
 from agent_os.service import AgentOSService
+from taskengine import TaskEngineError
 
 
 def build_agent_os_router(agent_service: AgentOSService) -> APIRouter:
@@ -124,6 +125,8 @@ def build_agent_os_router(agent_service: AgentOSService) -> APIRouter:
             raise HTTPException(status_code=404, detail={"error": "not_found"})
         except PermissionError as e:
             return error_response(403, str(e))
+        except TaskEngineError as e:
+            return error_response(e.status, e.code)
         except FileExistsError as e:
             return error_response(409, str(e))
         except ValueError as e:

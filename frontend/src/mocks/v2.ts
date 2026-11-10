@@ -83,8 +83,8 @@ export async function v2Response(
     return HttpResponse.json({
       contract_version: contract.version,
       openapi_sha256: contract.contract_sha256,
-      total_paths: 79,
-      total_operations: 95,
+      total_paths: 89,
+      total_operations: 106,
       baseline_v1_paths: 41,
       baseline_v1_operations: 43,
       workflows_ready: Object.fromEntries(

@@ -145,7 +145,7 @@ class WorkerGateway:
             offered = set(self.workers[worker_id].available_capabilities)
             requested = offered if capabilities is None else set(capabilities) & offered
             for task in list(self.engine.tasks.values()):
-                if task.capability not in requested or (
+                if task.capability.startswith("fanout.") or task.capability not in requested or (
                     allowed is not None and not allowed(task)
                 ):
                     continue

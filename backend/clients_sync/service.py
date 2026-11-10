@@ -128,17 +128,17 @@ class ClientSyncService:
 
     def get_release_manifest(self) -> dict:
         return {
-            "contract_version": "2.0.0-unified-v2",
+            "contract_version": "3.0.0-fanout-local",
             "min_compatible_contract": "1.1.1-local-integrated",
             "platforms": {
                 "web": {
-                    "version": "2.0.0-rc1",
+                    "version": "3.0.0-rc1",
                     "bundle_sha256": None,
                     "signed": False,
                     "status": "PENDING_VERIFIED_BUILD",
                 },
                 "android": {
-                    "version": "2.0.0-draft",
+                    "version": "3.0.0-draft",
                     "min_sdk": 31,
                     "target_sdk": 35,
                     "apk_sha256": None,
@@ -146,14 +146,14 @@ class ClientSyncService:
                     "status": "SPECIFIED_PENDING_BUILD",
                 },
                 "macos": {
-                    "version": "2.0.0-draft",
+                    "version": "3.0.0-draft",
                     "arch": ["arm64", "x64"],
                     "dmg_sha256": None,
                     "notarized": False,
                     "status": "SPECIFIED_PENDING_BUILD",
                 },
                 "windows": {
-                    "version": "2.0.0-draft",
+                    "version": "3.0.0-draft",
                     "arch": ["x64", "arm64"],
                     "installer_sha256": None,
                     "authenticode_signed": False,

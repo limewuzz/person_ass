@@ -52,7 +52,7 @@ async function call(
 }
 
 it("keeps all 43 V1 operations and explicitly reports unavailable V2 operations", async () => {
-  const v1 = operations.filter((x) => x.x_phase !== "V2");
+  const v1 = operations.filter((x) => x.x_phase !== "V2" && x.x_phase !== "V3");
   expect(v1).toHaveLength(43);
   for (const op of operations.filter(
     (x) => x.x_phase === "V2" && !v2Supported.has(`${x.method} ${x.path}`),

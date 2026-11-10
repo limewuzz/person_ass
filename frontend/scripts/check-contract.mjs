@@ -6,9 +6,9 @@ const input = JSON.parse(readFileSync("src/api/generated/contract.json"));
 const ops = JSON.parse(readFileSync("src/api/generated/operations.json"));
 if (
   hash !== input.contract_sha256 ||
-  input.paths !== 79 ||
-  input.operations !== 95 ||
-  ops.length !== 95
+  input.paths !== 89 ||
+  input.operations !== 106 ||
+  ops.length !== 106
 )
   throw Error("Contract drift");
 if (existsSync("../contracts/CONTRACT-LOCK.json")) {

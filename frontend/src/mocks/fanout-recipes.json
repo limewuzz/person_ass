@@ -1,0 +1,136 @@
+{
+  "paper": {
+    "name": "论文精读与实验立项",
+    "steps": [
+      [
+        "summary",
+        "ai",
+        "LOW",
+        []
+      ],
+      [
+        "archive",
+        "drive",
+        "LOW",
+        [
+          "summary"
+        ]
+      ],
+      [
+        "paper",
+        "notion",
+        "LOW",
+        [
+          "summary"
+        ]
+      ],
+      [
+        "reminder",
+        "reminders",
+        "LOW",
+        []
+      ],
+      [
+        "experiment",
+        "compute",
+        "MEDIUM",
+        [
+          "archive"
+        ]
+      ]
+    ]
+  },
+  "decision": {
+    "name": "方案定稿与开发排期",
+    "steps": [
+      [
+        "adr",
+        "notion",
+        "LOW",
+        []
+      ],
+      [
+        "issue",
+        "github",
+        "MEDIUM",
+        [
+          "adr"
+        ]
+      ],
+      [
+        "implementation",
+        "implementation",
+        "MEDIUM",
+        [
+          "issue"
+        ]
+      ],
+      [
+        "progress",
+        "wechat",
+        "LOW",
+        []
+      ]
+    ]
+  },
+  "wechat": {
+    "name": "随手交办与今日提醒",
+    "steps": [
+      [
+        "context",
+        "knowledge",
+        "LOW",
+        []
+      ],
+      [
+        "reminder",
+        "reminders",
+        "LOW",
+        []
+      ],
+      [
+        "confirmation",
+        "wechat",
+        "LOW",
+        []
+      ],
+      [
+        "execution",
+        "compute",
+        "MEDIUM",
+        [
+          "context"
+        ]
+      ]
+    ]
+  },
+  "checkpoint": {
+    "name": "检查点归档与异常通知",
+    "steps": [
+      [
+        "checkpoint",
+        "drive",
+        "LOW",
+        []
+      ],
+      [
+        "metrics",
+        "notion",
+        "LOW",
+        []
+      ],
+      [
+        "alert",
+        "wechat",
+        "LOW",
+        []
+      ],
+      [
+        "desktop",
+        "reminders",
+        "LOW",
+        []
+      ]
+    ]
+  }
+}

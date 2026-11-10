@@ -19,6 +19,7 @@ def build_core_v2_router(
     approvals,
     session_mgr,
     validator_holder: dict,
+    fanout=None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -231,6 +232,12 @@ def build_core_v2_router(
             raise HTTPException(status_code=404, detail={"error": "not_found"})
         if principal.role != "admin" and wi.created_by != actor_uuid(principal):
             return error_response(403, "work_item_forbidden")
+        if "recipe_id" in body:
+            try:
+                out, _ = fanout.create(body, principal, request.headers.get("Idempotency-Key", ""), work_item_id=id)
+                return JSONResponse(out, status_code=202)
+            except TaskEngineError as e:
+                return error_response(e.status, e.code)
         if body.get("dry_run") is not True:
             return error_response(400, "dry_run_required")
         cap_name = body["capability"]

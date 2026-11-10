@@ -1363,6 +1363,167 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recipes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_api_v1_recipes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fanouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_api_v1_fanouts"];
+        put?: never;
+        post: operations["post_api_v1_fanouts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fanouts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_api_v1_fanouts_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fanouts/{id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_api_v1_fanouts_id_decision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fanouts/{id}/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_api_v1_fanouts_id_simulate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fanouts/{id}/deliveries/{delivery_id}/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_api_v1_fanouts_id_deliveries_delivery_id_reconcile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/outbox/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_api_v1_workers_worker_id_outbox_claim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/outbox/{delivery_id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_api_v1_workers_worker_id_outbox_delivery_id_finish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/trigger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Scoped HMAC over timestamp, nonce, Idempotency-Key and exact body SHA-256. No bearer/query secret. See docs/V3-FANOUT.md. */
+        post: operations["post_api_v1_webhooks_trigger"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fanouts/{id}/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_api_v1_fanouts_id_stream"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1965,6 +2126,7 @@ export interface components {
             role?: "user" | "assistant" | "system";
             spawn_capability?: string | null;
             spawn_resource_id?: string | null;
+            fanout?: components["schemas"]["FanoutCreate"];
         };
         ConversationMessage: {
             id: string;
@@ -1978,6 +2140,7 @@ export interface components {
             /** Format: date-time */
             created_at: string;
             replayed: boolean;
+            fanout?: components["schemas"]["FanoutPlan"];
         };
         ConversationMessageList: {
             items: components["schemas"]["ConversationMessage"][];
@@ -2226,6 +2389,184 @@ export interface components {
             /** Format: date-time */
             checked_at: string;
         };
+        FanoutOrigin: {
+            /** @enum {string} */
+            channel: "web" | "android" | "macos" | "windows" | "wechat" | "rakazo" | "github" | "shortcuts" | "colab" | "manual";
+            source_ref?: string;
+        };
+        FanoutParameters: {
+            run_id?: string;
+            checkpoint_sha256?: string;
+            artifact_id?: string;
+            source_ref?: string;
+            step?: number;
+            byte_size?: number;
+            checkpoint_uri?: string;
+            metrics?: {
+                [key: string]: number;
+            };
+        };
+        FanoutCreate: {
+            /** @enum {string} */
+            recipe_id: "paper" | "decision" | "wechat" | "checkpoint";
+            title: string;
+            input: string;
+            /** @enum {string} */
+            mode: "SIMULATE" | "LIVE";
+            targets: string[];
+            origin: components["schemas"]["FanoutOrigin"];
+            parameters?: components["schemas"]["FanoutParameters"];
+        };
+        FanoutReceipt: {
+            uri: string;
+            sha256: string;
+            byte_size?: number;
+            /** @enum {string} */
+            source_mode: "MOCK" | "LIVE";
+        };
+        FanoutDelivery: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            plan_id: string;
+            /** Format: uuid */
+            task_id: string;
+            step_id: string;
+            target: string;
+            /** @enum {string} */
+            risk: "LOW" | "MEDIUM";
+            depends_on: string[];
+            /** @enum {string} */
+            state: "WAITING_APPROVAL" | "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED" | "EXPIRED" | "NEEDS_RECONCILIATION";
+            attempts: number;
+            generation: number;
+            next_retry_at: number;
+            lease_expires_at: number;
+            worker_id: string | null;
+            receipt: components["schemas"]["FanoutReceipt"] | null;
+            last_error: string | null;
+        };
+        FanoutPlan: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            work_item_id: string;
+            /** Format: uuid */
+            task_id: string;
+            /** Format: uuid */
+            trace_id: string;
+            owner_sub: string;
+            title: string;
+            input: string;
+            recipe_id: string;
+            recipe_version: number;
+            /** @enum {string} */
+            mode: "SIMULATE" | "LIVE";
+            origin: components["schemas"]["FanoutOrigin"];
+            parameters: components["schemas"]["FanoutParameters"];
+            plan_hash: string;
+            approval_id: string | null;
+            approval: components["schemas"]["Approval"] | null;
+            revision: number;
+            /** Format: date-time */
+            created_at: string;
+            delivery_ids: string[];
+            deliveries: components["schemas"]["FanoutDelivery"][];
+            status: string;
+            /** @enum {string} */
+            availability: "MOCK" | "LIVE" | "UNAVAILABLE";
+        };
+        FanoutList: {
+            items: components["schemas"]["FanoutPlan"][];
+            revision: number;
+            next_cursor: null;
+        };
+        FanoutRecipeList: {
+            items: {
+                id: string;
+                name: string;
+                version: number;
+                steps: {
+                    id: string;
+                    target: string;
+                    /** @enum {string} */
+                    risk: "LOW" | "MEDIUM";
+                    depends_on: string[];
+                }[];
+            }[];
+        };
+        FanoutDecision: {
+            /** @enum {string} */
+            decision: "approved" | "rejected";
+        };
+        FanoutReconcile: {
+            expected_generation: number;
+            /** @enum {string} */
+            resolution: "RETRY_CONFIRMED_NOT_EXECUTED" | "FAIL" | "ACCEPT_RECEIPT";
+            reason: string;
+            receipt?: components["schemas"]["FanoutReceipt"];
+        };
+        FanoutSimulate: {
+            target?: string;
+            /** @enum {string} */
+            outcome?: "SUCCEEDED" | "RETRYABLE" | "UNKNOWN";
+        };
+        OutboxClaimRequest: {
+            /** @enum {string} */
+            mode: "SIMULATE" | "LIVE";
+            limit?: number;
+        };
+        OutboxClaim: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            plan_id: string;
+            /** Format: uuid */
+            task_id: string;
+            step_id: string;
+            target: string;
+            /** @enum {string} */
+            risk: "LOW" | "MEDIUM";
+            depends_on: string[];
+            /** @enum {string} */
+            state: "WAITING_APPROVAL" | "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED" | "EXPIRED" | "NEEDS_RECONCILIATION";
+            attempts: number;
+            generation: number;
+            next_retry_at: number;
+            lease_expires_at: number;
+            worker_id: string | null;
+            receipt: components["schemas"]["FanoutReceipt"] | null;
+            last_error: string | null;
+            claim_token: string;
+            idempotency_key: string;
+            /** @enum {string} */
+            mode: "SIMULATE" | "LIVE";
+            input: string;
+            parameters: components["schemas"]["FanoutParameters"];
+            /** Format: uuid */
+            trace_id: string;
+            /** Format: uuid */
+            work_item_id: string;
+        };
+        OutboxClaimList: {
+            items: components["schemas"]["OutboxClaim"][];
+        };
+        OutboxFinishRequest: {
+            claim_token: string;
+            generation: number;
+            /** @enum {string} */
+            outcome: "SUCCEEDED" | "RETRYABLE" | "UNKNOWN";
+            error_code?: string;
+            receipt?: components["schemas"]["FanoutReceipt"];
+        };
+        OutboxFinishResult: {
+            /** Format: uuid */
+            delivery_id: string;
+            state: string;
+            replayed: boolean;
+        };
+        V3WorkItemDispatchRequest: components["schemas"]["WorkItemDispatchRequest"] | components["schemas"]["FanoutCreate"];
+        V3WorkItemDispatchResponse: components["schemas"]["TaskAccepted"] | components["schemas"]["FanoutPlan"];
     };
     responses: never;
     parameters: never;
@@ -5990,7 +6331,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["WorkItemDispatchRequest"];
+                "application/json": components["schemas"]["V3WorkItemDispatchRequest"];
             };
         };
         responses: {
@@ -6000,7 +6341,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskAccepted"];
+                    "application/json": components["schemas"]["V3WorkItemDispatchResponse"];
                 };
             };
             /** @description Bad request */
@@ -9282,6 +9623,868 @@ export interface operations {
                 };
             };
             /** @description Unavailable dependency */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    get_api_v1_recipes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutRecipeList"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    get_api_v1_fanouts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutList"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_fanouts: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FanoutCreate"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutPlan"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    get_api_v1_fanouts_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutPlan"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_fanouts_id_decision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FanoutDecision"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutPlan"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_fanouts_id_simulate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FanoutSimulate"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutPlan"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_fanouts_id_deliveries_delivery_id_reconcile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                delivery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FanoutReconcile"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutPlan"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_workers_worker_id_outbox_claim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutboxClaimRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutboxClaimList"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_workers_worker_id_outbox_delivery_id_finish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+                delivery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutboxFinishRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutboxFinishResult"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post_api_v1_webhooks_trigger: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FanoutCreate"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FanoutPlan"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    get_api_v1_fanouts_id_stream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Request rejected or unavailable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request rejected or unavailable */
             503: {
                 headers: {
                     [name: string]: unknown;

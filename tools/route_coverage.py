@@ -34,7 +34,7 @@ result = {
     "operations": len(expected),
     "missing": sorted(expected - actual),
     "unexpected": sorted(actual - expected),
-    "runtime_validation_tests": ["backend/tests/test_integrated_wire.py::test_all_43_operations_validate_against_shared_frozen_contract", "backend/tests/test_v2_all_workflows.py::test_all_52_v2_operations_validate_against_frozen_openapi_schema"],
+    "runtime_validation_tests": ["backend/tests/test_integrated_wire.py::test_all_43_operations_validate_against_shared_frozen_contract", "backend/tests/test_v2_all_workflows.py::test_all_52_v2_operations_validate_against_frozen_openapi_schema", "backend/tests/test_v3_fanout.py"],
 }
 assert not result["missing"] and not result["unexpected"]
 print(json.dumps(result, indent=2))

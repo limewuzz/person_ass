@@ -1,0 +1,4 @@
+# Private configuration paths only. No actual tokens/keys or default production password.
+MWCP_WEBHOOK_KEYS_FILE=/run/secrets/mwcp-webhook-config.json
+MWCP_FANOUT_GRANTS_FILE=/run/secrets/mwcp-fanout-grants.json
+# Keep production identity and PostgreSQL disabled until separately authorized Gate B.

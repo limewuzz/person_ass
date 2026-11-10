@@ -1506,7 +1506,7 @@
     "x_phase": "V2",
     "responses": {
       "202": {
-        "$ref": "#/components/schemas/TaskAccepted"
+        "$ref": "#/components/schemas/V3WorkItemDispatchResponse"
       },
       "400": {
         "$ref": "#/components/schemas/Error"
@@ -1528,7 +1528,7 @@
       }
     },
     "request": {
-      "$ref": "#/components/schemas/WorkItemDispatchRequest"
+      "$ref": "#/components/schemas/V3WorkItemDispatchRequest"
     }
   },
   {
@@ -2808,6 +2808,348 @@
       "200": {
         "$ref": "#/components/schemas/ContractMetaStatus"
       },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/recipes",
+    "method": "get",
+    "operationId": "get_api_v1_recipes",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/FanoutRecipeList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/fanouts",
+    "method": "get",
+    "operationId": "get_api_v1_fanouts",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/FanoutList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/fanouts",
+    "method": "post",
+    "operationId": "post_api_v1_fanouts",
+    "x_phase": "V3",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/FanoutPlan"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/FanoutCreate"
+    }
+  },
+  {
+    "path": "/api/v1/fanouts/{id}",
+    "method": "get",
+    "operationId": "get_api_v1_fanouts_id",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/FanoutPlan"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": null
+  },
+  {
+    "path": "/api/v1/fanouts/{id}/decision",
+    "method": "post",
+    "operationId": "post_api_v1_fanouts_id_decision",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/FanoutPlan"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/FanoutDecision"
+    }
+  },
+  {
+    "path": "/api/v1/fanouts/{id}/simulate",
+    "method": "post",
+    "operationId": "post_api_v1_fanouts_id_simulate",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/FanoutPlan"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/FanoutSimulate"
+    }
+  },
+  {
+    "path": "/api/v1/fanouts/{id}/deliveries/{delivery_id}/reconcile",
+    "method": "post",
+    "operationId": "post_api_v1_fanouts_id_deliveries_delivery_id_reconcile",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/FanoutPlan"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/FanoutReconcile"
+    }
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/outbox/claim",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_outbox_claim",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/OutboxClaimList"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/OutboxClaimRequest"
+    }
+  },
+  {
+    "path": "/api/v1/workers/{worker_id}/outbox/{delivery_id}/finish",
+    "method": "post",
+    "operationId": "post_api_v1_workers_worker_id_outbox_delivery_id_finish",
+    "x_phase": "V3",
+    "responses": {
+      "200": {
+        "$ref": "#/components/schemas/OutboxFinishResult"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/OutboxFinishRequest"
+    }
+  },
+  {
+    "path": "/api/v1/webhooks/trigger",
+    "method": "post",
+    "operationId": "post_api_v1_webhooks_trigger",
+    "x_phase": "V3",
+    "responses": {
+      "201": {
+        "$ref": "#/components/schemas/FanoutPlan"
+      },
+      "400": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "401": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "403": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "404": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "409": {
+        "$ref": "#/components/schemas/Error"
+      },
+      "503": {
+        "$ref": "#/components/schemas/Error"
+      }
+    },
+    "request": {
+      "$ref": "#/components/schemas/FanoutCreate"
+    }
+  },
+  {
+    "path": "/api/v1/fanouts/{id}/stream",
+    "method": "get",
+    "operationId": "get_api_v1_fanouts_id_stream",
+    "x_phase": "V3",
+    "responses": {
+      "200": {},
       "400": {
         "$ref": "#/components/schemas/Error"
       },

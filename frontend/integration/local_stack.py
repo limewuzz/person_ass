@@ -132,7 +132,7 @@ async def proxy(rest: str, request: Request):
             request.headers.get("x-mw-csrf", ""), session["csrf"]
         ):
             return error(403, "csrf_rejected")
-    if "/workers/" in path:
+    if "/workers/" in path or path == "/api/v1/webhooks/trigger":
         return error(403, "browser_worker_forbidden")
     template, op = lookup(path, request.method)
     if not op:

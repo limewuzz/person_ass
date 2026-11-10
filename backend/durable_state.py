@@ -79,6 +79,7 @@ def decode(value):
 
 
 FIELDS = {
+    '_fanout': ('plans','deliveries','idempotency','nonces','revision'),
     '_engine': ('work_items', '_wi_dedup', 'tasks', 'events', 'attempts', '_idem',
                 '_seq', 'artifacts', 'artifact_bytes', '_integrity', 'audit_bus',
                 '_audit_seq', 'admitted_generations', 'wire_payload_hashes'),
@@ -104,13 +105,15 @@ class DomainCheckpoint:
         values['resources'] = encode(self.api._store.resources._data)
         values['revocations'] = encode(self.api._validator.revocations._revoked
                                        if self.api._validator else set())
-        text = json.dumps({'codec_version': 1, 'values': values}, allow_nan=False,
+        text = json.dumps({'codec_version': 2, 'values': values}, allow_nan=False,
                           separators=(',', ':'), ensure_ascii=False)
         if len(text.encode('utf-8')) > MAX_DOCUMENT_BYTES:
             raise ValueError('Persistent state exceeds configured 64 MiB ceiling')
         return text
 
     def recover_expired_leases(self):
+        self.api._fanout.refresh()
+        self.api._fanout._dirty.update(self.api._fanout.deliveries)
         engine, gateway = self.api._engine, self.api._gateway
         for task_id, lease in list(gateway.leases.items()):
             if lease.expires_at > gateway.clock():
@@ -127,9 +130,11 @@ class DomainCheckpoint:
     def load(self, document):
         if isinstance(document, str):
             document = json.loads(document)
-        if document.get('codec_version') != 1:
+        if document.get('codec_version') not in (1,2):
             raise ValueError('Unsupported checkpoint version')
-        values = document['values']
+        values = dict(document['values'])
+        if document['codec_version']==1 and '_fanout' not in values:
+            values['_fanout']={k:encode(0 if k=='revision' else {}) for k in FIELDS['_fanout']}
         if set(values) != set(FIELDS) | {'resources', 'revocations'}:
             raise ValueError('Checkpoint namespaces differ from codec version')
         # Decode and validate everything before mutating any live domain object.
@@ -163,12 +168,12 @@ class PgCheckpoint:
             cur.execute("SET LOCAL lock_timeout = '3s'")
             cur.execute("SET LOCAL statement_timeout = '10s'")
             cur.execute("INSERT INTO runtime_state(id, codec_version, document) "
-                        "VALUES ('control-plane',1,%s::jsonb) ON CONFLICT (id) DO NOTHING",
+                        "VALUES ('control-plane',2,%s::jsonb) ON CONFLICT (id) DO NOTHING",
                         (self.codec.dump(),))
             cur.execute("SELECT revision, codec_version, document FROM runtime_state "
                         "WHERE id='control-plane' FOR UPDATE")
             row = cur.fetchone()
-            if row is None or row[1] != 1:
+            if row is None or row[1] not in (1,2):
                 raise RuntimeError('Runtime state unavailable')
             self.revision = row[0]
             self.codec.load(row[2])
@@ -176,12 +181,14 @@ class PgCheckpoint:
 
     def commit(self):
         with self.conn.cursor() as cur:
-            cur.execute("UPDATE runtime_state SET revision=revision+1, document=%s::jsonb, "
+            cur.execute("UPDATE runtime_state SET revision=revision+1, codec_version=2, document=%s::jsonb, "
                         "updated_at=now() WHERE id='control-plane' AND revision=%s",
                         (self.codec.dump(), self.revision))
             if cur.rowcount != 1:
                 raise RuntimeError('Runtime revision conflict')
+            self.codec.api._fanout.project_sql(cur)
         self.conn.commit()
+        self.codec.api._fanout._dirty.clear()
 
 
 class DurableRequests:
@@ -197,7 +204,7 @@ class DurableRequests:
     async def __call__(self, scope, receive, send):
         from service_container import get_state
         state = get_state()
-        if scope['type'] != 'http' or state.mode != 'postgres' or scope['path'] == '/api/v1/health/live':
+        if scope['type'] != 'http' or state.mode != 'postgres' or scope['path'] == '/api/v1/health/live' or (scope['path'].startswith('/api/v1/fanouts/') and scope['path'].endswith('/stream')):
             return await self.app(scope, receive, send)
         async with self.lock:
             durable = state.durable

@@ -77,3 +77,8 @@ writeFileSync(
   "src/mocks/schemas.json",
   JSON.stringify(spec.components.schemas) + "\n",
 );
+
+writeFileSync(
+  "src/mocks/fanout-recipes.json",
+  readFileSync("../backend/fanout/recipes.json"),
+);

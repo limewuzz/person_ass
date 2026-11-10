@@ -436,7 +436,7 @@ def test_all_52_v2_operations_validate_against_frozen_openapi_schema(client):
 
     # --- Workflow 7: System Contract Meta & Session Revoke/Logout ---
     meta_r = call("get", "/api/v1/system/contract-meta", expected_status=200).json()
-    assert meta_r["total_paths"] == 79 and meta_r["total_operations"] == 95
+    assert meta_r["total_paths"] == len(CONTRACT["paths"]) and meta_r["total_operations"] == sum(m in {"get","post","put","patch","delete"} for ops in CONTRACT["paths"].values() for m in ops)
     assert all(meta_r["workflows_ready"].values())
 
     call("post", "/api/v1/auth/revoke", json_body={"jti": "jti-to-revoke-v2", "reason": "security drill"}, expected_status=200)

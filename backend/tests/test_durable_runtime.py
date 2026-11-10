@@ -19,18 +19,25 @@ class FakeDatabase:
         self.row = None
         self.commits = 0
         self.fail_commit = False
+        self.outbox = {}
+        self.fail_projection = False
 
     def connect(self):
         db = self
         class Connection:
             pending = None
+            pending_outbox = None
             def cursor(self): return Cursor(self)
             def commit(self):
                 if db.fail_commit: raise RuntimeError('simulated outage')
                 if self.pending is not None: db.row = copy.deepcopy(self.pending)
+                if self.pending_outbox is not None: db.outbox = copy.deepcopy(self.pending_outbox)
+                self.pending_outbox = None
                 self.pending = None
                 db.commits += 1
-            def rollback(self): self.pending = None
+            def rollback(self):
+                self.pending = None
+                self.pending_outbox = None
         class Cursor:
             rowcount = 1
             rows = []
@@ -48,12 +55,16 @@ class FakeDatabase:
                 elif 'information_schema.tables' in low:
                     self.rows = [(n,) for n in ['principals','resources','tasks','task_events','task_attempts','approvals','audit_events','outbox','task_leases','artifacts','runtime_state','ai_providers','conversations','conversation_messages','plugins','compute_runs','client_devices','client_sync_states','upload_tickets']]
                 elif low.startswith('insert into runtime_state'):
-                    self.conn.pending = copy.deepcopy(db.row) if db.row is not None else [0, 1, json.loads(params[0])]
+                    self.conn.pending = copy.deepcopy(db.row) if db.row is not None else [0, 2, json.loads(params[0])]
                 elif low.startswith('select revision, codec_version'):
                     self.rows = [copy.deepcopy(self.conn.pending)]
+                elif low.startswith('insert into outbox'):
+                    if db.fail_projection: raise RuntimeError('simulated outbox failure')
+                    if self.conn.pending_outbox is None: self.conn.pending_outbox = copy.deepcopy(db.outbox)
+                    self.conn.pending_outbox[params[2]] = copy.deepcopy(params)
                 elif low.startswith('update runtime_state'):
                     self.rowcount = int(self.conn.pending[0] == params[1])
-                    if self.rowcount: self.conn.pending = [params[1] + 1, 1, json.loads(params[0])]
+                    if self.rowcount: self.conn.pending = [params[1] + 1, 2, json.loads(params[0])]
             def fetchone(self): return self.rows[0] if self.rows else None
             def fetchall(self): return self.rows
         return Connection()
@@ -193,3 +204,34 @@ def test_domain_unavailable_keeps_its_error_and_does_not_claim_database_failure(
     assert response.status_code == 503
     assert response.json()['error']['code'] == 'auth_misconfigured'
     assert db.commits == before
+
+
+def test_v3_checkpoint_and_fanout_projection_share_commit_and_rollback(durable):
+    db, codec, client, header = durable
+    body = {'recipe_id':'wechat','title':'durable fanout','input':'offline intent','mode':'SIMULATE','targets':['reminder'],'origin':{'channel':'web'}}
+    header = {**header,'Idempotency-Key':'durable-fanout-123456'}
+    before = codec.dump()
+    db.fail_projection = True
+    out = client.post('/api/v1/fanouts',json=body,headers=header)
+    assert out.status_code == 503
+    assert codec.dump() == before and db.outbox == {}
+    db.fail_projection = False
+    out = client.post('/api/v1/fanouts',json=body,headers=header)
+    assert out.status_code == 201, out.text
+    plan = out.json()
+    did = plan['delivery_ids'][0]
+    assert did in db.outbox
+    assert db.outbox[did][3] == 'QUEUED'
+    api._fanout.plans.clear(); api._fanout.deliveries.clear()
+    container.swap_to_postgres(db.connect())
+    restored = client.get('/api/v1/fanouts/'+plan['id'],headers=header)
+    assert restored.status_code == 200 and restored.json()['delivery_ids'] == [did]
+    # A commit failure rolls back both the response and the delivery mutation.
+    db.fail_commit = True
+    out = client.post('/api/v1/fanouts/'+plan['id']+'/simulate',json={},headers=header)
+    assert out.status_code == 503
+    assert api._fanout.deliveries[did]['state'] == 'QUEUED'
+    assert db.outbox[did][3] == 'QUEUED'
+    db.fail_commit = False
+    assert client.post('/api/v1/fanouts/'+plan['id']+'/simulate',json={},headers=header).status_code == 200
+    assert db.outbox[did][3] == 'SUCCEEDED'

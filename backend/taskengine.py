@@ -197,6 +197,7 @@ class TaskEngine:
         source_external_id: str | None = None,
         instructions: str | None = None,
         attachments: list[str] | None = None,
+        trace_id: str = "",
     ) -> WorkItemRec:
         if not (1 <= len(title) <= 200):
             raise TaskEngineError("bad_title", "title length 1..200")
@@ -222,7 +223,7 @@ class TaskEngine:
             self.work_items[rec.id] = rec
             if source_system and source_external_id:
                 self._wi_dedup[(created_by, source_system, source_external_id)] = rec.id
-            self.audit(created_by, "work_item.create", rec.id, "ok")
+            self.audit(created_by, "work_item.create", rec.id, "ok", trace_id)
             return rec
 
     def work_item_out(self, r: WorkItemRec) -> dict:
@@ -257,6 +258,7 @@ class TaskEngine:
         requires_approval: bool = False,
         risk: str = "READ",
         dry_run: bool = False,
+        trace_id: str | None = None,
     ) -> tuple[TaskRec, bool]:
         """幂等创建：同 (principal, capability-scope, key, payload_hash) 重复请求返回
         既有任务（replayed=True）；payload 不同则 409。100 并发仅建一条。"""
@@ -306,6 +308,7 @@ class TaskEngine:
                 requires_approval=requires_approval,
                 risk=risk,
                 dry_run=dry_run,
+                trace_id=trace_id or str(uuid.uuid4()),
             )
             rec.state = "WAITING_APPROVAL" if requires_approval else "QUEUED"
             self.tasks[rec.id] = rec
