@@ -1,0 +1,65 @@
+diff --git a/backend/queries.py b/backend/queries.py
+index 497b8b3..5fd3d18 100644
+--- a/backend/queries.py
++++ b/backend/queries.py
+@@ -8,7 +8,7 @@ from __future__ import annotations
+ 
+ from typing import Any
+ 
+-CONTRACT_VERSION = "1.1.1-local-integrated"
++CONTRACT_VERSION = "3.0.0-fanout-local"
+ 
+ 
+ def _now():
+diff --git a/backend/tests/test_queries_rc.py b/backend/tests/test_queries_rc.py
+index 1750f45..f9fa888 100644
+--- a/backend/tests/test_queries_rc.py
++++ b/backend/tests/test_queries_rc.py
+@@ -48,7 +48,7 @@ def test_ui_bootstrap_shape(client):
+     b = r.json()
+     assert (
+         b["app_mode"] == "LOCAL_MOCK"
+-        and b["contract_version"] == "1.1.1-local-integrated"
++        and b["contract_version"] == "3.0.0-fanout-local"
+     )
+     assert b["login"]["sub"] == "admin-1"
+     fs = b["features"]
+diff --git a/frontend/integration/corrected-fixtures/ui-bootstrap.json b/frontend/integration/corrected-fixtures/ui-bootstrap.json
+index afb1adb..f94875a 100644
+--- a/frontend/integration/corrected-fixtures/ui-bootstrap.json
++++ b/frontend/integration/corrected-fixtures/ui-bootstrap.json
+@@ -1,6 +1,6 @@
+ {
+   "app_mode": "LOCAL_MOCK",
+-  "contract_version": "1.1.1-local-integrated",
++  "contract_version": "3.0.0-fanout-local",
+   "server_time": "2026-11-08T19:10:36.556361+00:00",
+   "identity": {
+     "id": "1ed718a9-2190-4794-82b3-c1ac157283db",
+diff --git a/frontend/package.json b/frontend/package.json
+index 581d699..49b2169 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -52,5 +52,9 @@
+     "@typescript-eslint/typescript-estree": {
+       "minimatch": "11.0.1"
+     }
++  },
++  "allowScripts": {
++    "esbuild@0.28.2": true,
++    "msw@2.15.0": true
+   }
+ }
+diff --git a/frontend/src/mocks/fixtures.ts b/frontend/src/mocks/fixtures.ts
+index 8f3cbfb..db10a72 100644
+--- a/frontend/src/mocks/fixtures.ts
++++ b/frontend/src/mocks/fixtures.ts
+@@ -138,7 +138,7 @@ export const catalog = (key: string): Schema<"DisplayRecordList"> => ({
+   source_meta: meta(),
+ });
+ export const bootstrap = (): Schema<"UIBootstrap"> => ({
+-  contract_version: "1.1.1-local-integrated",
++  contract_version: "3.0.0-fanout-local",
+   server_time: now(),
+   app_mode: "LOCAL_MOCK",
+   identity,
