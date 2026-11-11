@@ -36,3 +36,16 @@ No Cherry Studio, Rakazo, 8765, existing databases, reverse proxies, cron or ser
 HTTPS session deployment candidate: [build, authentication gate and scoped rollback](docs/SESSION-DEPLOYMENT.md). This requires the existing server identity boundary and an authorized deployment channel; the local issuer is never a production fallback.
 
 Current V2 repairs and isolated PostgreSQL execution boundaries: [Gate B V2 handoff](docs/GATE-B-V2-EXECUTION.md). PostgreSQL runtime and production deployment remain NOT_RUN.
+
+## 美国机统一入口候选
+
+目标 `https://magicworkshop.fun`；现有聊天/Agent/模型/额度能力保持原入口。新增独立门户源码在 `frontend/portal/`，本地打开 `/portal/`；候选发布时主页在 `/`，完整工作坊在 `/workshop/`，资产分别使用 `/portal-assets/` 与 `/workshop/assets/`。
+
+```sh
+npm run dev --prefix frontend
+# http://127.0.0.1:5173/portal/
+node scripts/mw.mjs build-us --preview
+node scripts/mw.mjs build-us  # clean source, read-only HTTPS session candidate
+```
+
+构建只生成静态候选，不连接或部署美国机，不创建生产会话，不自动执行任务。新主页只把同源私有草稿交给工作坊检查。实际会话路由、旧应用fallback、配置备份与最小切换由部署者核验，详见 [US-PORTAL-INTEGRATION.md](docs/US-PORTAL-INTEGRATION.md)。

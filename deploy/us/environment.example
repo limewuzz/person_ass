@@ -1,0 +1,6 @@
+# Public names only; actual secrets belong to the deployment owner's private files.
+MW_PUBLIC_ORIGIN=https://magicworkshop.fun
+MW_WEB_BASE=/workshop/
+MW_SESSION_WRITES=disabled
+# Build with: node scripts/mw.mjs build-us
+# No password, API token or SSH credential is consumed by this frontend build.

@@ -1,6 +1,6 @@
 {
   "app_mode": "LOCAL_MOCK",
-  "contract_version": "1.1.1-local-integrated",
+  "contract_version": "3.0.0-fanout-local",
   "server_time": "2026-11-08T19:10:36.556361+00:00",
   "identity": {
     "id": "1ed718a9-2190-4794-82b3-c1ac157283db",

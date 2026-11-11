@@ -20,6 +20,7 @@ import {
 } from "../api/client";
 import { useConnection } from "../app/connection";
 import "./fanout.css";
+import { isRecipe, portalDraftKey, readPortalDraft } from "./portal-handoff";
 const labels: Record<string, string> = {
   ai: "AI 摘要",
   drive: "Google Drive",
@@ -80,6 +81,7 @@ export function FanoutWorkspace() {
     [receiptUri, setReceiptUri] = useState(""),
     [receiptSha, setReceiptSha] = useState("");
   const inFlight = useRef(false);
+  const portalApplied = useRef(false);
   const recipes = useQuery({
     queryKey: ["fanout", "recipes"],
     queryFn: async () => required(await api.GET("/api/v1/recipes")),
@@ -170,6 +172,7 @@ export function FanoutWorkspace() {
     },
     onSuccess: (p) => {
       sessionStorage.removeItem(pendingKey);
+      sessionStorage.removeItem(portalDraftKey);
       setPending(null);
       nav(`/workbench/fanout/${p.id}`);
       refresh();
@@ -235,6 +238,33 @@ export function FanoutWorkspace() {
     decision.error ??
     simulate.error ??
     reconcile.error;
+  useEffect(() => {
+    if (!recipes.data || pending || id || portalApplied.current) return;
+    let draft: ReturnType<typeof readPortalDraft> = null;
+    try {
+      draft = readPortalDraft(window.sessionStorage);
+    } catch {
+      /* Manual composition still works with storage disabled. */
+    }
+    const requested =
+      draft?.recipe ?? new URLSearchParams(location.search).get("recipe");
+    if (!isRecipe(requested)) {
+      portalApplied.current = true;
+      return;
+    }
+    const selected = recipes.data.items.find((r) => r.id === requested);
+    if (!selected) {
+      portalApplied.current = true;
+      return;
+    }
+    setRecipe(requested);
+    setTargets(selected.steps.filter((s) => s.risk === "LOW").map((s) => s.id));
+    if (draft) {
+      setInput(draft.input);
+      setTitle(draft.input.split("\n")[0].slice(0, 120));
+    }
+    portalApplied.current = true;
+  }, [recipes.data, pending, id]);
   const selectedRecipe = recipes.data?.items.find((r) => r.id === recipe);
   return (
     <>

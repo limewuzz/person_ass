@@ -48,6 +48,8 @@ jobs:
             frontend/evidence/prefix/junit.xml
             frontend/evidence/session/junit.xml
             frontend/evidence/workspace/
+            frontend/evidence/portal/
+            frontend/evidence/us/
             frontend/evidence/prefix/*.png
             frontend/evidence/screenshots/home-1600.png
             frontend/evidence/screenshots/tasks-390.png

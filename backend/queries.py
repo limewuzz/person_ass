@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
-CONTRACT_VERSION = "1.1.1-local-integrated"
+from contract_wire import CONTRACT
+
+CONTRACT_VERSION = CONTRACT["info"]["version"]
 
 
 def _now():

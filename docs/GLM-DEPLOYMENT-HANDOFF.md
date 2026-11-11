@@ -6,6 +6,10 @@
 
 活动契约只在 `contracts/openapi.yaml`；版本 **3.0.0-fanout-local，89 paths /106 operations**。SHA 以 `contracts/CONTRACT-LOCK.json` 为准。V2 的完整 79/95 契约按原始 SHA d94462c44cd7c331470fc79731da29a7539d78f770b52288fce590ae3f52504f 保存在 `contracts/snapshots/v2.0.1/`，用于兼容回归，不是第二份活动契约。V3 新增 11 操作，并对两个旧入口加入显式可选的配方分支，旧调用体与响应保持兼容。SDK 由根契约生成。
 
+## 当前目标站点：美国机 magicworkshop.fun
+
+新增统一入口候选将主页与工作坊分开放置；入口在 `/`，完整工作坊在 `/workshop/`，现有 AmazingWork、`/agent`、`/models`、`/usage/`、`/v1/` 和旧 `/assets/` 保留原处理链。`node scripts/mw.mjs build-us` 生成有源码身份和哈希的静态候选，默认只读、未部署。须先阅读 [US-PORTAL-INTEGRATION.md](US-PORTAL-INTEGRATION.md)，确认新会话BFF和旧站路由；不得把本地模拟发行器公开或固定改写Origin来绕过来源核验。网站账号不等于SSH凭据，真实密码不进入源码或静态构建。
+
 ## 拓扑与依赖
 
 ```text

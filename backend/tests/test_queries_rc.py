@@ -48,7 +48,7 @@ def test_ui_bootstrap_shape(client):
     b = r.json()
     assert (
         b["app_mode"] == "LOCAL_MOCK"
-        and b["contract_version"] == "1.1.1-local-integrated"
+        and b["contract_version"] == "3.0.0-fanout-local"
     )
     assert b["login"]["sub"] == "admin-1"
     fs = b["features"]

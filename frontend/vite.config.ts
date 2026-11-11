@@ -13,6 +13,7 @@ export default defineConfig({
     watch: {
       ignored: [
         "**/evidence/**",
+        "**/dist-portal/**",
         "**/test-results*/**",
         "**/playwright-report/**",
         "**/.runtime/**",
