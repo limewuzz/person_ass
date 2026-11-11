@@ -3,6 +3,7 @@
 import { HttpResponse } from "msw";
 import type { Schema } from "../api/client";
 import { identity, now, uuid, meta } from "./fixtures";
+import { fanoutResponse, stableJson } from "./fanout";
 import { ledger } from "./engine";
 import contract from "../api/generated/contract.json";
 import { sha256Hex, base64ToBytes } from "../workspace/model";
@@ -60,11 +61,33 @@ export async function v2Response(
   params: Record<string, unknown>,
 ) {
   const operation = `${method} ${path}`;
-  if (!v2Supported.has(operation))
-    return fail(path.includes("/workers/") ? 403 : 503, "mock_v2_unavailable");
   const rawBody = ["post", "put"].includes(method) ? await request.text() : "";
   const body = rawBody ? JSON.parse(rawBody) : {};
   const id = String(params.id ?? "");
+  if (
+    path === "/api/v1/work-items/{id}/dispatch" &&
+    method === "post" &&
+    body.recipe_id
+  ) {
+    if (!ledger.workItems.some((w) => w.id === id))
+      return fail(404, "not_found");
+    const response = await fanoutResponse(
+      "post",
+      "/api/v1/fanouts",
+      new Request(request.url, {
+        method: "POST",
+        headers: request.headers,
+        body: rawBody,
+      }),
+      { work_item_id: id },
+    );
+    return new HttpResponse(await response.text(), {
+      status: response.status === 201 ? 202 : response.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (!v2Supported.has(operation))
+    return fail(path.includes("/workers/") ? 403 : 503, "mock_v2_unavailable");
   if (path === "/api/v1/ai/providers")
     return HttpResponse.json({
       items: [],
@@ -138,7 +161,7 @@ export async function v2Response(
         return fail(400, "message_required");
       const previous = idem.get(`${id}:${key}`);
       if (previous)
-        return previous.content === body.content
+        return previous.content === stableJson(body)
           ? HttpResponse.json(
               { ...previous.message, replayed: true },
               { status: 201 },
@@ -155,8 +178,27 @@ export async function v2Response(
         created_at: now(),
         replayed: false,
       };
+      if (body.fanout) {
+        if (body.spawn_capability)
+          return fail(400, "fanout_and_spawn_mutually_exclusive");
+        const headers = new Headers(request.headers);
+        headers.set("Idempotency-Key", `conversation:${id}:${key}`);
+        const response = await fanoutResponse(
+          "post",
+          "/api/v1/fanouts",
+          new Request(request.url, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body.fanout),
+          }),
+          conv.work_item_id ? { work_item_id: conv.work_item_id } : {},
+        );
+        if (response.status !== 201) return response;
+        item.fanout = await response.json();
+        conv.work_item_id = item.fanout!.work_item_id;
+      }
       items.push(item);
-      idem.set(`${id}:${key}`, { content: body.content, message: item });
+      idem.set(`${id}:${key}`, { content: stableJson(body), message: item });
       conv.message_count++;
       return HttpResponse.json(item, { status: 201 });
     }

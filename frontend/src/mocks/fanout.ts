@@ -4,6 +4,19 @@ import { identity, now, uuid } from "./fixtures";
 import recipes from "./fanout-recipes.json";
 import { sha256Hex } from "../workspace/model";
 import { ledger } from "./engine";
+export function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return "[" + value.map(stableJson).join(",") + "]";
+  if (value && typeof value === "object")
+    return (
+      "{" +
+      Object.entries(value)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, item]) => JSON.stringify(key) + ":" + stableJson(item))
+        .join(",") +
+      "}"
+    );
+  return JSON.stringify(value) ?? "null";
+}
 const plans = new Map<string, Schema<"FanoutPlan">>(),
   keys = new Map<string, { hash: string; id: string }>();
 let revision = 0;
@@ -62,7 +75,11 @@ export async function fanoutResponse(
     if (!key || key.length < 12) return error(400, "idempotency_key_required");
     const recipe = recipes[b.recipe_id as keyof typeof recipes];
     if (!recipe) return error(400, "unknown_recipe");
-    const hash = await sha256Hex(new TextEncoder().encode(JSON.stringify(b))),
+    const hash = await sha256Hex(
+        new TextEncoder().encode(
+          stableJson({ body: b, work_item_id: params.work_item_id ?? null }),
+        ),
+      ),
       prior = keys.get(key);
     if (prior)
       return prior.hash === hash
@@ -82,16 +99,17 @@ export async function fanoutResponse(
         if (selected.has(id as string))
           for (const dep of deps) selected.add(dep);
     const pid = uuid(),
-      wi = uuid(),
+      wi = String(params.work_item_id ?? uuid()),
       root = uuid();
-    ledger.workItems.push({
-      id: wi,
-      title: b.title,
-      kind: b.recipe_id === "paper" ? "paper" : "task",
-      status: "open",
-      created_at: now(),
-      created_by: identity.id,
-    });
+    if (!params.work_item_id)
+      ledger.workItems.push({
+        id: wi,
+        title: b.title,
+        kind: b.recipe_id === "paper" ? "paper" : "task",
+        status: "open",
+        created_at: now(),
+        created_by: identity.id,
+      });
     const deliveries: Schema<"FanoutDelivery">[] = recipe.steps
       .filter(([id]) => selected.has(id as string))
       .map(([step, target, risk, deps]) => ({

@@ -490,8 +490,20 @@ class FanoutService:
             self.refresh()
             return self.view(pid, principal)
 
+    def verify_admission(self, p, d):
+        root = self.engine.tasks[p["task_id"]]
+        self.engine.verify_integrity(root)
+        self.engine.verify_integrity(self.engine.tasks[d["task_id"]])
+        resource = self.store.resources.get(root.resource_id)
+        if (
+            not resource
+            or resource.lifecycle_state != "ACTIVE"
+            or resource.generation != self.engine.admitted_generations.get(root.id)
+        ):
+            fail("fanout_resource_changed")
+
     def claim(self, worker_id, capabilities, limit=1, mode="SIMULATE", plan_id=None):
-        with self.engine._lock:
+        with self.engine._lock, self.store._target_lock:
             self.refresh()
             out = []
             for d in self.deliveries.values():
@@ -514,6 +526,7 @@ class FanoutService:
                 }
                 if any(by_step[s]["state"] != "SUCCEEDED" for s in d["depends_on"]):
                     continue
+                self.verify_admission(p, d)
                 token = secrets.token_urlsafe(32)
                 d.update(
                     state="RUNNING",
@@ -553,7 +566,7 @@ class FanoutService:
             return out
 
     def finish(self, did, worker_id, body):
-        with self.engine._lock:
+        with self.engine._lock, self.store._target_lock:
             self.refresh()
             d = self.deliveries.get(did)
             if not d:
@@ -570,6 +583,7 @@ class FanoutService:
                 return {"delivery_id": did, "state": d["state"], "replayed": True}
             if d["state"] != "RUNNING" or self.clock() >= d["lease_expires_at"]:
                 fail("late_result")
+            self.verify_admission(self.plans[d["plan_id"]], d)
             outcome = body["outcome"]
             receipt = body.get("receipt")
             if outcome == "SUCCEEDED":
@@ -690,7 +704,7 @@ class FanoutService:
                 and (worker_id is None or worker_id in g.get("worker_ids", []))
                 for g in config["grants"]
             )
-        except (KeyError, ValueError, OSError):
+        except (KeyError, ValueError, OSError, TypeError, AttributeError):
             return False
 
     def project_sql(self, cur):
@@ -705,7 +719,7 @@ class FanoutService:
             cur.execute(
                 """INSERT INTO outbox(aggregate,aggregate_id,kind,payload,delivery_id,delivery_state,claim_token,claimed_at,claim_expires_at,attempt_count,next_retry_at,dispatched_at,last_error)
      VALUES ('fanout',%s,'fanout.delivery',%s::jsonb,%s,%s,%s,to_timestamp(NULLIF(%s,0)),to_timestamp(NULLIF(%s,0)),%s,to_timestamp(NULLIF(%s,0)),CASE WHEN %s='SUCCEEDED' THEN now() ELSE NULL END,%s)
-     ON CONFLICT(delivery_id) DO UPDATE SET delivery_state=EXCLUDED.delivery_state,claim_token=EXCLUDED.claim_token,claimed_at=EXCLUDED.claimed_at,claim_expires_at=EXCLUDED.claim_expires_at,attempt_count=EXCLUDED.attempt_count,next_retry_at=EXCLUDED.next_retry_at,dispatched_at=EXCLUDED.dispatched_at,last_error=EXCLUDED.last_error""",
+     ON CONFLICT(delivery_id) DO UPDATE SET delivery_state=EXCLUDED.delivery_state,claim_token=EXCLUDED.claim_token,claimed_at=EXCLUDED.claimed_at,claim_expires_at=EXCLUDED.claim_expires_at,attempt_count=EXCLUDED.attempt_count,next_retry_at=EXCLUDED.next_retry_at,dispatched_at=COALESCE(outbox.dispatched_at,EXCLUDED.dispatched_at),last_error=EXCLUDED.last_error""",
                 (
                     did,
                     json.dumps(

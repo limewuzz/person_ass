@@ -111,3 +111,37 @@ it("browser mock cannot invoke workers or webhook, and LIVE cannot simulate", as
   expect(p.availability).toBe("UNAVAILABLE");
   expect((await call(`/fanouts/${p.id}/simulate`, {})).status).toBe(403);
 });
+it("existing conversation and dispatch entries reuse one item in Mock as in the API", async () => {
+  const conversation = await (
+    await call("/conversations", { title: "V3 manual discussion" })
+  ).json();
+  const body = {
+    content: "manual pasted note",
+    fanout: { ...input, targets: ["reminder"] },
+  };
+  const first = await (
+    await call(
+      `/conversations/${conversation.id}/messages`,
+      body,
+      "v3-conversation-123456",
+    )
+  ).json();
+  expect(first.fanout.work_item_id).toBeTruthy();
+  const replay = await (
+    await call(
+      `/conversations/${conversation.id}/messages`,
+      { fanout: body.fanout, content: body.content },
+      "v3-conversation-123456",
+    )
+  ).json();
+  expect(replay.fanout.id).toBe(first.fanout.id);
+  const dispatched = await call(
+    `/work-items/${first.fanout.work_item_id}/dispatch`,
+    input,
+    "v3-dispatch-123456",
+  );
+  expect(dispatched.status).toBe(202);
+  expect((await dispatched.json()).work_item_id).toBe(
+    first.fanout.work_item_id,
+  );
+});

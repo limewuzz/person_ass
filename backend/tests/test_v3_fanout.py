@@ -586,3 +586,55 @@ def test_plan_tamper_and_worker_target_grants_cannot_bypass_gate(
     assert not s.claim("unapproved-relay", ["fanout.reminders"], mode="LIVE")
     got = s.claim("approved-relay", ["fanout.reminders"], mode="LIVE")
     assert len(got) == 1 and got[0]["plan_id"] == live["id"]
+
+
+def test_changed_resource_and_child_payload_fail_before_execution(
+    env, monkeypatch, tmp_path
+):
+    _, _, s, p, _ = env
+    plan = create(env, intent("wechat", ["reminder"]))
+    child = s.engine.tasks[plan["deliveries"][0]["task_id"]]
+    child.args_redacted["step_id"] = "tampered"
+    with pytest.raises(TaskEngineError, match="payload_tampered"):
+        s.claim("relay", ["fanout.reminders"])
+    assert s.deliveries[plan["delivery_ids"][0]]["attempts"] == 0
+    child.args_redacted["step_id"] = "reminder"
+    from registry import RegistryService
+
+    RegistryService(s.store).disable("fanout-control-plane")
+    with pytest.raises(TaskEngineError, match="fanout_resource_changed"):
+        s.claim("relay", ["fanout.reminders"])
+    path = tmp_path / "bad-grants.json"
+    path.write_text('{"grants":[null]}')
+    monkeypatch.setenv("MWCP_FANOUT_GRANTS_FILE", str(path))
+    assert not s.live_granted(s.plans[plan["id"]], "reminders", "relay")
+
+
+def test_v2_operations_and_schemas_preserved_except_explicit_optional_entry_extensions():
+    import yaml
+
+    old = yaml.safe_load(
+        (
+            Path(__file__).parents[2] / "contracts/snapshots/v2.0.1/openapi.yaml"
+        ).read_text()
+    )
+    for path, operations in old["paths"].items():
+        for method, operation in operations.items():
+            if path == "/api/v1/work-items/{id}/dispatch" and method == "post":
+                active = copy.deepcopy(CONTRACT["paths"][path][method])
+                for branch in [
+                    active["requestBody"]["content"]["application/json"],
+                    active["responses"]["202"]["content"]["application/json"],
+                ]:
+                    name = branch["schema"]["$ref"].rsplit("/", 1)[-1]
+                    branch["schema"] = CONTRACT["components"]["schemas"][name]["oneOf"][
+                        0
+                    ]
+                assert active == operation
+            else:
+                assert CONTRACT["paths"][path][method] == operation
+    for name, schema in old["components"]["schemas"].items():
+        active = copy.deepcopy(CONTRACT["components"]["schemas"][name])
+        if name in {"ConversationMessage", "ConversationMessageCreate"}:
+            active["properties"].pop("fanout")
+        assert active == schema, name
