@@ -25,6 +25,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Trust only the checked-out workspace in the test container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
