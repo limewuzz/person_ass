@@ -1,0 +1,209 @@
+.fo-recipes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0;
+}
+.fo-recipes button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 13px;
+  padding: 22px;
+  background: var(--ws-panel, #fff);
+  border: 1px solid #dfe5ec;
+  border-radius: 22px;
+  min-width: 0;
+  color: inherit;
+}
+.fo-recipes button.selected {
+  border-color: #4672eb;
+  background: linear-gradient(135deg, #f0f4ff, #faf7ff);
+  box-shadow: 0 5px 22px #4269d912;
+}
+.fo-recipes small,
+.fo-branch small,
+.fo-targets small {
+  color: #6d788b;
+}
+.fo-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.fo-form label,
+.fo-reconcile label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+.fo-form {
+  display: grid;
+  gap: 16px;
+}
+.fo-composer textarea {
+  min-height: 130px;
+  width: 100%;
+  resize: vertical;
+}
+.fo-composer input,
+.fo-composer textarea,
+.fo-composer select,
+.fo-reconcile input {
+  padding: 11px;
+  border: 1px solid #d8dfeb;
+  border-radius: 12px;
+  background: #fff;
+  color: #17253b;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.fo-targets {
+  display: grid;
+  gap: 12px;
+}
+.fo-targets label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.fo-targets small {
+  margin-left: auto;
+  font-size: 11px;
+}
+.fo-composer > .ws-actions,
+.fo-composer > small {
+  grid-column: 1/-1;
+}
+.fo-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 28px 0 16px;
+  flex-wrap: wrap;
+}
+.fo-tabs button[aria-pressed="true"] {
+  background: #203c82;
+  color: white;
+}
+.fo-history {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  overflow: auto;
+  padding: 3px;
+}
+.fo-history button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+.fo-history small {
+  color: #65728a;
+}
+.fo-branches {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0;
+}
+.fo-branch {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 14px;
+  border: 1px solid #dfe5ef;
+  border-radius: 18px;
+  padding: 18px;
+}
+.fo-branch-icon {
+  display: grid;
+  place-items: center;
+  background: #eef2fb;
+  border-radius: 12px;
+  height: 40px;
+  color: #4566b0;
+}
+.fo-branch[data-state="SUCCEEDED"] .fo-branch-icon {
+  background: #e7f4ec;
+  color: #26784e;
+}
+.fo-branch[data-state="NEEDS_RECONCILIATION"] {
+  border-color: #dfb97c;
+}
+.fo-branch h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.fo-branch p {
+  margin: 7px 0;
+}
+.fo-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.fo-receipt code,
+.fo-receipt small,
+.fo-command {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.fo-reconcile {
+  border: 1px solid #e2c392;
+  border-radius: 15px;
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 18px;
+}
+.fo-branch .ws-actions {
+  margin-top: 15px;
+}
+.fo-tabs button,
+.fo-recipes button {
+  cursor: pointer;
+}
+.fo-composer .ws-actions label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.fo-reconcile input {
+  width: 100%;
+}
+@media (max-width: 1000px) {
+  .fo-recipes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fo-composer {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 500px) {
+  .fo-recipes {
+    gap: 9px;
+  }
+  .fo-recipes button {
+    padding: 15px;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+  .fo-branch {
+    padding: 13px;
+    gap: 9px;
+  }
+  .fo-branch .ws-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fo-targets small {
+    margin-left: 0;
+  }
+  .fo-history {
+    max-width: 100%;
+  }
+}

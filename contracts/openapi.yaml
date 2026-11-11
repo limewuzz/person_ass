@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: MagicWorkshop Control Plane API
-  version: 2.0.0-unified-v2
+  version: 3.0.0-fanout-local
   description: '**MagicWorkshop V2 Unified Full-Module Contract (retains all 41 paths
     / 43 operations from 1.1.1).** Covers all 7 parallel workflows: Platform Core,
     AI Infrastructure, Agent OS, Compute Resources, Multi-Platform Clients, Data Integrations,
@@ -2981,7 +2981,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskAccepted'
+                $ref: '#/components/schemas/V3WorkItemDispatchResponse'
         '400':
           description: Bad request
           content:
@@ -3037,7 +3037,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkItemDispatchRequest'
+              $ref: '#/components/schemas/V3WorkItemDispatchRequest'
   /api/v1/tasks/{id}/reconcile:
     post:
       tags:
@@ -5412,6 +5412,668 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v1/recipes:
+    get:
+      tags:
+      - Fanout V3
+      operationId: get_api_v1_recipes
+      x-phase: V3
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutRecipeList'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/fanouts:
+    get:
+      tags:
+      - Fanout V3
+      operationId: get_api_v1_fanouts
+      x-phase: V3
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutList'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_fanouts
+      x-phase: V3
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 12
+          maxLength: 256
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutPlan'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FanoutCreate'
+  /api/v1/fanouts/{id}:
+    get:
+      tags:
+      - Fanout V3
+      operationId: get_api_v1_fanouts_id
+      x-phase: V3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutPlan'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/fanouts/{id}/decision:
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_fanouts_id_decision
+      x-phase: V3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutPlan'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FanoutDecision'
+  /api/v1/fanouts/{id}/simulate:
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_fanouts_id_simulate
+      x-phase: V3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutPlan'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FanoutSimulate'
+  /api/v1/fanouts/{id}/deliveries/{delivery_id}/reconcile:
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_fanouts_id_deliveries_delivery_id_reconcile
+      x-phase: V3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: delivery_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutPlan'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FanoutReconcile'
+  /api/v1/workers/{worker_id}/outbox/claim:
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_workers_worker_id_outbox_claim
+      x-phase: V3
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboxClaimList'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutboxClaimRequest'
+  /api/v1/workers/{worker_id}/outbox/{delivery_id}/finish:
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_workers_worker_id_outbox_delivery_id_finish
+      x-phase: V3
+      parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: delivery_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboxFinishResult'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutboxFinishRequest'
+  /api/v1/webhooks/trigger:
+    post:
+      tags:
+      - Fanout V3
+      operationId: post_api_v1_webhooks_trigger
+      x-phase: V3
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 12
+          maxLength: 256
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FanoutPlan'
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FanoutCreate'
+      security: []
+      description: Scoped HMAC over timestamp, nonce, Idempotency-Key and exact body
+        SHA-256. No bearer/query secret. See docs/V3-FANOUT.md.
+  /api/v1/fanouts/{id}/stream:
+    get:
+      tags:
+      - Fanout V3
+      operationId: get_api_v1_fanouts_id_stream
+      x-phase: V3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Request rejected or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     humanBearer:
@@ -7256,6 +7918,8 @@ components:
           type:
           - string
           - 'null'
+        fanout:
+          $ref: '#/components/schemas/FanoutCreate'
     ConversationMessage:
       type: object
       required:
@@ -7295,6 +7959,8 @@ components:
           format: date-time
         replayed:
           type: boolean
+        fanout:
+          $ref: '#/components/schemas/FanoutPlan'
     ConversationMessageList:
       type: object
       required:
@@ -8086,6 +8752,531 @@ components:
         checked_at:
           type: string
           format: date-time
+    FanoutOrigin:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum:
+          - web
+          - android
+          - macos
+          - windows
+          - wechat
+          - rakazo
+          - github
+          - shortcuts
+          - colab
+          - manual
+        source_ref:
+          type: string
+          maxLength: 300
+      required:
+      - channel
+      additionalProperties: false
+    FanoutParameters:
+      type: object
+      properties:
+        run_id:
+          type: string
+          maxLength: 200
+        checkpoint_sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        artifact_id:
+          type: string
+          maxLength: 200
+        source_ref:
+          type: string
+          maxLength: 300
+        step:
+          type: integer
+          minimum: 0
+        byte_size:
+          type: integer
+          minimum: 0
+        checkpoint_uri:
+          type: string
+          pattern: ^https://
+          maxLength: 2000
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+      required: []
+      additionalProperties: false
+    FanoutCreate:
+      type: object
+      properties:
+        recipe_id:
+          type: string
+          enum:
+          - paper
+          - decision
+          - wechat
+          - checkpoint
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        input:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        mode:
+          type: string
+          enum:
+          - SIMULATE
+          - LIVE
+        targets:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-z]+$
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+        origin:
+          $ref: '#/components/schemas/FanoutOrigin'
+        parameters:
+          $ref: '#/components/schemas/FanoutParameters'
+      required:
+      - recipe_id
+      - title
+      - input
+      - mode
+      - targets
+      - origin
+      additionalProperties: false
+    FanoutReceipt:
+      type: object
+      properties:
+        uri:
+          type: string
+          pattern: ^(mock|https|file|reminders|x-apple-reminderkit)://
+          maxLength: 2000
+        sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        byte_size:
+          type: integer
+          minimum: 0
+        source_mode:
+          type: string
+          enum:
+          - MOCK
+          - LIVE
+      required:
+      - uri
+      - sha256
+      - source_mode
+      additionalProperties: false
+    FanoutDelivery:
+      type: object
+      properties:
+        id: &id003
+          type: string
+          format: uuid
+        plan_id: &id004
+          type: string
+          format: uuid
+        task_id: &id005
+          type: string
+          format: uuid
+        step_id: &id006
+          type: string
+        target: &id007
+          type: string
+        risk: &id008
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+        depends_on: &id009
+          type: array
+          items:
+            type: string
+        state: &id010
+          type: string
+          enum:
+          - WAITING_APPROVAL
+          - QUEUED
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+          - CANCELED
+          - EXPIRED
+          - NEEDS_RECONCILIATION
+        attempts: &id011
+          type: integer
+          minimum: 0
+        generation: &id012
+          type: integer
+          minimum: 0
+        next_retry_at: &id013
+          type: number
+        lease_expires_at: &id014
+          type: number
+        worker_id: &id015
+          type:
+          - string
+          - 'null'
+        receipt: &id016
+          anyOf:
+          - $ref: '#/components/schemas/FanoutReceipt'
+          - type: 'null'
+        last_error: &id017
+          type:
+          - string
+          - 'null'
+      required:
+      - id
+      - plan_id
+      - task_id
+      - step_id
+      - target
+      - risk
+      - depends_on
+      - state
+      - attempts
+      - generation
+      - next_retry_at
+      - lease_expires_at
+      - worker_id
+      - receipt
+      - last_error
+    FanoutPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        work_item_id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        trace_id:
+          type: string
+          format: uuid
+        owner_sub:
+          type: string
+        title:
+          type: string
+        input:
+          type: string
+        recipe_id:
+          type: string
+        recipe_version:
+          type: integer
+          minimum: 0
+        mode:
+          type: string
+          enum:
+          - SIMULATE
+          - LIVE
+        origin:
+          $ref: '#/components/schemas/FanoutOrigin'
+        parameters:
+          $ref: '#/components/schemas/FanoutParameters'
+        plan_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        approval_id:
+          type:
+          - string
+          - 'null'
+        approval:
+          anyOf:
+          - $ref: '#/components/schemas/Approval'
+          - type: 'null'
+        revision:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        delivery_ids:
+          type: array
+          items:
+            type: string
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/FanoutDelivery'
+        status:
+          type: string
+        availability:
+          type: string
+          enum:
+          - MOCK
+          - LIVE
+          - UNAVAILABLE
+      required:
+      - id
+      - work_item_id
+      - task_id
+      - trace_id
+      - owner_sub
+      - title
+      - input
+      - recipe_id
+      - recipe_version
+      - mode
+      - origin
+      - parameters
+      - plan_hash
+      - approval_id
+      - approval
+      - revision
+      - created_at
+      - delivery_ids
+      - deliveries
+      - status
+      - availability
+    FanoutList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FanoutPlan'
+        revision:
+          type: integer
+          minimum: 0
+        next_cursor:
+          type: 'null'
+      required:
+      - items
+      - revision
+      - next_cursor
+    FanoutRecipeList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              version:
+                type: integer
+                minimum: 0
+              steps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    target:
+                      type: string
+                    risk:
+                      type: string
+                      enum:
+                      - LOW
+                      - MEDIUM
+                    depends_on:
+                      type: array
+                      items:
+                        type: string
+                  required:
+                  - id
+                  - target
+                  - risk
+                  - depends_on
+            required:
+            - id
+            - name
+            - version
+            - steps
+      required:
+      - items
+    FanoutDecision:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum:
+          - approved
+          - rejected
+      required:
+      - decision
+      additionalProperties: false
+    FanoutReconcile:
+      type: object
+      properties:
+        expected_generation:
+          type: integer
+          minimum: 0
+        resolution:
+          type: string
+          enum:
+          - RETRY_CONFIRMED_NOT_EXECUTED
+          - FAIL
+          - ACCEPT_RECEIPT
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        receipt:
+          $ref: '#/components/schemas/FanoutReceipt'
+      required:
+      - expected_generation
+      - resolution
+      - reason
+      additionalProperties: false
+    FanoutSimulate:
+      type: object
+      properties:
+        target:
+          type: string
+          maxLength: 50
+        outcome:
+          type: string
+          enum:
+          - SUCCEEDED
+          - RETRYABLE
+          - UNKNOWN
+      required: []
+      additionalProperties: false
+    OutboxClaimRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - SIMULATE
+          - LIVE
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+      required:
+      - mode
+      additionalProperties: false
+    OutboxClaim:
+      type: object
+      properties:
+        id: *id003
+        plan_id: *id004
+        task_id: *id005
+        step_id: *id006
+        target: *id007
+        risk: *id008
+        depends_on: *id009
+        state: *id010
+        attempts: *id011
+        generation: *id012
+        next_retry_at: *id013
+        lease_expires_at: *id014
+        worker_id: *id015
+        receipt: *id016
+        last_error: *id017
+        claim_token:
+          type: string
+          minLength: 32
+        idempotency_key:
+          type: string
+        mode:
+          type: string
+          enum:
+          - SIMULATE
+          - LIVE
+        input:
+          type: string
+        parameters:
+          $ref: '#/components/schemas/FanoutParameters'
+        trace_id:
+          type: string
+          format: uuid
+        work_item_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - plan_id
+      - task_id
+      - step_id
+      - target
+      - risk
+      - depends_on
+      - state
+      - attempts
+      - generation
+      - next_retry_at
+      - lease_expires_at
+      - worker_id
+      - receipt
+      - last_error
+      - claim_token
+      - idempotency_key
+      - mode
+      - input
+      - parameters
+      - trace_id
+      - work_item_id
+    OutboxClaimList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutboxClaim'
+      required:
+      - items
+    OutboxFinishRequest:
+      type: object
+      properties:
+        claim_token:
+          type: string
+          minLength: 32
+          maxLength: 256
+        generation:
+          type: integer
+          minimum: 0
+        outcome:
+          type: string
+          enum:
+          - SUCCEEDED
+          - RETRYABLE
+          - UNKNOWN
+        error_code:
+          type: string
+          maxLength: 100
+        receipt:
+          $ref: '#/components/schemas/FanoutReceipt'
+      required:
+      - claim_token
+      - generation
+      - outcome
+      additionalProperties: false
+    OutboxFinishResult:
+      type: object
+      properties:
+        delivery_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+        replayed:
+          type: boolean
+      required:
+      - delivery_id
+      - state
+      - replayed
+    V3WorkItemDispatchRequest:
+      oneOf:
+      - $ref: '#/components/schemas/WorkItemDispatchRequest'
+      - $ref: '#/components/schemas/FanoutCreate'
+    V3WorkItemDispatchResponse:
+      oneOf:
+      - $ref: '#/components/schemas/TaskAccepted'
+      - $ref: '#/components/schemas/FanoutPlan'
 x-release-status: LOCAL_DESIGN_CONTRACT_ONLY
 x-preserved-v0.4:
   paths: 31

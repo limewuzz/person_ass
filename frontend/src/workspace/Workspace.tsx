@@ -187,6 +187,7 @@ export function WorkspaceLayout() {
           <NavLink to="/workbench/history">我的工作</NavLink>
           <NavLink to="/workbench/results">结果库</NavLink>
           <NavLink to="/workbench/assistants">助手</NavLink>
+          <NavLink to="/workbench/fanout">协同流水线</NavLink>
         </nav>
         <Link className="ws-admin-link" to="/dashboard">
           管理后台 <ArrowRight size={14} />
@@ -880,8 +881,7 @@ function ArtifactCard({ artifact }: { artifact: Schema<"Artifact"> }) {
   const [dlState, setDlState] = useState<string>("");
   const canDownloadContent =
     !!artifact.sha256 &&
-    !artifact.uri.startsWith("http://") &&
-    !artifact.uri.startsWith("https://");
+    (artifact.uri.startsWith("memory://") || artifact.uri.startsWith("mock://uploads/"));
   const handleDownload = async () => {
     setDlState("校验中…");
     try {

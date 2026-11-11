@@ -193,6 +193,7 @@ else if (command === "contract") {
     "--",
     "frontend/src/api/generated",
     "frontend/src/mocks/schemas.json",
+    "frontend/src/mocks/fanout-recipes.json",
   ]);
   run(py, ["tools/route_coverage.py"]);
   run(py, ["tools/contract_check.py"]);

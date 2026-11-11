@@ -202,8 +202,19 @@ class AgentOSService:
                 existing_msg = next(
                     m for m in self.messages[cid] if m.id == existing_msg_id
                 )
-                return self.message_out(existing_msg, replayed=True)
+                out = self.message_out(existing_msg, replayed=True)
+                if body.get("fanout"):
+                    prior = self.fanout.idempotency[(principal.sub, f"conversation:{cid}:{idempotency_key}")]
+                    out["fanout"] = self.fanout.view(prior[1], principal)
+                return out
 
+            fanout_plan = None
+            if body.get("fanout"):
+                if body.get("spawn_capability"):
+                    raise ValueError("fanout_and_spawn_mutually_exclusive")
+                fanout_plan, _ = self.fanout.create(body["fanout"], principal,
+                    f"conversation:{cid}:{idempotency_key}", work_item_id=conv.work_item_id)
+                conv.work_item_id = fanout_plan["work_item_id"]
             spawn_cap = body.get("spawn_capability")
             spawn_res = body.get("spawn_resource_id") or "local-ledger"
             spawned_task_id = None
@@ -249,7 +260,10 @@ class AgentOSService:
             conv.updated_at = now
             self._msg_idem[idem_tuple] = (msg.id, payload_hash)
             self.engine.audit(principal.sub, "agent_os.message.append", msg.id, f"conv={cid}")
-            return self.message_out(msg, replayed=False)
+            out = self.message_out(msg, replayed=False)
+            if fanout_plan:
+                out["fanout"] = fanout_plan
+            return out
 
     def list_messages(self, cid: str, principal) -> list[dict]:
         with self._lock:

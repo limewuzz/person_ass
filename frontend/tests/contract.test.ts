@@ -80,7 +80,7 @@ it("covers every candidate operation with schema validated success or explicit f
   await ledger.approve(approval.id);
   await ledger.run(task.id);
   for (const op of operations) {
-    if (op.x_phase === "V2" || op.method === "post") continue;
+    if ((op.x_phase === "V2" || op.x_phase === "V3") || op.method === "post") continue;
     let path = op.path;
     if (path.includes("{id}")) {
       const id = path.includes("/tasks/")

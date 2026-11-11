@@ -1,0 +1,1 @@
+{"grants":[{"enabled":false,"target":"reminders","owner_sub":"YOUR_ACTOR_SUBJECT","recipes":["wechat"],"worker_ids":["YOUR_NEW_MAC_WORKER_ID"]}]}

@@ -1,0 +1,1 @@
+{"keys":{"YOUR_KEY_ID":{"secret_file":"/run/secrets/trigger-key","owner_sub":"YOUR_ACTOR_SUBJECT","channel":"wechat","recipes":["wechat"],"expires_at":0}}}

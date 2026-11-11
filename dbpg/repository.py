@@ -375,6 +375,7 @@ class PgOutboxRepository(_PgBase):
                    attempt_count = attempt_count + 1
                 WHERE id IN (SELECT id FROM outbox
                               WHERE dispatched_at IS NULL
+                                AND delivery_id IS NULL
                                 AND attempt_count < %s
                                 AND (next_retry_at IS NULL OR next_retry_at <= now())
                                 AND (claimed_at IS NULL OR claim_expires_at < now())

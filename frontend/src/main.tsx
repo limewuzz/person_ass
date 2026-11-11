@@ -1,3 +1,4 @@
+import { FanoutWorkspace } from "./workspace/Fanout";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -81,6 +82,8 @@ async function start() {
               path="workbench/assistants"
               element={<WorkspaceAssistants />}
             />
+            <Route path="workbench/fanout" element={<FanoutWorkspace />} />
+            <Route path="workbench/fanout/:id" element={<FanoutWorkspace />} />
             <Route path="workbench/tasks/:id" element={<WorkspaceTask />} />
           </Route>
           <Route element={<Shell />}>

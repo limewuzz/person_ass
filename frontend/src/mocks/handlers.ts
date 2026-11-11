@@ -1,3 +1,4 @@
+import { fanoutResponse } from "./fanout";
 import { http, HttpResponse, delay } from "msw";
 import operations from "../api/generated/operations.json";
 import { v2Response } from "./v2";
@@ -61,7 +62,10 @@ export const handlers = operations.map((op) =>
         key = op.path.slice(8),
         id = String(params.id ?? "");
       try {
-        if (op.x_phase === "V2") return await v2Response(op.method, op.path, request, params);
+        if (op.x_phase === "V3")
+          return await fanoutResponse(op.method, op.path, request, params);
+        if (op.x_phase === "V2")
+          return await v2Response(op.method, op.path, request, params);
         if (key === "events")
           return new HttpResponse(
             `retry: 15000\nid: ${ledger.events.at(-1)?.id ?? "0"}\ndata: {"summary":"LOCAL MOCK"}\n\n`,

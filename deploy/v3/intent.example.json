@@ -1,0 +1,1 @@
+{"recipe_id":"wechat","title":"本地测试交办","input":"请整理这份手动提交的笔记并建立提醒","mode":"SIMULATE","targets":["context","reminder","confirmation"],"origin":{"channel":"wechat"}}

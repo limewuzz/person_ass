@@ -1,8 +1,10 @@
-# MagicWorkshop · V2 unified local RC
+# MagicWorkshop · V3 single-input fan-out local RC
+
+One intent creates one WorkItem, one aggregate approval and independently leased Outbox branches. Four recipe cards, signed webhook ingress and a crash-aware Mac relay extend the existing workspace; see [V3 architecture and adapter limits](docs/V3-FANOUT.md).
 
 Single-user control plane with the accepted React/Vite frontend and FastAPI backend in one repository. **LOCAL RC only; DEPLOYMENT_BLOCKED.** The GLM Phase A PostgreSQL code is retained; runtime behavior and production deployment are not validated by this local release.
 
-Target branch: `v0.1_personal`. The independent `main` branch is unchanged. Architecture, commands and remaining production gates: [GLM deployment handoff](docs/GLM-DEPLOYMENT-HANDOFF.md). Source provenance: [frontend import](docs/FRONTEND-PROVENANCE.md).
+Target branch: `v3.0`, based on merged v2.0.1 `c17b64b`. The independent `main` branch is unchanged. Architecture, commands and remaining production gates: [GLM deployment handoff](docs/GLM-DEPLOYMENT-HANDOFF.md). Source provenance: [frontend import](docs/FRONTEND-PROVENANCE.md).
 
 ```sh
 python3 -m venv .venv
@@ -21,11 +23,11 @@ node scripts/mw.mjs stop
 node scripts/mw.mjs package          # exact-HEAD source/static/evidence + GLM handoff in release/
 ```
 
-Open http://127.0.0.1:5174 for the user workspace. The administrator console is `/dashboard`, and the retained Motion homepage is `/architecture`. See [user-workspace release](docs/USER-WORKSPACE-RELEASE.md) for the supported task/approval/results flow, recovery behavior, local V2 conversations/uploads/sync and unavailable live model execution and `/app/` build instructions. Ports 5174/8127/8128 must be free; the launcher refuses to reuse or stop existing services. Logs and owner state: `.runtime/`; validation: `frontend/evidence/`. For Python outside `.venv`, set `MW_PYTHON` to its interpreter. Pure MSW frontend demo: `npm --prefix frontend run dev` (5173).
+Open http://127.0.0.1:5174 for the user workspace and `/workbench/fanout` for the V3 recipe console. The administrator console is `/dashboard`, and the retained Motion homepage is `/architecture`. See [user-workspace release](docs/USER-WORKSPACE-RELEASE.md) for the supported task/approval/results flow, recovery behavior, local V2 conversations/uploads/sync and unavailable live model execution and `/app/` build instructions. Ports 5174/8127/8128 must be free; the launcher refuses to reuse or stop existing services. Logs and owner state: `.runtime/`; validation: `frontend/evidence/`. For Python outside `.venv`, set `MW_PYTHON` to its interpreter. Pure MSW frontend demo: `npm --prefix frontend run dev` (5173).
 
-`contracts/openapi.yaml` is the sole active contract: 2.0.0-unified-v2, 79 paths / 95 operations, SHA `d94462c44cd7c331470fc79731da29a7539d78f770b52288fce590ae3f52504f`. Historical `contracts/baseline` is reference evidence. Frontend SDK and BFF consume the root file; no active frontend copy exists.
+`contracts/openapi.yaml` is the sole active contract: 3.0.0-fanout-local, 89 paths / 106 operations, SHA `28be05bbde88a55d3c97ce7ca1ebef70823be208d1ac216b36b70734f8625a6a`. Historical `contracts/baseline` is reference evidence. Frontend SDK and BFF consume the root file; no active frontend copy exists.
 
-The 22 accepted templates and V1/Prism bytes are retained. Only `local.simulate` on `local-ledger` may execute, with server-enforced MEDIUM approval. A synthetic worker operates the new in-memory ledger; restart loses state. Unknown external sources remain UNKNOWN/UNAVAILABLE. Local session identity, cookie flags and JWT issuer are not production OIDC/TLS.
+The 22 accepted templates and V1/Prism bytes are retained. Legacy `local.simulate` still requires server-enforced MEDIUM approval. V3 defaults to SIMULATE; LIVE additionally requires server grants bound to owner/recipe/target/worker and an explicitly enabled adapter. AI/knowledge, WeChat sending, Colab execution and implementation adapters remain unavailable; Notion/Drive/GitHub/Reminders adapters are unverified candidates. A synthetic worker operates the new in-memory ledger; restart loses state. Unknown external sources remain UNKNOWN/UNAVAILABLE. Local session identity, cookie flags and JWT issuer are not production OIDC/TLS.
 
 CI runs backend tests in both orders, route/runtime schema checks, BFF security, ownership guards, TypeScript/lint/Vitest, shared SDK generation, production frontend build, original and new user-workspace Mock/static-loopback browser cases plus a separately rebuilt `/app/` deployment check, finite secret scan and dependency audits. Actions use read-only contents permissions and no service credentials or PG. Source must stay clean. Reports do not trigger Vite reloads.
 

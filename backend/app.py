@@ -67,6 +67,7 @@ _VERSION = os.environ.get("MWCP_VERSION", CONTRACT["info"]["version"])
 _OPENAPI_FILE = Path(__file__).resolve().parents[1] / "contracts" / "openapi.yaml"
 
 PUBLIC_PATHS = {
+    "/api/v1/webhooks/trigger",
     "/api/v1/health/live",
     "/api/v1/health/ready",
     "/docs",
@@ -210,6 +211,12 @@ _agent_os = AgentOSService(store=_store, engine=_engine, approvals=_approvals)
 _worker_hub = WorkerHubService(store=_store, engine=_engine, gateway=_gateway)
 _client_sync = ClientSyncService(engine=_engine, session_mgr=_session_mgr)
 _integrations = IntegrationsService(engine=_engine, store=_store)
+from fanout.service import FanoutService
+_fanout = FanoutService(_engine,_store,_approvals,_client_sync)
+_agent_os.fanout = _fanout
+_fanout.worker_hub = _worker_hub
+from fanout.router import build_router as build_fanout_router
+app.include_router(build_fanout_router(_fanout,_gateway,app))
 
 app.include_router(build_registry_router(_store))
 app.include_router(build_me_router(_validator_holder))
@@ -568,9 +575,9 @@ def approve(id: str, principal: Principal = Depends(get_principal)):
     try:
         with _engine._lock, _store._target_lock:
             _resource_unchanged(_engine.tasks[approval.task_id])
-            return _approvals.approval_out(
-                _approvals.decide(id, decision="approved", actor=principal.sub)
-            )
+            result=_approvals.decide(id, decision="approved", actor=principal.sub)
+            _fanout.refresh()
+            return _approvals.approval_out(result)
     except TaskEngineError as e:
         return _engine_err(e)
 
@@ -582,9 +589,9 @@ def reject(id: str, principal: Principal = Depends(get_principal)):
     try:
         with _engine._lock, _store._target_lock:
             _resource_unchanged(_engine.tasks[approval.task_id])
-            return _approvals.approval_out(
-                _approvals.decide(id, decision="rejected", actor=principal.sub)
-            )
+            result=_approvals.decide(id, decision="rejected", actor=principal.sub)
+            _fanout.refresh()
+            return _approvals.approval_out(result)
     except TaskEngineError as e:
         return _engine_err(e)
 
@@ -893,6 +900,7 @@ app.include_router(
         approvals=_approvals,
         session_mgr=_session_mgr,
         validator_holder=_validator_holder,
+        fanout=_fanout,
     )
 )
 app.include_router(build_ai_hub_router(_ai_hub))
@@ -913,7 +921,7 @@ def get_system_contract_meta(principal: Principal = Depends(get_principal)):
         if m in {"get", "post", "put", "patch", "delete"}
     )
     return {
-        "contract_version": "2.0.0-unified-v2",
+        "contract_version": CONTRACT["info"]["version"],
         "openapi_sha256": hashlib.sha256(_OPENAPI_FILE.read_bytes()).hexdigest(),
         "total_paths": total_paths,
         "total_operations": total_ops,
@@ -942,3 +950,6 @@ app.add_middleware(_DurableRequests)
 @app.on_event("startup")
 def _require_configured_repository():
     get_container()  # postgres_pending must fail at startup, never serve memory.
+
+from fanout.webhook import WebhookAuth
+app.add_middleware(WebhookAuth)
