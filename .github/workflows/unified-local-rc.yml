@@ -33,6 +33,13 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: python -m pip install -r backend/requirements-postgres.lock
       - run: npm ci --prefix frontend --no-audit --no-fund
+      - name: Use canonical Ubuntu archive for browser dependencies
+        run: |
+          # Keep Ubuntu's signed repositories and the full Playwright dependency
+          # installation; avoid an unavailable Azure mirror on hosted runners.
+          if [ -f /etc/apt/apt-mirrors.txt ]; then
+            sudo sed -i 's#https\?://azure.archive.ubuntu.com/ubuntu#https://archive.ubuntu.com/ubuntu#g' /etc/apt/apt-mirrors.txt
+          fi
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - run: node scripts/mw.mjs test
