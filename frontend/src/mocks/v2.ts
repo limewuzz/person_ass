@@ -5,7 +5,7 @@ import type { Schema } from "../api/client";
 import { identity, now, uuid, meta } from "./fixtures";
 import { fanoutResponse, stableJson } from "./fanout";
 import { ledger } from "./engine";
-import contract from "../api/generated/contract.json";
+import contract from "../api/generated/contract.json" with { type: "json" };
 import { sha256Hex, base64ToBytes } from "../workspace/model";
 
 export const v2Supported = new Set([

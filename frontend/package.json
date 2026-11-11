@@ -12,7 +12,8 @@
     "e2e": "playwright test",
     "generate": "node scripts/generate.mjs",
     "contract-sha-check": "node scripts/check-contract.mjs && node scripts/check-design.mjs",
-    "check": "npm run typecheck && npm run lint && npm run unit && npm run contract-sha-check && npm run build"
+    "check": "npm run typecheck && npm run lint && npm run unit && npm run contract-sha-check && npm run build",
+    "build:portal": "tsc --noEmit && vite build --config vite.portal.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",
@@ -52,5 +53,9 @@
     "@typescript-eslint/typescript-estree": {
       "minimatch": "11.0.1"
     }
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "msw@2.15.0": true
   }
 }

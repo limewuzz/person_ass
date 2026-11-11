@@ -175,6 +175,7 @@ try {
   await run("frontend-check", "npm", ["run", "check"], front, {
     VITE_API_MODE: "loopback",
   });
+  await run("us-static-candidate", process.execPath, ["scripts/check-us.mjs"]);
   await run(
     "static-build",
     process.execPath,

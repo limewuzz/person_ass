@@ -1,3 +1,4 @@
+import contract from "../api/generated/contract.json" with { type: "json" };
 import type { Schema } from "../api/client";
 export const now = () => new Date().toISOString();
 export const uuid = () => crypto.randomUUID();
@@ -138,7 +139,7 @@ export const catalog = (key: string): Schema<"DisplayRecordList"> => ({
   source_meta: meta(),
 });
 export const bootstrap = (): Schema<"UIBootstrap"> => ({
-  contract_version: "1.1.1-local-integrated",
+  contract_version: contract.version,
   server_time: now(),
   app_mode: "LOCAL_MOCK",
   identity,

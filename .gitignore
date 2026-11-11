@@ -72,3 +72,6 @@ release/
 !deploy/local.env.example
 
 !scripts/gateb_secrets.py
+
+# Separate static portal candidate
+frontend/dist-portal/

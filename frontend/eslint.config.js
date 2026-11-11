@@ -5,6 +5,7 @@ export default ts.config(
   {
     ignores: [
       "dist",
+      "dist-portal",
       "public",
       "src/api/generated",
       "evidence",

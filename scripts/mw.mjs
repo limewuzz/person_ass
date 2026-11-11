@@ -251,6 +251,11 @@ else if (command === "contract") {
       2,
     ),
   );
+} else if (command === "build-us") {
+  run(process.execPath, [
+    "scripts/build_us_candidate.mjs",
+    ...process.argv.slice(3),
+  ]);
 } else if (command === "package") {
   run(process.execPath, ["scripts/mw.mjs", "build"]);
   run(py, ["scripts/package_release.py"]);
@@ -266,5 +271,5 @@ else if (command === "dependencies") {
   ]);
 } else
   console.log(
-    "node scripts/mw.mjs start [--static] | stop | test | contract | build | build-session | package | security | dependencies",
+    "node scripts/mw.mjs start [--static] | stop | test | contract | build | build-session | build-us [--preview] | package | security | dependencies",
   );

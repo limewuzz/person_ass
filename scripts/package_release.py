@@ -34,6 +34,19 @@ with zipfile.ZipFile(out/'MagicWorkshop-validation.zip','w',zipfile.ZIP_DEFLATED
    if p.is_file() and p.suffix in {'.png','.xml'}:z.write(p,str(p.relative_to(ev)))
  z.writestr('SCREENSHOT-INVENTORY.json',json.dumps(inventory,indent=2))
  z.write(out/'RELEASE-IDENTITY.json','RELEASE-IDENTITY.json')
+# Preserve the independently built same-origin US portal/workshop candidate.
+usp=root/'release/us-candidate/LATEST.json'
+if usp.is_file():
+ candidate=Path(json.loads(usp.read_text())['directory']).resolve()
+ assert candidate.is_relative_to((root/'release/us-candidate').resolve())
+ cm=json.loads((candidate/'CANDIDATE-MANIFEST.json').read_text())
+ assert cm['head']==head and cm['source_dirty'] is False and cm['session_writes'] is False
+ with zipfile.ZipFile(out/'MagicWorkshop-US-static-candidate.zip','w',zipfile.ZIP_DEFLATED) as z:
+  for f in cm['files']:
+   p=(candidate/f['path']).resolve();assert p.is_relative_to(candidate) and hashlib.sha256(p.read_bytes()).hexdigest()==f['sha256']
+   z.write(p,f['path'])
+  z.write(candidate/'CANDIDATE-MANIFEST.json','CANDIDATE-MANIFEST.json');z.write(candidate/'SHA256SUMS.txt','SHA256SUMS.txt')
+ shutil.copyfile(root/'docs/US-PORTAL-INTEGRATION.md',out/'US-PORTAL-INTEGRATION.md')
 shutil.copyfile(root/'docs/GLM-DEPLOYMENT-HANDOFF.md',out/'GLM-DEPLOYMENT-HANDOFF.md')
 files=[p for p in out.iterdir() if p.is_file() and p.name not in {'MANIFEST.json','SHA256SUMS.txt'}]
 manifest={'identity':identity,'files':[{'name':p.name,'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(files)]}

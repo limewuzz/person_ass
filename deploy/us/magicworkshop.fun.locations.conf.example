@@ -1,0 +1,29 @@
+# Candidate ONLY: insert selected locations inside the inspected magicworkshop.fun
+# server{} after backups and gates. Replace /NEW_RELEASE with an immutable release.
+# Keep the server-level root and all existing locations/upstreams/auth/TLS unchanged.
+# In particular, preserve /chat/, /agent, /models, /usage/, /v1/ and /assets/.
+# Never paste this as a complete server or delete an existing enabled site.
+
+location = / {
+    root /NEW_RELEASE/portal;
+    try_files /index.html =404;
+    expires -1;  # Keep inherited security headers; force index revalidation.
+}
+location ^~ /portal-assets/ {
+    root /NEW_RELEASE/portal;
+    try_files $uri =404;
+    expires 365d;  # Hashed public assets; inherited headers remain intact.
+}
+location = /workshop { return 308 /workshop/; }
+location ^~ /workshop/ {
+    root /NEW_RELEASE;
+    try_files $uri $uri/ /workshop/index.html;
+    expires -1;  # Keep inherited security headers; force index revalidation.
+}
+
+# DO NOT point public /api/v1/ or an auth endpoint at integration/local_stack.py.
+# The owner must inspect the actual new control-plane session BFF and add only its
+# explicitly verified upstream. Require anonymous 401, authenticated 200, expiry
+# denial, CSRF and real Origin validation. Do not rewrite client Origin.
+# This candidate intentionally does not provide a made-up production upstream,
+# any shared admin bearer, passwords, certificates or a /local/session proxy.
