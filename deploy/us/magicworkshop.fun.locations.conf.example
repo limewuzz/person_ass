@@ -15,6 +15,16 @@ location ^~ /portal-assets/ {
     expires 365d;  # Hashed public assets; inherited headers remain intact.
 }
 location = /workshop { return 308 /workshop/; }
+location = /workshop/build-meta.json {
+    root /NEW_RELEASE;
+    try_files /workshop/build-meta.json =404;
+    expires -1;
+}
+location ^~ /workshop/assets/ {
+    root /NEW_RELEASE;
+    try_files $uri =404;  # A missing module must not become index.html with 200.
+    expires 365d;
+}
 location ^~ /workshop/ {
     root /NEW_RELEASE;
     try_files $uri $uri/ /workshop/index.html;
