@@ -1,0 +1,48 @@
+{
+  "purpose": "Unmodified historical Drive evidence; not active US deployment instructions",
+  "catalog_checks": "Five entries verified against original SHA256.json; catalog own hash recorded separately",
+  "files": [
+    {
+      "path": "START-HERE.md",
+      "source_name": "MagicWorkshop-v3.0.1-2fa330f7-START-HERE.md",
+      "drive_id": "1OnfAvmPVPoWDWjOwi6lzvKMKFoCJptHm",
+      "bytes": 4812,
+      "sha256": "cad3409eaba9b244516d68fbe4d23b3d41becdc37b186a4fc82981a700e63f77"
+    },
+    {
+      "path": "DEPLOYMENT.md",
+      "source_name": "MagicWorkshop-v3.0.1-2fa330f7-DEPLOYMENT.md",
+      "drive_id": "1zeOzDjkrozOknL3eqP2AP3Bp6I9x-fmx",
+      "bytes": 6670,
+      "sha256": "9d481bba5fb1106c8dd781be4a840a249bdc75a6ce04e9595c0cc99b673adfd2"
+    },
+    {
+      "path": "CHANGES-AND-KNOWN-ISSUES.md",
+      "source_name": "MagicWorkshop-v3.0.1-2fa330f7-CHANGES-AND-KNOWN-ISSUES.md",
+      "drive_id": "1xKKa_bIH7qS0sRWuack1nyl7OJCs3zDp",
+      "bytes": 5880,
+      "sha256": "c8db2d46911736bd859b4e34c4f8a56f69f5bde4bf8cd58ddb7eaba39ba8c728"
+    },
+    {
+      "path": "PATCH.diff",
+      "source_name": "MagicWorkshop-v3.0.1-2fa330f7-PATCH.diff",
+      "drive_id": "1NiVyYa9D1ihrabkLpfbjdXfCc18k6Xp7",
+      "bytes": 2226,
+      "sha256": "e164ba9e77e4dbf273ae05dc9dee02a51e2592b2caec589a9dc33b54cb66167e"
+    },
+    {
+      "path": "VERSION.json",
+      "source_name": "MagicWorkshop-v3.0.1-2fa330f7-VERSION.json",
+      "drive_id": "1liFfYCC6jo0cNYi9d5AHE8IVMzgU75kl",
+      "bytes": 3420,
+      "sha256": "941545a751d930d16861494afcff3ad2cbae4716e6125a46bc29505594f66838"
+    },
+    {
+      "path": "SHA256.json",
+      "source_name": "MagicWorkshop-v3.0.1-2fa330f7-SHA256.json",
+      "drive_id": "1tScYO8Mc7iJiVWVwMC8Jm3xrm9X4p3fX",
+      "bytes": 1893,
+      "sha256": "91522311df6a262fb0e72e4c2f410a5b7e9da1c981063a0c7f69f1fb1e562ba5"
+    }
+  ]
+}

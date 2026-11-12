@@ -1,0 +1,125 @@
+{
+ "product": "MagicWorkshop",
+ "release": "v3.0.1",
+ "release_kind": "local deployment hardening + defect fixes",
+ "baseline_v3_0": {
+  "commit": "c0cf4ed09f31532b6d5fb9486f5b29e574325776",
+  "tree": "72684d6234b11643dd1d891def989ff3e6b944a0",
+  "merged_pr": 7
+ },
+ "v3_0_1": {
+  "commit": "2fa330f744b56d47169b34230a078adc6618b654",
+  "tree": "ced979dc77754eb75fb5e67ce2609e84d6ca1412",
+  "branch": "v3.0.1",
+  "tag": "v3.0.1",
+  "pushed_to_remote": false
+ },
+ "contract": {
+  "version": "3.0.0-fanout-local",
+  "paths": 89,
+  "operations": 106,
+  "sha256": "28be05bbde88a55d3c97ce7ca1ebef70823be208d1ac216b36b70734f8625a6a",
+  "changed_since_v3_0": false
+ },
+ "verification": {
+  "backend_tests": "276 passed, 0 failed",
+  "contract_route_check": "clean, contract_only: []",
+  "frontend_build_modules": 1893,
+  "frontend_bundle_gzip_bytes": 208160,
+  "browser_routes_checked": 9,
+  "browser_js_errors": 0,
+  "browser_failed_requests": 0,
+  "public_proxy_no_auth": 401,
+  "public_proxy_with_auth": 200,
+  "sse_stream": "200 text/event-stream",
+  "resident_memory_bytes": 107782144
+ },
+ "environment_measured": {
+  "os": "Debian GNU/Linux 12 (bookworm) x86_64",
+  "vcpu": 2,
+  "node": "v24.22.2",
+  "npm": "11.19.1",
+  "python": "3.11.2",
+  "service_manager": "systemd Type=oneshot RemainAfterExit=yes",
+  "reverse_proxy": "nginx 1.22.1 + Basic Auth + self-signed TLS"
+ },
+ "status": {
+  "implemented": "YES",
+  "tested": "YES",
+  "deployed": "YES_LOCAL_ONLY",
+  "approved": "LOCAL_ONLY",
+  "pg_runtime": "NOT_RUN",
+  "gates_opened": [
+   "A"
+  ],
+  "gates_closed": [
+   "B",
+   "C",
+   "D",
+   "E"
+  ]
+ },
+ "known_issues_open": 4,
+ "files": [
+  {
+   "path": "README.txt",
+   "bytes": 822,
+   "sha256": "b6198d51b43b49cc2d1fed3bb12135fe1aa15999234b19d449c602ba0e7f149f"
+  },
+  {
+   "path": "V3.0.1-START-HERE.md",
+   "bytes": 4812,
+   "sha256": "cad3409eaba9b244516d68fbe4d23b3d41becdc37b186a4fc82981a700e63f77"
+  },
+  {
+   "path": "source.tar.gz",
+   "bytes": 565204,
+   "sha256": "8ee30866730a7349487d989315780b4fc7bd8653378c9aafa4771865b030e792"
+  },
+  {
+   "path": "docs/V3.0.1-CHANGES-AND-KNOWN-ISSUES.md",
+   "bytes": 5880,
+   "sha256": "c8db2d46911736bd859b4e34c4f8a56f69f5bde4bf8cd58ddb7eaba39ba8c728"
+  },
+  {
+   "path": "docs/V3.0.1-DEPLOYMENT.md",
+   "bytes": 6670,
+   "sha256": "9d481bba5fb1106c8dd781be4a840a249bdc75a6ce04e9595c0cc99b673adfd2"
+  },
+  {
+   "path": "deploy/magicworkshop-public.nginx.conf",
+   "bytes": 1573,
+   "sha256": "97875a12da6f0f0966e859efe7583c220ce0303ed3f3e97ee8e69c4b9c9e3187"
+  },
+  {
+   "path": "deploy/magicworkshop-v3.service",
+   "bytes": 704,
+   "sha256": "82a8f36bcdc4f6a755553babd3ee6086417b53da22c3a40acfc816069e52d917"
+  },
+  {
+   "path": "patches/v3.0.1.patch",
+   "bytes": 2226,
+   "sha256": "e164ba9e77e4dbf273ae05dc9dee02a51e2592b2caec589a9dc33b54cb66167e"
+  },
+  {
+   "path": "evidence/contract-route-check.txt",
+   "bytes": 4239,
+   "sha256": "1e08b6e76438034f2f28e0e0c45036504445c7ff8382e80a8db825a266d348de"
+  },
+  {
+   "path": "evidence/contract-sha256.txt",
+   "bytes": 89,
+   "sha256": "6fcef3ff192d8ef0ceeeb11b366be2a82ee1d93dfd5d4ea0b4b5b25d290f46bf"
+  },
+  {
+   "path": "evidence/pytest.txt",
+   "bytes": 2427,
+   "sha256": "09358d308c99f2446bbea9c24a3c98c939556551e8962ea9888e7ed910d55706"
+  },
+  {
+   "path": "evidence/runtime-verification.json",
+   "bytes": 1012,
+   "sha256": "799e4034d83fd1b260f955b98b85a8b45c7fee0da6ca8cf3d6f688bf963aafcd"
+  }
+ ]
+}

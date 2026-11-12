@@ -1,0 +1,65 @@
+{
+ "release": "v3.0.1",
+ "product": "MagicWorkshop",
+ "commit": "2fa330f744b56d47169b34230a078adc6618b654",
+ "tree": "ced979dc77754eb75fb5e67ce2609e84d6ca1412",
+ "baseline": {
+  "release": "v3.0",
+  "commit": "c0cf4ed09f31532b6d5fb9486f5b29e574325776",
+  "tree": "72684d6234b11643dd1d891def989ff3e6b944a0"
+ },
+ "contract": {
+  "version": "3.0.0-fanout-local",
+  "paths": 89,
+  "operations": 106,
+  "sha256": "28be05bbde88a55d3c97ce7ca1ebef70823be208d1ac216b36b70734f8625a6a",
+  "changed": false
+ },
+ "delivery_form": "text artifacts (no binary archive in Drive for this release)",
+ "archive_local_only": {
+  "path": "~/dev-v3-deploy/MagicWorkshop-v3.0.1-2fa330f7.zip",
+  "bytes": 18835,
+  "sha256": "see local file"
+ },
+ "files": [
+  {
+   "name": "MagicWorkshop-v3.0.1-2fa330f7-START-HERE.md",
+   "bytes": 4812,
+   "sha256": "cad3409eaba9b244516d68fbe4d23b3d41becdc37b186a4fc82981a700e63f77"
+  },
+  {
+   "name": "MagicWorkshop-v3.0.1-2fa330f7-DEPLOYMENT.md",
+   "bytes": 6670,
+   "sha256": "9d481bba5fb1106c8dd781be4a840a249bdc75a6ce04e9595c0cc99b673adfd2"
+  },
+  {
+   "name": "MagicWorkshop-v3.0.1-2fa330f7-CHANGES-AND-KNOWN-ISSUES.md",
+   "bytes": 5880,
+   "sha256": "c8db2d46911736bd859b4e34c4f8a56f69f5bde4bf8cd58ddb7eaba39ba8c728"
+  },
+  {
+   "name": "MagicWorkshop-v3.0.1-2fa330f7-PATCH.diff",
+   "bytes": 2226,
+   "sha256": "e164ba9e77e4dbf273ae05dc9dee02a51e2592b2caec589a9dc33b54cb66167e"
+  },
+  {
+   "name": "MagicWorkshop-v3.0.1-2fa330f7-VERSION.json",
+   "bytes": 3420,
+   "sha256": "941545a751d930d16861494afcff3ad2cbae4716e6125a46bc29505594f66838"
+  }
+ ],
+ "note": "PATCH.diff applied to the v3.0 source (see MagicWorkshop-v3.0-c0cf4ed09f31.zip) reconstructs v3.0.1 exactly.",
+ "status": {
+  "implemented": "YES",
+  "tested": "YES",
+  "deployed": "YES_LOCAL_ONLY",
+  "approved": "LOCAL_ONLY",
+  "pg_runtime": "NOT_RUN",
+  "gates_closed": [
+   "B",
+   "C",
+   "D",
+   "E"
+  ]
+ }
+}
